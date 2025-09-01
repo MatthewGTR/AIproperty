@@ -7,6 +7,7 @@ interface HeaderProps {
   onSubmitClick: () => void;
   onLogout: () => void;
   onAgentsClick: () => void;
+  onRentClick: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onSubmitClick, onLogout, onAgentsClick }) => {
@@ -23,7 +24,12 @@ const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onSubmitClick, onLog
           {/* Navigation */}
           <nav className="hidden md:flex space-x-8">
             <a href="#" className="text-gray-700 hover:text-blue-600 transition-colors duration-200">Buy</a>
-            <a href="#" className="text-gray-700 hover:text-blue-600 transition-colors duration-200">Rent</a>
+            <button 
+              onClick={onRentClick}
+              className="text-gray-700 hover:text-blue-600 transition-colors duration-200"
+            >
+              Rent
+            </button>
             <a href="#" className="text-gray-700 hover:text-blue-600 transition-colors duration-200">Sell</a>
             <button 
               onClick={onAgentsClick}
