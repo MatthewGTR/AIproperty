@@ -138,14 +138,14 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
   };
 
   return (
-    <section className="relative bg-gradient-to-r from-blue-600 to-blue-800 py-20">
+    <section className="relative bg-gradient-to-r from-blue-600 to-blue-800 py-12">
       <div className="absolute inset-0 bg-black opacity-20"></div>
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
             Find Your Perfect Home with Smart Property AI
           </h1>
-          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+          <p className="text-lg text-blue-100 mb-6 max-w-3xl mx-auto">
             Chat with our Smart Property AI assistant about your dream home. Get personalized recommendations and neighborhood insights.
           </p>
         </div>
@@ -286,27 +286,27 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
         </div>
 
         {/* AI Features */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-white">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
           <div className="text-center">
-            <div className="bg-white bg-opacity-20 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <Bot className="h-8 w-8" />
+            <div className="bg-white bg-opacity-20 rounded-full p-3 w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+              <Bot className="h-6 w-6" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Smart AI Integration</h3>
-            <p className="text-blue-100">Powered by advanced AI for intelligent property conversations</p>
+            <h3 className="text-base font-semibold mb-1">Smart AI Integration</h3>
+            <p className="text-blue-100 text-sm">Powered by advanced AI for intelligent property conversations</p>
           </div>
           <div className="text-center">
-            <div className="bg-white bg-opacity-20 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <MapPin className="h-8 w-8" />
+            <div className="bg-white bg-opacity-20 rounded-full p-3 w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+              <MapPin className="h-6 w-6" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Smart Recommendations</h3>
-            <p className="text-blue-100">Intelligent property matching with neighborhood expertise</p>
+            <h3 className="text-base font-semibold mb-1">Smart Recommendations</h3>
+            <p className="text-blue-100 text-sm">Intelligent property matching with neighborhood expertise</p>
           </div>
           <div className="text-center">
-            <div className="bg-white bg-opacity-20 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <Sparkles className="h-8 w-8" />
+            <div className="bg-white bg-opacity-20 rounded-full p-3 w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+              <Sparkles className="h-6 w-6" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Expert Insights</h3>
-            <p className="text-blue-100">Market analysis and investment guidance from AI expertise</p>
+            <h3 className="text-base font-semibold mb-1">Expert Insights</h3>
+            <p className="text-blue-100 text-sm">Market analysis and investment guidance from AI expertise</p>
           </div>
         </div>
       </div>
