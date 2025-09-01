@@ -6,9 +6,10 @@ interface HeaderProps {
   onAuthClick: () => void;
   onSubmitClick: () => void;
   onLogout: () => void;
+  onAgentsClick: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onSubmitClick, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onSubmitClick, onLogout, onAgentsClick }) => {
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -24,7 +25,12 @@ const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onSubmitClick, onLog
             <a href="#" className="text-gray-700 hover:text-blue-600 transition-colors duration-200">Buy</a>
             <a href="#" className="text-gray-700 hover:text-blue-600 transition-colors duration-200">Rent</a>
             <a href="#" className="text-gray-700 hover:text-blue-600 transition-colors duration-200">Sell</a>
-            <a href="#" className="text-gray-700 hover:text-blue-600 transition-colors duration-200">Agents</a>
+            <button 
+              onClick={onAgentsClick}
+              className="text-gray-700 hover:text-blue-600 transition-colors duration-200"
+            >
+              Agents
+            </button>
           </nav>
 
           {/* Right side actions */}
