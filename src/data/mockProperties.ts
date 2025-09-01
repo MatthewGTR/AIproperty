@@ -11,9 +11,7 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1400,
     images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/2121121/pexels-photo-2121121.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Luxurious condominium in the heart of KL with stunning city views and premium facilities.',
     amenities: ['Swimming Pool', 'Gym', 'Security', 'Parking', 'Concierge'],
@@ -59,7 +57,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1100,
     images: [
-      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/2121121/pexels-photo-2121121.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Heritage area apartment with stunning hill views and walking distance to UNESCO World Heritage sites.',
     amenities: ['Hill View', 'Heritage Location', 'Near UNESCO Sites', 'Parking'],
