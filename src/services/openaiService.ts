@@ -164,6 +164,28 @@ const findMatchingProperties = (query: string, properties: Property[]): Property
 const generateFallbackResponse = (query: string, properties: Property[], locationInfo?: LocationInfo): string => {
   const queryLower = query.toLowerCase();
   
+  // Handle salary-based affordability questions
+  if (queryLower.includes('salary') || queryLower.includes('income') || queryLower.includes('earn') || queryLower.includes('afford')) {
+    const salaryMatch = query.match(/(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/);
+    if (salaryMatch) {
+      const salary = parseFloat(salaryMatch[1].replace(/,/g, ''));
+      const affordablePrice = calculateAffordablePrice(salary);
+      const affordableProperties = properties.filter(p => p.price <= affordablePrice);
+      
+      return `Based on a salary of $${salary.toLocaleString()}, you can typically afford a property up to $${affordablePrice.toLocaleString()} (following the 28% rule). I found ${affordableProperties.length} properties within your budget. Your estimated monthly payment would be around $${calculateMonthlyPayment(affordablePrice).toLocaleString()}. Would you like to see these affordable options?`;
+    }
+    return "I'd be happy to help you find properties within your budget! Could you tell me your monthly or annual salary? I'll calculate what you can afford and show you suitable options.";
+  }
+  
+  // Handle location queries (where is...)
+  if (queryLower.includes('where is') || queryLower.includes('location of') || queryLower.includes('find location')) {
+    const locationMatch = query.match(/where is (.+?)[\?\.]*$/i) || query.match(/location of (.+?)[\?\.]*$/i);
+    if (locationMatch) {
+      const searchLocation = locationMatch[1].trim();
+      return `I'd be happy to help you find "${searchLocation}"! Let me search for that location and show you any available properties in that area. This location might be in Malaysia or another region - I can help you understand the area and find suitable properties nearby. Would you like me to search for properties in ${searchLocation}?`;
+    }
+  }
+  
   // Handle calculations
   if (queryLower.includes('calculate') || queryLower.includes('monthly payment') || queryLower.includes('mortgage')) {
     const priceMatch = query.match(/\$?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/);
@@ -242,4 +264,24 @@ const calculateMonthlyPayment = (price: number, downPaymentPercent: number = 20,
   const numPayments = years * 12;
   const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1);
   return Math.round(monthlyPayment);
+};
+
+// Calculate affordable property price based on salary
+const calculateAffordablePrice = (annualSalary: number): number => {
+  // Using the 28% rule: housing costs should not exceed 28% of gross monthly income
+  const monthlyIncome = annualSalary / 12;
+  const maxMonthlyPayment = monthlyIncome * 0.28;
+  
+  // Calculate maximum loan amount based on monthly payment
+  const interestRate = 6.5; // 6.5% annual interest rate
+  const years = 30;
+  const monthlyRate = interestRate / 100 / 12;
+  const numPayments = years * 12;
+  
+  const maxLoanAmount = maxMonthlyPayment * (Math.pow(1 + monthlyRate, numPayments) - 1) / (monthlyRate * Math.pow(1 + monthlyRate, numPayments));
+  
+  // Assuming 20% down payment
+  const maxPropertyPrice = maxLoanAmount / 0.8;
+  
+  return Math.round(maxPropertyPrice);
 };

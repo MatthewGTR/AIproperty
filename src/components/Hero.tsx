@@ -124,6 +124,8 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
   const quickPrompts = [
     "I'm looking for a luxury apartment in downtown with city views",
     "Show me affordable family homes with gardens under $500k", 
+    "I have a salary of $60,000, what can I afford?",
+    "Where is Taman Daya and are there properties there?",
     "Calculate monthly payment for a $800k house",
     "What neighborhoods are good for young professionals?",
     "I need investment properties with good rental potential",
