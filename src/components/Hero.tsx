@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Send, Bot, User, Sparkles, MapPin } from 'lucide-react';
 import { Property } from '../types/Property';
 import { searchPropertiesWithAI, LocationInfo } from '../services/openaiService';
-import { geocodeAddress, getCurrentLocation } from '../services/mapsService';
+import { geocodeAddress } from '../services/mapsService';
 
 interface HeroProps {
   onPropertiesRecommended: (properties: Property[]) => void;
@@ -28,29 +28,15 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [userLocation, setUserLocation] = useState<LocationInfo | null>(null);
 
-  const handleLocationSearch = async (query: string): Promise<LocationInfo | null> => {
-    // Check if the query contains location-related keywords
-    const locationKeywords = ['in ', 'near ', 'around ', 'at ', 'location', 'address', 'area'];
-    const hasLocationKeyword = locationKeywords.some(keyword => 
-      query.toLowerCase().includes(keyword)
-    );
-
-    if (hasLocationKeyword) {
-      // Extract potential address from the query
-      const words = query.split(' ');
-      const locationIndex = words.findIndex(word => 
-        ['in', 'near', 'around', 'at'].includes(word.toLowerCase())
-      );
-      
-      if (locationIndex !== -1 && locationIndex < words.length - 1) {
-        const potentialAddress = words.slice(locationIndex + 1).join(' ');
-        return await geocodeAddress(potentialAddress);
-      }
-    }
+  const extractLocation = async (query: string): Promise<LocationInfo | null> => {
+    const keywords = ['in ', 'near ', 'around ', 'at '];
+    const hasKeyword = keywords.some(k => query.toLowerCase().includes(k));
+    if (!hasKeyword) return null;
     
-    return null;
+    const words = query.split(' ');
+    const idx = words.findIndex(w => ['in', 'near', 'around', 'at'].includes(w.toLowerCase()));
+    return idx !== -1 && idx < words.length - 1 ? await geocodeAddress(words.slice(idx + 1).join(' ')) : null;
   };
 
   const handleSendMessage = async () => {
@@ -67,16 +53,8 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
       setIsTyping(true);
 
       try {
-        // Check if user is asking about a specific location
-        const searchedLocation = await handleLocationSearch(inputMessage);
-        const contextLocation = searchedLocation || userLocation;
-
-        // Get AI response with ChatGPT integration
-        const { response, matchedProperties } = await searchPropertiesWithAI(
-          inputMessage, 
-          allProperties,
-          contextLocation
-        );
+        const location = await extractLocation(inputMessage);
+        const { response, matchedProperties } = await searchPropertiesWithAI(inputMessage, allProperties, location);
         
         const aiMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
@@ -88,17 +66,11 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
 
         setMessages(prev => [...prev, aiMessage]);
         
-        // Always update property recommendations, even if empty
-        if (matchedProperties && matchedProperties.length > 0) {
-          onPropertiesRecommended(matchedProperties);
-        } else {
-          // If no matches, show featured properties as fallback
-          onPropertiesRecommended(allProperties.filter(p => p.featured));
-        }
+        onPropertiesRecommended(matchedProperties.length > 0 ? matchedProperties : allProperties.filter(p => p.featured));
       } catch (error) {
         const errorMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
-          text: "I apologize, but I'm having trouble processing your request right now. Please try again or rephrase your question.",
+          text: "Sorry, I'm having trouble right now. Please try again!",
           sender: 'ai',
           timestamp: new Date(),
           properties: allProperties.filter(p => p.featured)
@@ -120,8 +92,8 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
   };
 
   const quickPrompts = [
-    "I'm looking for a luxury apartment in downtown with city views",
-    "Show me affordable family homes with gardens under RM500k"
+    "Show me luxury apartments with city views",
+    "Find affordable family homes under RM500k"
   ];
 
   return (

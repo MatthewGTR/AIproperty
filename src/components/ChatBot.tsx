@@ -11,21 +11,16 @@ interface Message {
 const ChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: 'Hi! I\'m your AI property assistant. How can I help you find your perfect home today?',
-      sender: 'bot',
-      timestamp: new Date()
-    }
+    { id: '1', text: 'Hi! I\'m your AI assistant. How can I help you today?', sender: 'bot', timestamp: new Date() }
   ]);
   const [inputMessage, setInputMessage] = useState('');
 
   const botResponses = [
-    "I'd be happy to help you find properties in that area! Let me search for available options.",
-    "Based on your preferences, I can recommend some great properties. What's your budget range?",
-    "That's a great location choice! Here are some properties that might interest you.",
-    "I can help you schedule viewings with the property agents. Would you like me to arrange that?",
-    "For investment properties, I recommend looking at areas with good growth potential. Let me find some options.",
+    "I'd be happy to help! Let me search for options.",
+    "Great question! What's your budget range?",
+    "That's interesting! Let me find some options.",
+    "I can help with that. Would you like me to arrange something?",
+    "Good choice! Let me find some recommendations.",
   ];
 
   const handleSendMessage = () => {
@@ -40,14 +35,8 @@ const ChatBot: React.FC = () => {
       setMessages(prev => [...prev, userMessage]);
       setInputMessage('');
 
-      // Simulate bot response
       setTimeout(() => {
-        const botMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: botResponses[Math.floor(Math.random() * botResponses.length)],
-          sender: 'bot',
-          timestamp: new Date()
-        };
+        const botMessage: Message = { id: (Date.now() + 1).toString(), text: botResponses[Math.floor(Math.random() * botResponses.length)], sender: 'bot', timestamp: new Date() };
         setMessages(prev => [...prev, botMessage]);
       }, 1000);
     }
