@@ -189,6 +189,7 @@ export const getCurrentLocation = (): Promise<LocationInfo | null> => {
           default:
             console.warn('An unknown error occurred.');
             break;
+        }
         resolve(null);
       },
       { 
