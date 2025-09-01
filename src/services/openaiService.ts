@@ -43,45 +43,41 @@ export const searchPropertiesWithAI = async (
   properties: Property[],
   locationInfo?: LocationInfo
 ): Promise<{ response: string; matchedProperties: Property[] }> => {
-  // Check if Gemini is available first, then OpenAI
+  // First check if this is a property-related query
+  const isPropertyQuery = isPropertyRelatedQuery(userQuery);
+  
+  // Initialize AI services
   const hasGemini = initializeGemini();
   const hasOpenAI = initializeOpenAI();
-  
-  if (!hasGemini && !hasOpenAI) {
-    console.warn('Neither Gemini nor OpenAI API keys configured. Using fallback matching.');
-    const matchedProperties = findMatchingProperties(userQuery, properties);
-    const fallbackResponse = generateFallbackResponse(userQuery, matchedProperties);
-    
-    return {
-      response: fallbackResponse,
-      matchedProperties
-    };
-  }
 
   try {
     // Try Gemini first if available
     if (hasGemini && genAI) {
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
-      // Create a detailed property context for the AI
-      const propertyContext = properties.map(p => ({
-        id: p.id,
-        title: p.title,
-        location: p.location,
-        price: p.price,
-        type: p.type,
-        bedrooms: p.bedrooms,
-        bathrooms: p.bathrooms,
-        sqft: p.sqft,
-        amenities: p.amenities,
-        description: p.description
-      }));
+      let prompt: string;
+      let matchedProperties: Property[] = [];
+      
+      if (isPropertyQuery) {
+        // Create property-specific prompt
+        const propertyContext = properties.map(p => ({
+          id: p.id,
+          title: p.title,
+          location: p.location,
+          price: p.price,
+          type: p.type,
+          bedrooms: p.bedrooms,
+          bathrooms: p.bathrooms,
+          sqft: p.sqft,
+          amenities: p.amenities,
+          description: p.description
+        }));
 
-      const locationContext = locationInfo ? 
-        `User's current/searched location: ${locationInfo.address} (${locationInfo.lat}, ${locationInfo.lng})` : 
-        '';
+        const locationContext = locationInfo ? 
+          `User's current/searched location: ${locationInfo.address} (${locationInfo.lat}, ${locationInfo.lng})` : 
+          '';
 
-      const prompt = `You are an expert Malaysian real estate AI assistant helping users find their perfect property. You have deep knowledge of Malaysian property market, neighborhoods, pricing trends, and investment opportunities.
+        prompt = `You are an expert Malaysian real estate AI assistant helping users find their perfect property. You have deep knowledge of Malaysian property market, neighborhoods, pricing trends, and investment opportunities.
 
 Available Properties in Malaysia:
 ${JSON.stringify(propertyContext, null, 2)}
@@ -100,18 +96,27 @@ Your task:
 7. Be specific about property features that match their needs
 8. If no properties match the exact criteria, clearly state "I don't have any properties available in [location]" and suggest alternative nearby areas
 9. Consider Malaysian lifestyle factors (proximity to schools, shopping malls, food courts, etc.)
+10. Ask clarifying questions when information is missing (buy vs rent, budget, timeline, etc.)
+11. Be conversational and engaging, like talking to a helpful friend
 
 CRITICAL: When filtering by location, be EXACT. If user asks for "Taman Daya", only show properties with "Taman Daya" in the location field. Do not show properties from other areas.
-Respond in a friendly, professional tone as a knowledgeable Malaysian real estate expert. Be conversational but informative. Keep responses concise but comprehensive. Use Malaysian context and terminology where appropriate.
 
-Focus on being helpful and providing actionable insights that help the user make informed decisions.`;
+Respond in a friendly, conversational tone as a knowledgeable Malaysian real estate expert. Use natural expressions and ask follow-up questions when needed.`;
+
+        // Get property matches for property-related queries
+        matchedProperties = findMatchingPropertiesEnhanced(userQuery, properties, locationInfo);
+      } else {
+        // Handle non-property queries with general AI capabilities
+        prompt = `You are a helpful AI assistant. The user asked: "${userQuery}"
+
+Please provide a helpful, accurate, and conversational response. If it's a math question, solve it step by step. If it's a general question, provide informative answers. Be friendly and natural in your response.
+
+Note: You are primarily a real estate assistant, but you can help with other questions too. If the user asks something unrelated to real estate, answer it helpfully and then gently guide them back to how you can help with property needs if appropriate.`;
+      }
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const aiResponse = response.text();
-
-      // Enhanced property matching for Gemini
-      const matchedProperties = findMatchingPropertiesEnhanced(userQuery, properties, locationInfo);
 
       return {
         response: aiResponse,
@@ -120,36 +125,29 @@ Focus on being helpful and providing actionable insights that help the user make
     }
 
     // Fallback to OpenAI if Gemini is not available
-    if (!hasOpenAI || !openai) {
-      console.warn('Gemini failed, OpenAI not available. Using fallback matching.');
-      const matchedProperties = findMatchingProperties(userQuery, properties);
-      const fallbackResponse = generateFallbackResponse(userQuery, matchedProperties);
+    if (hasOpenAI && openai) {
+      let systemPrompt: string;
+      let matchedProperties: Property[] = [];
       
-      return {
-        response: fallbackResponse,
-        matchedProperties
-      };
-    }
+      if (isPropertyQuery) {
+        const propertyContext = properties.map(p => ({
+          id: p.id,
+          title: p.title,
+          location: p.location,
+          price: p.price,
+          type: p.type,
+          bedrooms: p.bedrooms,
+          bathrooms: p.bathrooms,
+          sqft: p.sqft,
+          amenities: p.amenities,
+          description: p.description
+        }));
 
-    // Create a detailed property context for the AI
-    const propertyContext = properties.map(p => ({
-      id: p.id,
-      title: p.title,
-      location: p.location,
-      price: p.price,
-      type: p.type,
-      bedrooms: p.bedrooms,
-      bathrooms: p.bathrooms,
-      sqft: p.sqft,
-      amenities: p.amenities,
-      description: p.description
-    }));
+        const locationContext = locationInfo ? 
+          `User's current/searched location: ${locationInfo.address} (${locationInfo.lat}, ${locationInfo.lng})` : 
+          '';
 
-    const locationContext = locationInfo ? 
-      `User's current/searched location: ${locationInfo.address} (${locationInfo.lat}, ${locationInfo.lng})` : 
-      '';
-
-    const systemPrompt = `You are an expert real estate AI assistant helping users find their perfect property. 
+        systemPrompt = `You are an expert real estate AI assistant helping users find their perfect property. 
 
 Available Properties:
 ${JSON.stringify(propertyContext, null, 2)}
@@ -163,40 +161,71 @@ Your task:
 4. If location is mentioned, consider proximity and neighborhood characteristics
 5. Be specific about property features that match their needs
 6. If no perfect matches exist, suggest the closest alternatives and explain why
+7. Ask clarifying questions when information is missing
 
 Respond in a friendly, professional tone as a knowledgeable real estate expert. Keep responses concise but informative.`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userQuery }
-      ],
-      max_tokens: 500,
-      temperature: 0.7
-    });
+        matchedProperties = findMatchingProperties(userQuery, properties);
+      } else {
+        systemPrompt = `You are a helpful AI assistant. Answer the user's question accurately and conversationally. If it's not related to real estate, still provide a helpful response and then gently mention that you're primarily a real estate assistant if appropriate.`;
+      }
 
-    const aiResponse = completion.choices[0]?.message?.content || 
-      "I'd be happy to help you find the perfect property! Could you tell me more about what you're looking for?";
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userQuery }
+        ],
+        max_tokens: 500,
+        temperature: 0.7
+      });
 
-    // Simple keyword matching as fallback for property selection
-    const matchedProperties = findMatchingProperties(userQuery, properties);
+      const aiResponse = completion.choices[0]?.message?.content || 
+        "I'd be happy to help you! Could you tell me more about what you're looking for?";
 
-    return {
-      response: aiResponse,
-      matchedProperties
-    };
+      return {
+        response: aiResponse,
+        matchedProperties
+      };
+    }
+
+    // If no AI service is available, use fallback
+    console.warn('No AI services available. Using fallback.');
+    if (isPropertyQuery) {
+      const matchedProperties = findMatchingProperties(userQuery, properties);
+      const fallbackResponse = generateFallbackResponse(userQuery, matchedProperties, locationInfo);
+      
+      return {
+        response: fallbackResponse,
+        matchedProperties
+      };
+    } else {
+      // Handle non-property questions with simple responses
+      const simpleResponse = handleNonPropertyQuery(userQuery);
+      return {
+        response: simpleResponse,
+        matchedProperties: []
+      };
+    }
+
   } catch (error) {
     console.warn('AI API Error (falling back to local matching):', error);
     
-    // Fallback to local matching if API fails
-    const matchedProperties = findMatchingProperties(userQuery, properties);
-    const fallbackResponse = generateFallbackResponse(userQuery, matchedProperties, locationInfo);
-    
-    return {
-      response: fallbackResponse,
-      matchedProperties
-    };
+    if (isPropertyQuery) {
+      const matchedProperties = findMatchingProperties(userQuery, properties);
+      const fallbackResponse = generateFallbackResponse(userQuery, matchedProperties, locationInfo);
+      
+      return {
+        response: fallbackResponse,
+        matchedProperties
+      };
+    } else {
+      const simpleResponse = handleNonPropertyQuery(userQuery);
+      return {
+        response: simpleResponse,
+        matchedProperties: []
+      };
+    }
   }
 };
 
@@ -530,4 +559,77 @@ const calculateAffordablePrice = (annualSalary: number): number => {
   const maxPropertyPrice = maxLoanAmount / 0.8;
   
   return Math.round(maxPropertyPrice);
+};
+
+// Function to detect if query is property-related
+const isPropertyRelatedQuery = (query: string): boolean => {
+  const queryLower = query.toLowerCase();
+  
+  // Property-related keywords
+  const propertyKeywords = [
+    'house', 'apartment', 'condo', 'villa', 'property', 'home', 'rent', 'buy', 'purchase',
+    'bedroom', 'bathroom', 'sqft', 'square feet', 'price', 'budget', 'location', 'area',
+    'neighborhood', 'amenities', 'pool', 'gym', 'parking', 'garden', 'balcony',
+    'mortgage', 'loan', 'down payment', 'investment', 'rental', 'yield',
+    'taman', 'klcc', 'mont kiara', 'bangsar', 'petaling jaya', 'johor', 'penang',
+    'kuala lumpur', 'selangor', 'cyberjaya', 'putrajaya', 'damansara',
+    'real estate', 'agent', 'listing', 'viewing', 'tour', 'inspection'
+  ];
+  
+  // Check if query contains property-related keywords
+  const hasPropertyKeywords = propertyKeywords.some(keyword => queryLower.includes(keyword));
+  
+  // Check for salary/affordability questions (these are property-related)
+  const isAffordabilityQuery = queryLower.includes('salary') || queryLower.includes('afford') || queryLower.includes('income');
+  
+  // Check for location questions that might be property-related
+  const isLocationQuery = (queryLower.includes('where is') || queryLower.includes('location of')) && 
+                          propertyKeywords.some(keyword => queryLower.includes(keyword));
+  
+  return hasPropertyKeywords || isAffordabilityQuery || isLocationQuery;
+};
+
+// Function to handle non-property queries
+const handleNonPropertyQuery = (query: string): string => {
+  const queryLower = query.toLowerCase();
+  
+  // Math questions
+  if (queryLower.includes('+') || queryLower.includes('-') || queryLower.includes('*') || queryLower.includes('/') || 
+      queryLower.includes('plus') || queryLower.includes('minus') || queryLower.includes('times') || queryLower.includes('divided')) {
+    
+    // Simple math evaluation for basic operations
+    try {
+      // Handle "1+1" type questions
+      const mathMatch = query.match(/(\d+)\s*[\+\-\*\/]\s*(\d+)/);
+      if (mathMatch) {
+        const result = eval(mathMatch[0]); // Note: eval is generally unsafe, but for simple math it's okay
+        return `The answer is ${result}! 😊\n\nBy the way, I'm primarily a real estate assistant. Is there anything about properties or homes I can help you with today?`;
+      }
+    } catch (error) {
+      return `I can help with simple math, but I'm primarily a real estate assistant! Is there anything about properties or homes I can help you with?`;
+    }
+  }
+  
+  // Greetings
+  if (queryLower.includes('hello') || queryLower.includes('hi') || queryLower.includes('hey')) {
+    return `Hello there! 👋 I'm your AI property assistant. While I can chat about various topics, I'm especially good at helping you find the perfect home! Are you looking to buy or rent a property?`;
+  }
+  
+  // General questions
+  if (queryLower.includes('how are you')) {
+    return `I'm doing great, thanks for asking! 😊 I'm here and ready to help you with all your property needs. Are you looking for a new home, or do you have questions about the real estate market?`;
+  }
+  
+  // Weather questions
+  if (queryLower.includes('weather')) {
+    return `I don't have access to current weather data, but I can tell you about properties with great weather protection features like covered parking, indoor pools, or climate-controlled spaces! What kind of property are you interested in?`;
+  }
+  
+  // Time questions
+  if (queryLower.includes('time') || queryLower.includes('date')) {
+    return `I don't have access to real-time information, but I can help you find properties available right now! Are you looking to move in soon? I can show you properties with immediate availability.`;
+  }
+  
+  // Default response for other non-property questions
+  return `That's an interesting question! While I can chat about various topics, I'm specifically designed to be your real estate expert. I can help you find properties, calculate affordability, provide neighborhood insights, and answer all your property-related questions. What kind of home are you looking for?`;
 };
