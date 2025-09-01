@@ -110,61 +110,7 @@ Respond in a friendly, conversational tone as a knowledgeable Malaysian real est
 
       return {
         response: aiResponse,
-    // Fallback to OpenAI if Gemini is not available
-        const propertyContext = properties.map(p => ({
-          id: p.id,
-          title: p.title,
-          location: p.location,
-          price: p.price,
-          type: p.type,
-          bedrooms: p.bedrooms,
-          bathrooms: p.bathrooms,
-          sqft: p.sqft,
-          amenities: p.amenities,
-          description: p.description
-        }));
-
-        const locationContext = locationInfo ? 
-          `User's current/searched location: ${locationInfo.address} (${locationInfo.lat}, ${locationInfo.lng})` : 
-          '';
-
-        systemPrompt = `You are an expert real estate AI assistant helping users find their perfect property. 
-
-Available Properties:
-${JSON.stringify(propertyContext, null, 2)}
-
-${locationContext}
-
-Your task:
-1. Analyze the user's query to understand their preferences (location, budget, property type, amenities, etc.)
-2. Match properties from the available list based on their criteria
-3. Provide a helpful, conversational response explaining why you selected these properties
-4. If location is mentioned, consider proximity and neighborhood characteristics
-5. Be specific about property features that match their needs
-6. If no perfect matches exist, suggest the closest alternatives and explain why
-7. Ask clarifying questions when information is missing
-
-Respond in a friendly, professional tone as a knowledgeable real estate expert. Keep responses concise but informative.`;
-      } else {
-        systemPrompt = `You are a helpful AI assistant. Answer the user's question in a friendly, professional manner.`;
-      }
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userQuery }
-        ],
-        max_tokens: 500,
-        temperature: 0.7
-      });
-
-      const aiResponse = completion.choices[0]?.message?.content || 
-        "I'd be happy to help you! Could you tell me more about what you're looking for?";
-
-      return {
-        response: aiResponse,
-        matchedProperties: findMatchingPropertiesEnhanced(userQuery, properties, locationInfo)
+        matchedProperties: isPropertyQuery ? findMatchingPropertiesEnhanced(userQuery, properties, locationInfo) : []
       };
     }
 
