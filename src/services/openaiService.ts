@@ -93,14 +93,15 @@ User Query: "${userQuery}"
 Your task:
 1. Analyze the user's query to understand their preferences (location, budget, property type, amenities, lifestyle needs)
 2. If they mention salary/income, calculate affordability using Malaysian lending standards (typically 28% of gross income for housing)
-3. Match properties from the available list based on their criteria
+3. STRICTLY match properties from the available list based on their criteria - only recommend properties that actually match their requirements
 4. Consider Malaysian market context - areas like KLCC, Mont Kiara are premium; Johor Bahru offers value; Penang has heritage appeal
 5. Provide investment insights if relevant (rental yields, capital appreciation potential)
-6. If location is mentioned, consider proximity, transportation (LRT, MRT), amenities, and neighborhood characteristics
+6. If a specific location is mentioned (like "Taman Daya"), ONLY show properties from that exact location - do not show properties from other areas
 7. Be specific about property features that match their needs
-8. If no perfect matches exist, suggest the closest alternatives and explain why
+8. If no properties match the exact criteria, clearly state "I don't have any properties available in [location]" and suggest alternative nearby areas
 9. Consider Malaysian lifestyle factors (proximity to schools, shopping malls, food courts, etc.)
 
+CRITICAL: When filtering by location, be EXACT. If user asks for "Taman Daya", only show properties with "Taman Daya" in the location field. Do not show properties from other areas.
 Respond in a friendly, professional tone as a knowledgeable Malaysian real estate expert. Be conversational but informative. Keep responses concise but comprehensive. Use Malaysian context and terminology where appropriate.
 
 Focus on being helpful and providing actionable insights that help the user make informed decisions.`;
@@ -203,6 +204,29 @@ Respond in a friendly, professional tone as a knowledgeable real estate expert. 
 const findMatchingPropertiesEnhanced = (query: string, properties: Property[], locationInfo?: LocationInfo): Property[] => {
   const queryLower = query.toLowerCase();
   
+  // First, check for exact location matches
+  const exactLocationMatches = properties.filter(property => {
+    const propertyLocation = property.location.toLowerCase();
+    
+    // Check for exact location name matches
+    if (queryLower.includes('taman daya') && propertyLocation.includes('taman daya')) return true;
+    if (queryLower.includes('taman molek') && propertyLocation.includes('taman molek')) return true;
+    if (queryLower.includes('sutera utama') && propertyLocation.includes('sutera utama')) return true;
+    if (queryLower.includes('mount austin') && propertyLocation.includes('mount austin')) return true;
+    if (queryLower.includes('klcc') && propertyLocation.includes('klcc')) return true;
+    if (queryLower.includes('mont kiara') && propertyLocation.includes('mont kiara')) return true;
+    if (queryLower.includes('bangsar') && propertyLocation.includes('bangsar')) return true;
+    if (queryLower.includes('petaling jaya') && propertyLocation.includes('petaling jaya')) return true;
+    if (queryLower.includes('damansara heights') && propertyLocation.includes('damansara heights')) return true;
+    
+    return false;
+  });
+  
+  // If we found exact location matches, return only those
+  if (exactLocationMatches.length > 0) {
+    return exactLocationMatches;
+  }
+  
   // Handle salary-based affordability first
   if (queryLower.includes('salary') || queryLower.includes('income') || queryLower.includes('earn') || queryLower.includes('afford')) {
     const salaryMatch = query.match(/rm\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/i);
@@ -251,6 +275,29 @@ const findMatchingPropertiesEnhanced = (query: string, properties: Property[], l
 // Fallback function for when API is not available
 const findMatchingProperties = (query: string, properties: Property[]): Property[] => {
   const queryLower = query.toLowerCase();
+  
+  // First, check for exact location matches
+  const exactLocationMatches = properties.filter(property => {
+    const propertyLocation = property.location.toLowerCase();
+    
+    // Check for exact location name matches
+    if (queryLower.includes('taman daya') && propertyLocation.includes('taman daya')) return true;
+    if (queryLower.includes('taman molek') && propertyLocation.includes('taman molek')) return true;
+    if (queryLower.includes('sutera utama') && propertyLocation.includes('sutera utama')) return true;
+    if (queryLower.includes('mount austin') && propertyLocation.includes('mount austin')) return true;
+    if (queryLower.includes('klcc') && propertyLocation.includes('klcc')) return true;
+    if (queryLower.includes('mont kiara') && propertyLocation.includes('mont kiara')) return true;
+    if (queryLower.includes('bangsar') && propertyLocation.includes('bangsar')) return true;
+    if (queryLower.includes('petaling jaya') && propertyLocation.includes('petaling jaya')) return true;
+    if (queryLower.includes('damansara heights') && propertyLocation.includes('damansara heights')) return true;
+    
+    return false;
+  });
+  
+  // If we found exact location matches, return only those
+  if (exactLocationMatches.length > 0) {
+    return exactLocationMatches;
+  }
   
   // Handle salary-based affordability first
   if (queryLower.includes('salary') || queryLower.includes('income') || queryLower.includes('earn') || queryLower.includes('afford')) {
@@ -352,6 +399,17 @@ const findMatchingProperties = (query: string, properties: Property[]): Property
 
 const generateFallbackResponse = (query: string, properties: Property[], locationInfo?: LocationInfo): string => {
   const queryLower = query.toLowerCase();
+  
+  // Handle specific location queries
+  if (queryLower.includes('taman daya')) {
+    if (properties.length === 0) {
+      return "I don't have any properties currently available in Taman Daya. However, I can show you similar properties in nearby areas like Taman Molek or other parts of Johor Bahru. Would you like me to search for alternatives?";
+    }
+    const tamanDayaProperties = properties.filter(p => p.location.toLowerCase().includes('taman daya'));
+    if (tamanDayaProperties.length > 0) {
+      return `Great! I found ${tamanDayaProperties.length} property(ies) in Taman Daya, Johor Bahru. Taman Daya is a well-established residential area known for its family-friendly environment, good schools, and convenient access to amenities. The properties range from RM${Math.min(...tamanDayaProperties.map(p => p.price)).toLocaleString()} to RM${Math.max(...tamanDayaProperties.map(p => p.price)).toLocaleString()}.`;
+    }
+  }
   
   // Handle salary-based affordability questions
   if (queryLower.includes('salary') || queryLower.includes('income') || queryLower.includes('earn') || queryLower.includes('afford')) {
