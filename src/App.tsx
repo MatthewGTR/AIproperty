@@ -7,6 +7,7 @@ import AuthModal from './components/AuthModal';
 import ChatBot from './components/ChatBot';
 import SubmitProperty from './components/SubmitProperty';
 import AgentsPage from './components/AgentsPage';
+import RentPage from './components/RentPage';
 import { Property } from './types/Property';
 import { mockProperties } from './data/mockProperties';
 
@@ -15,6 +16,7 @@ function App() {
   const [showAuth, setShowAuth] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
   const [showAgents, setShowAgents] = useState(false);
+  const [showRent, setShowRent] = useState(false);
   const [recommendedProperties, setRecommendedProperties] = useState<Property[]>(mockProperties);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
 
@@ -29,6 +31,7 @@ function App() {
         onAuthClick={() => setShowAuth(true)}
         onSubmitClick={() => setShowSubmit(true)}
         onAgentsClick={() => setShowAgents(true)}
+        onRentClick={() => setShowRent(true)}
         onLogout={() => setUser(null)}
       />
       
@@ -67,6 +70,13 @@ function App() {
       {showAgents && (
         <AgentsPage 
           onClose={() => setShowAgents(false)}
+        />
+      )}
+      
+      {showRent && (
+        <RentPage 
+          onClose={() => setShowRent(false)}
+          user={user}
         />
       )}
       
