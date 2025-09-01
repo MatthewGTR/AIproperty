@@ -146,7 +146,7 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
         // Automatically send the message
         const userMessage: ChatMessage = {
           id: Date.now().toString(),
-          text: locationMessage,
+          text: 'Hi! I\'m your AI property assistant. Tell me what kind of home you\'re looking for - location, budget, size, amenities, or any specific preferences. I can also help you understand neighborhoods and provide location-based advice. What can I help you find today?',
           sender: 'user',
           timestamp: new Date()
         };
