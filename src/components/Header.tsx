@@ -9,9 +9,10 @@ interface HeaderProps {
   onAgentsClick: () => void;
   onBuyClick: () => void;
   onRentClick: () => void;
+  onNewDevelopmentClick: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onSubmitClick, onLogout, onAgentsClick, onRentClick, onBuyClick }) => {
+const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onSubmitClick, onLogout, onAgentsClick, onRentClick, onBuyClick, onNewDevelopmentClick }) => {
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -36,7 +37,12 @@ const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onSubmitClick, onLog
             >
               Rent
             </button>
-            <a href="#" className="text-gray-700 hover:text-blue-600 transition-colors duration-200">Sell</a>
+            <button 
+              onClick={onNewDevelopmentClick}
+              className="text-gray-700 hover:text-blue-600 transition-colors duration-200"
+            >
+              New Development
+            </button>
             <button 
               onClick={onAgentsClick}
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200"

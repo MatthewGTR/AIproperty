@@ -9,6 +9,7 @@ import SubmitProperty from './components/SubmitProperty';
 import AgentsPage from './components/AgentsPage';
 import RentPage from './components/RentPage';
 import BuyPage from './components/BuyPage';
+import NewDevelopmentPage from './components/NewDevelopmentPage';
 import { Property } from './types/Property';
 import { mockProperties } from './data/mockProperties';
 
@@ -19,6 +20,7 @@ function App() {
   const [showAgents, setShowAgents] = useState(false);
   const [showRent, setShowRent] = useState(false);
   const [showBuy, setShowBuy] = useState(false);
+  const [showNewDevelopment, setShowNewDevelopment] = useState(false);
   const [recommendedProperties, setRecommendedProperties] = useState<Property[]>(mockProperties);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
 
@@ -35,6 +37,7 @@ function App() {
         onAgentsClick={() => setShowAgents(true)}
         onRentClick={() => setShowRent(true)}
         onBuyClick={() => setShowBuy(true)}
+        onNewDevelopmentClick={() => setShowNewDevelopment(true)}
         onLogout={() => setUser(null)}
       />
       
@@ -86,6 +89,13 @@ function App() {
       {showBuy && (
         <BuyPage 
           onClose={() => setShowBuy(false)}
+          user={user}
+        />
+      )}
+      
+      {showNewDevelopment && (
+        <NewDevelopmentPage 
+          onClose={() => setShowNewDevelopment(false)}
           user={user}
         />
       )}
