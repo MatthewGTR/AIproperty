@@ -262,12 +262,55 @@ const SubmitProperty: React.FC<SubmitPropertyProps> = ({ onClose, user }) => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Property Photos</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors duration-200">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
                   <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-2">Upload property photos</p>
-                  <p className="text-sm text-gray-500">Drag and drop or click to browse</p>
-                  <input type="file" multiple accept="image/*" className="hidden" />
+                  <p className="text-gray-600 mb-2">Upload property photos (Max 10 images)</p>
+                  <p className="text-sm text-gray-500 mb-4">Drag and drop or click to browse</p>
+                  <input 
+                    type="file" 
+                    multiple 
+                    accept="image/*" 
+                    onChange={handleImageUpload}
+                    className="hidden" 
+                    id="image-upload"
+                  />
+                  <label 
+                    htmlFor="image-upload"
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors duration-200"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Choose Images
+                  </label>
+                  <p className="text-xs text-gray-400 mt-2">{selectedImages.length}/10 images selected</p>
                 </div>
+                
+                {/* Image Previews */}
+                {imagePreviewUrls.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Selected Images ({imagePreviewUrls.length}/10)</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {imagePreviewUrls.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={url}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                          >
+                            ×
+                          </button>
+                          <div className="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
+                            {index + 1}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="bg-blue-50 rounded-lg p-4">

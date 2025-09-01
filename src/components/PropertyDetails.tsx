@@ -74,17 +74,65 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onClose, us
                 className="w-full h-96 object-cover rounded-xl"
               />
               {property.images.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                  {property.images.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentImageIndex(index)}
-                      className={`w-3 h-3 rounded-full transition-colors duration-200 ${
-                        index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
-                      }`}
-                    />
-                  ))}
-                </div>
+                <>
+                  {/* Navigation Arrows */}
+                  <button
+                    onClick={() => setCurrentImageIndex(currentImageIndex > 0 ? currentImageIndex - 1 : property.images.length - 1)}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all duration-200"
+                  >
+                    ←
+                  </button>
+                  <button
+                    onClick={() => setCurrentImageIndex(currentImageIndex < property.images.length - 1 ? currentImageIndex + 1 : 0)}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all duration-200"
+                  >
+                    →
+                  </button>
+                  
+                  {/* Image Counter */}
+                  <div className="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                    {currentImageIndex + 1} / {property.images.length}
+                  </div>
+                  
+                  {/* Dot Indicators */}
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                    {property.images.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={`w-3 h-3 rounded-full transition-colors duration-200 ${
+                          index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Thumbnail Strip */}
+                  {property.images.length > 1 && (
+                    <div className="absolute bottom-4 left-4 flex space-x-2 max-w-xs overflow-x-auto">
+                      {property.images.slice(0, 5).map((image, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentImageIndex(index)}
+                          className={`flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                            index === currentImageIndex ? 'border-white' : 'border-transparent opacity-70 hover:opacity-100'
+                          }`}
+                        >
+                          <img
+                            src={image}
+                            alt={`Thumbnail ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
+                      {property.images.length > 5 && (
+                        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-black bg-opacity-50 flex items-center justify-center text-white text-xs">
+                          +{property.images.length - 5}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
