@@ -102,11 +102,11 @@ Respond in a friendly, professional tone as a knowledgeable real estate expert. 
       matchedProperties
     };
   } catch (error) {
-    console.error('OpenAI API Error:', error);
+    console.warn('OpenAI API Error (falling back to local matching):', error);
     
     // Fallback to local matching if API fails
     const matchedProperties = findMatchingProperties(userQuery, properties);
-    const fallbackResponse = generateFallbackResponse(userQuery, matchedProperties);
+    const fallbackResponse = generateFallbackResponse(userQuery, matchedProperties, locationInfo);
     
     return {
       response: fallbackResponse,
@@ -161,14 +161,14 @@ const findMatchingProperties = (query: string, properties: Property[]): Property
   return matchedProperties.length > 0 ? matchedProperties : properties.filter(p => p.featured);
 };
 
-const generateFallbackResponse = (query: string, properties: Property[]): string => {
+const generateFallbackResponse = (query: string, properties: Property[], locationInfo?: LocationInfo): string => {
   if (properties.length === 0) {
-    return "I couldn't find any properties matching your exact criteria, but let me show you some of our featured properties that might interest you. Could you provide more details about what you're looking for?";
+    return "I'm currently experiencing high demand and using my backup search system. I couldn't find properties matching your exact criteria, but let me show you some featured properties that might interest you. Could you provide more details about what you're looking for?";
   }
   
   if (properties.length === 1) {
     const property = properties[0];
-    return `Perfect! I found an excellent match for you: "${property.title}" in ${property.location}. It's a ${property.bedrooms}-bedroom ${property.type} priced at $${property.price.toLocaleString()}. This property features ${property.amenities.slice(0, 3).join(', ')} and more. Would you like to see more details or similar properties?`;
+    return `Great! Using my backup search system, I found an excellent match: "${property.title}" in ${property.location}. It's a ${property.bedrooms}-bedroom ${property.type} priced at $${property.price.toLocaleString()}. This property features ${property.amenities.slice(0, 3).join(', ')} and more. Would you like to see more details?`;
   }
   
   const priceRange = {
@@ -176,5 +176,7 @@ const generateFallbackResponse = (query: string, properties: Property[]): string
     max: Math.max(...properties.map(p => p.price))
   };
   
-  return `Great! I found ${properties.length} properties that match your criteria. The price range is from $${priceRange.min.toLocaleString()} to $${priceRange.max.toLocaleString()}. You can see all the recommendations below. Would you like me to narrow down the search or provide more specific recommendations?`;
+  const locationText = locationInfo ? ` in the ${locationInfo.city || locationInfo.address} area` : '';
+  
+  return `I'm using my backup search system due to high demand, but I found ${properties.length} great properties${locationText} that match your criteria! The price range is from $${priceRange.min.toLocaleString()} to $${priceRange.max.toLocaleString()}. You can see all the recommendations below. Would you like me to help narrow down the search?`;
 };
