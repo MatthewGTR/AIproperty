@@ -102,16 +102,6 @@ Your task:
 CRITICAL: When filtering by location, be EXACT. If user asks for "Taman Daya", only show properties with "Taman Daya" in the location field. Do not show properties from other areas.
 
 Respond in a friendly, conversational tone as a knowledgeable Malaysian real estate expert. Use natural expressions and ask follow-up questions when needed.`;
-
-        // Get property matches for property-related queries
-        matchedProperties = findMatchingPropertiesEnhanced(userQuery, properties, locationInfo);
-      } else {
-        // Handle non-property queries with general AI capabilities
-        prompt = `You are a helpful AI assistant. The user asked: "${userQuery}"
-
-Please provide a helpful, accurate, and conversational response. If it's a math question, solve it step by step. If it's a general question, provide informative answers. Be friendly and natural in your response.
-
-Note: You are primarily a real estate assistant, but you can help with other questions too. If the user asks something unrelated to real estate, answer it helpfully and then gently guide them back to how you can help with property needs if appropriate.`;
       }
 
       const result = await model.generateContent(prompt);
@@ -120,16 +110,7 @@ Note: You are primarily a real estate assistant, but you can help with other que
 
       return {
         response: aiResponse,
-        matchedProperties
-      };
-    }
-
     // Fallback to OpenAI if Gemini is not available
-    if (hasOpenAI && openai) {
-      let systemPrompt: string;
-      let matchedProperties: Property[] = [];
-      
-      if (isPropertyQuery) {
         const propertyContext = properties.map(p => ({
           id: p.id,
           title: p.title,
@@ -164,14 +145,6 @@ Your task:
 7. Ask clarifying questions when information is missing
 
 Respond in a friendly, professional tone as a knowledgeable real estate expert. Keep responses concise but informative.`;
-
-        matchedProperties = findMatchingProperties(userQuery, properties);
-      } else {
-        systemPrompt = `You are a helpful AI assistant. Answer the user's question accurately and conversationally. If it's not related to real estate, still provide a helpful response and then gently mention that you're primarily a real estate assistant if appropriate.`;
-      }
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userQuery }
