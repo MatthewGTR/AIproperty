@@ -172,9 +172,9 @@ const generateFallbackResponse = (query: string, properties: Property[], locatio
       const affordablePrice = calculateAffordablePrice(salary);
       const affordableProperties = properties.filter(p => p.price <= affordablePrice);
       
-      return `Based on a salary of $${salary.toLocaleString()}, you can typically afford a property up to $${affordablePrice.toLocaleString()} (following the 28% rule). I found ${affordableProperties.length} properties within your budget. Your estimated monthly payment would be around $${calculateMonthlyPayment(affordablePrice).toLocaleString()}. Would you like to see these affordable options?`;
+      return `Based on a salary of RM${salary.toLocaleString()}, you can typically afford a property up to RM${affordablePrice.toLocaleString()} (following the 28% rule). I found ${affordableProperties.length} properties within your budget. Your estimated monthly payment would be around RM${calculateMonthlyPayment(affordablePrice).toLocaleString()}. Would you like to see these affordable options?`;
     }
-    return "I'd be happy to help you find properties within your budget! Could you tell me your monthly or annual salary? I'll calculate what you can afford and show you suitable options.";
+    return "I'd be happy to help you find properties within your budget! Could you tell me your monthly or annual salary in RM? I'll calculate what you can afford and show you suitable options.";
   }
   
   // Handle location queries (where is...)
@@ -188,11 +188,11 @@ const generateFallbackResponse = (query: string, properties: Property[], locatio
   
   // Handle calculations
   if (queryLower.includes('calculate') || queryLower.includes('monthly payment') || queryLower.includes('mortgage')) {
-    const priceMatch = query.match(/\$?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/);
+    const priceMatch = query.match(/RM?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/);
     if (priceMatch) {
       const price = parseFloat(priceMatch[1].replace(/,/g, ''));
       const monthlyPayment = calculateMonthlyPayment(price);
-      return `Based on a property price of $${price.toLocaleString()}, with a 20% down payment and 6.5% interest rate over 30 years, your estimated monthly payment would be around $${monthlyPayment.toLocaleString()}. This includes principal and interest only. Would you like me to show you properties in this price range?`;
+      return `Based on a property price of RM${price.toLocaleString()}, with a 20% down payment and 6.5% interest rate over 30 years, your estimated monthly payment would be around RM${monthlyPayment.toLocaleString()}. This includes principal and interest only. Would you like me to show you properties in this price range?`;
     }
   }
   
@@ -207,7 +207,7 @@ const generateFallbackResponse = (query: string, properties: Property[], locatio
   
   // Handle market questions
   if (queryLower.includes('market') || queryLower.includes('trend') || queryLower.includes('price trend')) {
-    return "The real estate market varies by location, but I can help you understand pricing in specific areas. Based on our current listings, I'm seeing a range from $420,000 to $2.5M. Would you like me to analyze trends for a specific location or price range?";
+    return "The real estate market varies by location, but I can help you understand pricing in specific areas. Based on our current listings, I'm seeing a range from RM280,000 to RM3.2M. Would you like me to analyze trends for a specific location or price range?";
   }
   
   // Handle neighborhood questions
@@ -234,9 +234,9 @@ const generateFallbackResponse = (query: string, properties: Property[], locatio
   if (properties.length === 1) {
     const property = properties[0];
     const responses = [
-      `Perfect! I found an excellent match: "${property.title}" in ${property.location}. This ${property.bedrooms}-bedroom ${property.type} is priced at $${property.price.toLocaleString()} and features ${property.amenities.slice(0, 3).join(', ')}. The price per square foot is $${Math.round(property.price / property.sqft)}, which is competitive for the area.`,
-      `Great news! "${property.title}" looks like exactly what you're looking for. Located in ${property.location}, this ${property.type} offers ${property.bedrooms} bedrooms and ${property.bathrooms} bathrooms for $${property.price.toLocaleString()}. What catches my eye is the ${property.amenities[0]} - that's a great feature!`,
-      `I found a fantastic option: "${property.title}" in ${property.location}. At $${property.price.toLocaleString()} for ${property.sqft.toLocaleString()} sq ft, you're getting great value. Plus, it includes ${property.amenities.slice(0, 2).join(' and ')}. Would you like to know more about the neighborhood?`
+      `Perfect! I found an excellent match: "${property.title}" in ${property.location}. This ${property.bedrooms}-bedroom ${property.type} is priced at RM${property.price.toLocaleString()} and features ${property.amenities.slice(0, 3).join(', ')}. The price per square foot is RM${Math.round(property.price / property.sqft)}, which is competitive for the area.`,
+      `Great news! "${property.title}" looks like exactly what you're looking for. Located in ${property.location}, this ${property.type} offers ${property.bedrooms} bedrooms and ${property.bathrooms} bathrooms for RM${property.price.toLocaleString()}. What catches my eye is the ${property.amenities[0]} - that's a great feature!`,
+      `I found a fantastic option: "${property.title}" in ${property.location}. At RM${property.price.toLocaleString()} for ${property.sqft.toLocaleString()} sq ft, you're getting great value. Plus, it includes ${property.amenities.slice(0, 2).join(' and ')}. Would you like to know more about the neighborhood?`
     ];
     return responses[Math.floor(Math.random() * responses.length)];
   }
@@ -249,9 +249,9 @@ const generateFallbackResponse = (query: string, properties: Property[], locatio
   const locationText = locationInfo ? ` in the ${locationInfo.city || locationInfo.address} area` : '';
   
   const multipleResponses = [
-    `Excellent! I found ${properties.length} properties${locationText} that match what you're looking for. Prices range from $${priceRange.min.toLocaleString()} to $${priceRange.max.toLocaleString()}. I've arranged them by how well they match your criteria. Which one catches your eye?`,
-    `Great search results! I discovered ${properties.length} options${locationText} in your criteria. The price spread is $${priceRange.min.toLocaleString()} - $${priceRange.max.toLocaleString()}. Each has unique advantages - would you like me to highlight the best features of each?`,
-    `Perfect timing! I have ${properties.length} properties${locationText} that fit your needs. Budget-wise, you're looking at $${priceRange.min.toLocaleString()} to $${priceRange.max.toLocaleString()}. Should I help you compare them or do you want to focus on a specific price range?`
+    `Excellent! I found ${properties.length} properties${locationText} that match what you're looking for. Prices range from RM${priceRange.min.toLocaleString()} to RM${priceRange.max.toLocaleString()}. I've arranged them by how well they match your criteria. Which one catches your eye?`,
+    `Great search results! I discovered ${properties.length} options${locationText} in your criteria. The price spread is RM${priceRange.min.toLocaleString()} - RM${priceRange.max.toLocaleString()}. Each has unique advantages - would you like me to highlight the best features of each?`,
+    `Perfect timing! I have ${properties.length} properties${locationText} that fit your needs. Budget-wise, you're looking at RM${priceRange.min.toLocaleString()} to RM${priceRange.max.toLocaleString()}. Should I help you compare them or do you want to focus on a specific price range?`
   ];
   
   return multipleResponses[Math.floor(Math.random() * multipleResponses.length)];

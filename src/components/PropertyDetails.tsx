@@ -15,10 +15,13 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onClose, us
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+      style: 'decimal',
       minimumFractionDigits: 0,
     }).format(price);
+  };
+
+  const formatPriceRM = (price: number) => {
+    return `RM${formatPrice(price)}`;
   };
 
   const amenityIcons: { [key: string]: React.ReactNode } = {
@@ -88,7 +91,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onClose, us
             {/* Property Info */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold text-blue-600">{formatPrice(property.price)}</span>
+                <span className="text-3xl font-bold text-blue-600">{formatPriceRM(property.price)}</span>
                 <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">
                   {property.type.charAt(0).toUpperCase() + property.type.slice(1)}
                 </span>
@@ -215,7 +218,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onClose, us
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Price per sqft:</span>
-                  <span className="font-medium">${Math.round(property.price / property.sqft).toLocaleString()}</span>
+                  <span className="font-medium">RM{Math.round(property.price / property.sqft).toLocaleString()}</span>
                 </div>
               </div>
             </div>

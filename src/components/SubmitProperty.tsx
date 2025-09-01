@@ -133,13 +133,13 @@ const SubmitProperty: React.FC<SubmitPropertyProps> = ({ onClose, user }) => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                    <span className="absolute left-3 top-3 text-gray-400 text-sm font-medium">RM</span>
                     <input
                       type="number"
                       name="price"
                       value={formData.price}
                       onChange={handleInputChange}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="0"
                       required
                     />
@@ -275,7 +275,7 @@ const SubmitProperty: React.FC<SubmitPropertyProps> = ({ onClose, user }) => {
                 <div className="text-sm text-blue-700 space-y-1">
                   <p><strong>Title:</strong> {formData.title}</p>
                   <p><strong>Location:</strong> {formData.location}</p>
-                  <p><strong>Price:</strong> ${parseInt(formData.price || '0').toLocaleString()}</p>
+                  <p><strong>Price:</strong> RM{parseInt(formData.price || '0').toLocaleString()}</p>
                   <p><strong>Type:</strong> {formData.type}</p>
                   <p><strong>Bedrooms:</strong> {formData.bedrooms}</p>
                   <p><strong>Bathrooms:</strong> {formData.bathrooms}</p>

@@ -10,10 +10,13 @@ interface PropertyListingsProps {
 const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onPropertyClick }) => {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+      style: 'decimal',
       minimumFractionDigits: 0,
     }).format(price);
+  };
+
+  const formatPriceRM = (price: number) => {
+    return `RM${formatPrice(price)}`;
   };
 
   return (
@@ -49,7 +52,7 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onPrope
             <div className="p-6">
               <div className="flex justify-between items-start mb-3">
                 <h3 className="text-xl font-semibold text-gray-900 line-clamp-1">{property.title}</h3>
-                <span className="text-2xl font-bold text-blue-600">{formatPrice(property.price)}</span>
+                <span className="text-2xl font-bold text-blue-600">{formatPriceRM(property.price)}</span>
               </div>
 
               <div className="flex items-center text-gray-600 mb-4">
