@@ -11,7 +11,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1400,
     images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/2121121/pexels-photo-2121121.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Luxurious condominium in the heart of KL with stunning city views and premium facilities.',
     amenities: ['Swimming Pool', 'Gym', 'Security', 'Parking', 'Concierge'],
