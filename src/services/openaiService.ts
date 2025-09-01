@@ -1,7 +1,9 @@
 import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Property } from '../types/Property';
 
 let openai: OpenAI | null = null;
+let genAI: GoogleGenerativeAI | null = null;
 
 // Initialize OpenAI only if API key is available
 const initializeOpenAI = () => {
@@ -11,6 +13,16 @@ const initializeOpenAI = () => {
       apiKey: apiKey,
       dangerouslyAllowBrowser: true
     });
+    return true;
+  }
+  return false;
+};
+
+// Initialize Gemini API
+const initializeGemini = () => {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (apiKey && apiKey !== 'your_gemini_api_key_here' && apiKey.trim() !== '') {
+    genAI = new GoogleGenerativeAI(apiKey);
     return true;
   }
   return false;
@@ -31,11 +43,12 @@ export const searchPropertiesWithAI = async (
   properties: Property[],
   locationInfo?: LocationInfo
 ): Promise<{ response: string; matchedProperties: Property[] }> => {
-  // Check if OpenAI is available
+  // Check if Gemini is available first, then OpenAI
+  const hasGemini = initializeGemini();
   const hasOpenAI = initializeOpenAI();
   
-  if (!hasOpenAI || !openai) {
-    console.warn('OpenAI API key not configured. Using fallback matching.');
+  if (!hasGemini && !hasOpenAI) {
+    console.warn('Neither Gemini nor OpenAI API keys configured. Using fallback matching.');
     const matchedProperties = findMatchingProperties(userQuery, properties);
     const fallbackResponse = generateFallbackResponse(userQuery, matchedProperties);
     
@@ -46,6 +59,77 @@ export const searchPropertiesWithAI = async (
   }
 
   try {
+    // Try Gemini first if available
+    if (hasGemini && genAI) {
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      
+      // Create a detailed property context for the AI
+      const propertyContext = properties.map(p => ({
+        id: p.id,
+        title: p.title,
+        location: p.location,
+        price: p.price,
+        type: p.type,
+        bedrooms: p.bedrooms,
+        bathrooms: p.bathrooms,
+        sqft: p.sqft,
+        amenities: p.amenities,
+        description: p.description
+      }));
+
+      const locationContext = locationInfo ? 
+        `User's current/searched location: ${locationInfo.address} (${locationInfo.lat}, ${locationInfo.lng})` : 
+        '';
+
+      const prompt = `You are an expert Malaysian real estate AI assistant helping users find their perfect property. You have deep knowledge of Malaysian property market, neighborhoods, pricing trends, and investment opportunities.
+
+Available Properties in Malaysia:
+${JSON.stringify(propertyContext, null, 2)}
+
+${locationContext}
+
+User Query: "${userQuery}"
+
+Your task:
+1. Analyze the user's query to understand their preferences (location, budget, property type, amenities, lifestyle needs)
+2. If they mention salary/income, calculate affordability using Malaysian lending standards (typically 28% of gross income for housing)
+3. Match properties from the available list based on their criteria
+4. Consider Malaysian market context - areas like KLCC, Mont Kiara are premium; Johor Bahru offers value; Penang has heritage appeal
+5. Provide investment insights if relevant (rental yields, capital appreciation potential)
+6. If location is mentioned, consider proximity, transportation (LRT, MRT), amenities, and neighborhood characteristics
+7. Be specific about property features that match their needs
+8. If no perfect matches exist, suggest the closest alternatives and explain why
+9. Consider Malaysian lifestyle factors (proximity to schools, shopping malls, food courts, etc.)
+
+Respond in a friendly, professional tone as a knowledgeable Malaysian real estate expert. Be conversational but informative. Keep responses concise but comprehensive. Use Malaysian context and terminology where appropriate.
+
+Focus on being helpful and providing actionable insights that help the user make informed decisions.`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const aiResponse = response.text();
+
+      // Enhanced property matching for Gemini
+      const matchedProperties = findMatchingPropertiesEnhanced(userQuery, properties, locationInfo);
+
+      return {
+        response: aiResponse,
+        matchedProperties
+      };
+    }
+
+    // Fallback to OpenAI if Gemini is not available
+    if (!hasOpenAI || !openai) {
+      console.warn('Gemini failed, OpenAI not available. Using fallback matching.');
+      const matchedProperties = findMatchingProperties(userQuery, properties);
+      const fallbackResponse = generateFallbackResponse(userQuery, matchedProperties);
+      
+      return {
+        response: fallbackResponse,
+        matchedProperties
+      };
+    }
+
     // Create a detailed property context for the AI
     const propertyContext = properties.map(p => ({
       id: p.id,
@@ -102,7 +186,7 @@ Respond in a friendly, professional tone as a knowledgeable real estate expert. 
       matchedProperties
     };
   } catch (error) {
-    console.warn('OpenAI API Error (falling back to local matching):', error);
+    console.warn('AI API Error (falling back to local matching):', error);
     
     // Fallback to local matching if API fails
     const matchedProperties = findMatchingProperties(userQuery, properties);
@@ -113,6 +197,55 @@ Respond in a friendly, professional tone as a knowledgeable real estate expert. 
       matchedProperties
     };
   }
+};
+
+// Enhanced property matching function for better AI integration
+const findMatchingPropertiesEnhanced = (query: string, properties: Property[], locationInfo?: LocationInfo): Property[] => {
+  const queryLower = query.toLowerCase();
+  
+  // Handle salary-based affordability first
+  if (queryLower.includes('salary') || queryLower.includes('income') || queryLower.includes('earn') || queryLower.includes('afford')) {
+    const salaryMatch = query.match(/rm\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/i);
+    if (salaryMatch) {
+      const salary = parseFloat(salaryMatch[1].replace(/,/g, ''));
+      const affordablePrice = calculateAffordablePrice(salary);
+      const affordableProperties = properties.filter(p => p.price <= affordablePrice);
+      
+      if (affordableProperties.length > 0) {
+        return affordableProperties.sort((a, b) => a.price - b.price);
+      } else {
+        return properties.sort((a, b) => a.price - b.price).slice(0, 5);
+      }
+    }
+  }
+  
+  // Enhanced location matching with proximity if locationInfo is available
+  let locationFilteredProperties = properties;
+  if (locationInfo) {
+    // If user has location context, prioritize nearby properties
+    locationFilteredProperties = properties.filter(property => {
+      const propertyLocation = property.location.toLowerCase();
+      const userCity = locationInfo.city?.toLowerCase() || '';
+      const userState = locationInfo.state?.toLowerCase() || '';
+      
+      // Check if property is in same city or state
+      return propertyLocation.includes(userCity) || 
+             propertyLocation.includes(userState) ||
+             (userState === 'johor' && propertyLocation.includes('johor')) ||
+             (userState === 'selangor' && (propertyLocation.includes('kuala lumpur') || propertyLocation.includes('selangor')));
+    });
+    
+    // If no local matches, use all properties
+    if (locationFilteredProperties.length === 0) {
+      locationFilteredProperties = properties;
+    }
+  }
+  
+  // Apply existing matching logic to filtered properties
+  const matchedProperties = findMatchingProperties(query, locationFilteredProperties);
+  
+  // If still no matches, return featured properties
+  return matchedProperties.length > 0 ? matchedProperties : properties.filter(p => p.featured);
 };
 
 // Fallback function for when API is not available
