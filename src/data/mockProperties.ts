@@ -3,147 +3,6 @@ import { Property } from '../types/Property';
 export const mockProperties: Property[] = [
   {
     id: '1',
-    title: 'Modern Downtown Apartment',
-    location: 'Downtown, New York',
-    price: 850000,
-    type: 'apartment',
-    bedrooms: 2,
-    bathrooms: 2,
-    sqft: 1200,
-    images: [
-      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    description: 'Beautiful modern apartment in the heart of downtown with stunning city views and premium amenities.',
-    amenities: ['Gym', 'Pool', 'Parking', 'Concierge', 'Rooftop Deck'],
-    agent: {
-      name: 'Sarah Johnson',
-      phone: '+1 (555) 123-4567',
-      email: 'sarah@realestate.com',
-      image: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150'
-    },
-    featured: true,
-    listedDate: '2025-01-15'
-  },
-  {
-    id: '2',
-    title: 'Luxury Family Villa',
-    location: 'Beverly Hills, CA',
-    price: 2500000,
-    type: 'villa',
-    bedrooms: 5,
-    bathrooms: 4,
-    sqft: 3500,
-    images: [
-      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    description: 'Spectacular luxury villa with panoramic views, private pool, and premium finishes throughout.',
-    amenities: ['Private Pool', 'Garden', 'Garage', 'Security System', 'Wine Cellar'],
-    agent: {
-      name: 'Michael Chen',
-      phone: '+1 (555) 987-6543',
-      email: 'michael@luxuryrealty.com',
-      image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150'
-    },
-    featured: true,
-    listedDate: '2025-01-14'
-  },
-  {
-    id: '3',
-    title: 'Cozy Suburban House',
-    location: 'Austin, TX',
-    price: 420000,
-    type: 'house',
-    bedrooms: 3,
-    bathrooms: 2,
-    sqft: 1800,
-    images: [
-      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    description: 'Charming family home in quiet neighborhood with large backyard and modern updates.',
-    amenities: ['Backyard', 'Garage', 'Updated Kitchen', 'Hardwood Floors'],
-    agent: {
-      name: 'Emma Rodriguez',
-      phone: '+1 (555) 456-7890',
-      email: 'emma@homefinders.com',
-      image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
-    },
-    featured: false,
-    listedDate: '2025-01-13'
-  },
-  {
-    id: '4',
-    title: 'Urban Loft',
-    location: 'Brooklyn, NY',
-    price: 675000,
-    type: 'apartment',
-    bedrooms: 1,
-    bathrooms: 1,
-    sqft: 900,
-    images: [
-      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    description: 'Stylish loft apartment with exposed brick walls, high ceilings, and industrial charm.',
-    amenities: ['High Ceilings', 'Exposed Brick', 'Modern Appliances', 'Near Subway'],
-    agent: {
-      name: 'David Kim',
-      phone: '+1 (555) 234-5678',
-      email: 'david@urbanrealty.com',
-      image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'
-    },
-    featured: false,
-    listedDate: '2025-01-12'
-  },
-  {
-    id: '5',
-    title: 'Beachfront Condo',
-    location: 'Miami Beach, FL',
-    price: 1200000,
-    type: 'condo',
-    bedrooms: 3,
-    bathrooms: 3,
-    sqft: 2200,
-    images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    description: 'Stunning oceanfront condo with breathtaking views, private balcony, and resort-style amenities.',
-    amenities: ['Ocean View', 'Balcony', 'Beach Access', 'Spa', 'Valet Parking'],
-    agent: {
-      name: 'Isabella Martinez',
-      phone: '+1 (555) 345-6789',
-      email: 'isabella@coastalrealty.com',
-      image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150'
-    },
-    featured: true,
-    listedDate: '2025-01-11'
-  },
-  {
-    id: '6',
-    title: 'Historic Townhouse',
-    location: 'Boston, MA',
-    price: 950000,
-    type: 'house',
-    bedrooms: 4,
-    bathrooms: 3,
-    sqft: 2500,
-    images: [
-      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    description: 'Beautifully restored historic townhouse with original details, modern amenities, and prime location.',
-    amenities: ['Historic Details', 'Modern Kitchen', 'Garden', 'Fireplace', 'Parking'],
-    agent: {
-      name: 'James Wilson',
-      phone: '+1 (555) 567-8901',
-      email: 'james@heritagehomes.com',
-      image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150'
-    },
-    featured: false,
-    listedDate: '2025-01-10'
-  },
-  // Malaysian Properties
-  {
-    id: '7',
     title: 'Modern Condo in KLCC',
     location: 'Kuala Lumpur City Centre, KL',
     price: 850000,
@@ -166,7 +25,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-16'
   },
   {
-    id: '8',
+    id: '2',
     title: 'Terrace House in Taman Daya',
     location: 'Taman Daya, Johor Bahru',
     price: 420000,
@@ -189,7 +48,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-15'
   },
   {
-    id: '9',
+    id: '3',
     title: 'Penang Hill View Apartment',
     location: 'Georgetown, Penang',
     price: 650000,
@@ -212,7 +71,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-14'
   },
   {
-    id: '10',
+    id: '4',
     title: 'Luxury Villa in Mont Kiara',
     location: 'Mont Kiara, Kuala Lumpur',
     price: 2800000,
@@ -235,7 +94,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-13'
   },
   {
-    id: '11',
+    id: '5',
     title: 'Affordable Flat in Wangsa Maju',
     location: 'Wangsa Maju, Kuala Lumpur',
     price: 280000,
@@ -258,7 +117,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-12'
   },
   {
-    id: '12',
+    id: '6',
     title: 'Beachfront Condo in Kota Kinabalu',
     location: 'Kota Kinabalu, Sabah',
     price: 750000,
@@ -281,7 +140,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-11'
   },
   {
-    id: '13',
+    id: '7',
     title: 'Shop Office in Subang Jaya',
     location: 'Subang Jaya, Selangor',
     price: 1200000,
@@ -304,7 +163,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-10'
   },
   {
-    id: '14',
+    id: '8',
     title: 'Semi-D in Shah Alam',
     location: 'Shah Alam, Selangor',
     price: 950000,
@@ -327,7 +186,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-09'
   },
   {
-    id: '15',
+    id: '9',
     title: 'High-Rise Condo in Cyberjaya',
     location: 'Cyberjaya, Selangor',
     price: 580000,
@@ -350,7 +209,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-08'
   },
   {
-    id: '16',
+    id: '10',
     title: 'Townhouse in Bandar Sunway',
     location: 'Bandar Sunway, Selangor',
     price: 720000,
@@ -373,7 +232,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-07'
   },
   {
-    id: '17',
+    id: '11',
     title: 'Luxury Condo in Damansara Heights',
     location: 'Damansara Heights, KL',
     price: 1800000,
@@ -396,7 +255,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-06'
   },
   {
-    id: '18',
+    id: '12',
     title: 'Budget Apartment in Cheras',
     location: 'Cheras, Kuala Lumpur',
     price: 320000,
@@ -419,7 +278,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-05'
   },
   {
-    id: '19',
+    id: '13',
     title: 'Waterfront Condo in Putrajaya',
     location: 'Putrajaya, Malaysia',
     price: 680000,
@@ -442,7 +301,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-04'
   },
   {
-    id: '20',
+    id: '14',
     title: 'Bungalow in Petaling Jaya',
     location: 'Petaling Jaya, Selangor',
     price: 3200000,
@@ -465,7 +324,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-03'
   },
   {
-    id: '21',
+    id: '15',
     title: 'Studio in Bukit Bintang',
     location: 'Bukit Bintang, Kuala Lumpur',
     price: 450000,
@@ -488,7 +347,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-02'
   },
   {
-    id: '22',
+    id: '16',
     title: 'Terrace in Taman Tun Dr Ismail',
     location: 'TTDI, Kuala Lumpur',
     price: 1400000,
@@ -503,7 +362,7 @@ export const mockProperties: Property[] = [
     amenities: ['Renovated', 'Near International School', 'Park Nearby', 'Established Area'],
     agent: {
       name: 'Melissa Chong',
-    phone: '+60 13-678-9012',
+      phone: '+60 13-678-9012',
       email: 'melissa@ttdiproperties.com',
       image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
     },
@@ -511,7 +370,7 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-01'
   },
   {
-    id: '23',
+    id: '17',
     title: 'Serviced Apartment in Mid Valley',
     location: 'Mid Valley, Kuala Lumpur',
     price: 620000,
@@ -534,7 +393,7 @@ export const mockProperties: Property[] = [
     listedDate: '2024-12-31'
   },
   {
-    id: '24',
+    id: '18',
     title: 'Landed Property in Ampang',
     location: 'Ampang, Selangor',
     price: 880000,
@@ -557,7 +416,7 @@ export const mockProperties: Property[] = [
     listedDate: '2024-12-30'
   },
   {
-    id: '25',
+    id: '19',
     title: 'New Launch Condo in Setia Alam',
     location: 'Setia Alam, Selangor',
     price: 520000,
@@ -580,7 +439,7 @@ export const mockProperties: Property[] = [
     listedDate: '2024-12-29'
   },
   {
-    id: '26',
+    id: '20',
     title: 'Affordable House in Kajang',
     location: 'Kajang, Selangor',
     price: 380000,
@@ -601,5 +460,237 @@ export const mockProperties: Property[] = [
     },
     featured: false,
     listedDate: '2024-12-28'
+  },
+  // New Agent Profiles with Properties
+  {
+    id: '21',
+    title: 'Executive Condo in Bangsar',
+    location: 'Bangsar, Kuala Lumpur',
+    price: 1350000,
+    type: 'condo',
+    bedrooms: 3,
+    bathrooms: 3,
+    sqft: 1800,
+    images: [
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Premium executive condominium in trendy Bangsar with city skyline views and upscale amenities.',
+    amenities: ['City View', 'Premium Gym', 'Infinity Pool', 'Concierge', 'Wine Storage'],
+    agent: {
+      name: 'Dr. Amelia Tan',
+      phone: '+60 12-888-9999',
+      email: 'amelia@eliterealty.my',
+      image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: true,
+    listedDate: '2025-01-17'
+  },
+  {
+    id: '22',
+    title: 'Garden Villa in Tropicana',
+    location: 'Tropicana, Selangor',
+    price: 2200000,
+    type: 'villa',
+    bedrooms: 5,
+    bathrooms: 4,
+    sqft: 3800,
+    images: [
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    ],
+    description: 'Cozy studio in the heart of KL entertainment district. Walking distance to shopping and dining.',
+    amenities: ['Furnished', 'Near Monorail', 'Shopping Nearby', 'Restaurants'],
+    agent: {
+      name: 'Sarah Lim',
+      phone: '+60 13-222-3333',
+      email: 'sarah@cityrentals.my',
+      image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: false,
+    listedDate: '2025-01-19'
+  },
+  {
+    id: '23',
+    title: 'Family House for Rent - Subang Jaya',
+    location: 'Subang Jaya, Selangor',
+    price: 2200,
+    type: 'house',
+    bedrooms: 4,
+    bathrooms: 3,
+    sqft: 2000,
+    images: [
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Spacious family home in established neighborhood. Great for families with children.',
+    amenities: ['Garden', 'Parking', 'Near Schools', 'Playground'],
+    agent: {
+      name: 'David Wong',
+      phone: '+60 14-333-4444',
+      email: 'david@familyrentals.my',
+      image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: true,
+    listedDate: '2025-01-18'
+  },
+  {
+    id: '24',
+    title: 'Modern Condo for Rent - Mont Kiara',
+    location: 'Mont Kiara, Kuala Lumpur',
+    price: 4200,
+    type: 'condo',
+    bedrooms: 3,
+    bathrooms: 2,
+    sqft: 1500,
+    images: [
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Premium condominium in expat-friendly Mont Kiara with excellent facilities.',
+    amenities: ['Swimming Pool', 'Gym', 'Tennis Court', 'Security', 'Parking'],
+    agent: {
+      name: 'Michelle Chen',
+      phone: '+60 15-444-5555',
+      email: 'michelle@premiumrentals.my',
+      image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: true,
+    listedDate: '2025-01-17'
+  },
+  {
+    id: '25',
+    title: 'Budget Room for Rent - Cheras',
+    location: 'Cheras, Kuala Lumpur',
+    price: 600,
+    type: 'apartment',
+    bedrooms: 1,
+    bathrooms: 1,
+    sqft: 300,
+    images: [
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Affordable single room for students and young professionals. Near public transport.',
+    amenities: ['Furnished', 'Near MRT', 'Shared Kitchen', 'Utilities Included'],
+    agent: {
+      name: 'Kumar Raj',
+      phone: '+60 16-555-6666',
+      email: 'kumar@budgetrentals.my',
+      image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: false,
+    listedDate: '2025-01-16'
+  },
+  {
+    id: '26',
+    title: 'Serviced Apartment for Rent - Cyberjaya',
+    location: 'Cyberjaya, Selangor',
+    price: 2800,
+    type: 'apartment',
+    bedrooms: 2,
+    bathrooms: 2,
+    sqft: 1000,
+    images: [
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Modern serviced apartment in tech hub with hotel-like amenities and services.',
+    amenities: ['Fully Serviced', 'Housekeeping', 'Gym', 'Pool', 'Business Center'],
+    agent: {
+      name: 'Lisa Tan',
+      phone: '+60 17-666-7777',
+      email: 'lisa@servicedapartments.my',
+      image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: true,
+    listedDate: '2025-01-15'
+  },
+  {
+    id: '27',
+    title: 'Penthouse for Rent - Damansara Heights',
+    location: 'Damansara Heights, KL',
+    price: 8500,
+    type: 'condo',
+    bedrooms: 4,
+    bathrooms: 3,
+    sqft: 2500,
+    images: [
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Luxury penthouse with panoramic city views and premium finishes throughout.',
+    amenities: ['City View', 'Private Lift', 'Jacuzzi', 'Wine Cellar', 'Maid Room'],
+    agent: {
+      name: 'James Lim',
+      phone: '+60 18-777-8888',
+      email: 'james@luxuryrentals.my',
+      image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: true,
+    listedDate: '2025-01-14'
+  },
+  {
+    id: '28',
+    title: 'Shared House for Rent - Petaling Jaya',
+    location: 'Petaling Jaya, Selangor',
+    price: 800,
+    type: 'house',
+    bedrooms: 1,
+    bathrooms: 1,
+    sqft: 400,
+    images: [
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Room in shared house with common areas. Perfect for students and young professionals.',
+    amenities: ['Shared Kitchen', 'WiFi', 'Parking', 'Near LRT'],
+    agent: {
+      name: 'Amy Ng',
+      phone: '+60 19-888-9999',
+      email: 'amy@sharedliving.my',
+      image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: false,
+    listedDate: '2025-01-13'
+  },
+  {
+    id: '29',
+    title: 'Beachfront Condo for Rent - Penang',
+    location: 'Batu Ferringhi, Penang',
+    price: 3200,
+    type: 'condo',
+    bedrooms: 2,
+    bathrooms: 2,
+    sqft: 1100,
+    images: [
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Stunning beachfront condominium with direct beach access and resort facilities.',
+    amenities: ['Beach Access', 'Sea View', 'Swimming Pool', 'Restaurant', 'Spa'],
+    agent: {
+      name: 'Peter Loh',
+      phone: '+60 12-999-0000',
+      email: 'peter@penangrentals.my',
+      image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: true,
+    listedDate: '2025-01-12'
+  },
+  {
+    id: '30',
+    title: 'Executive Condo for Rent - Bangsar',
+    location: 'Bangsar, Kuala Lumpur',
+    price: 4800,
+    type: 'condo',
+    bedrooms: 3,
+    bathrooms: 2,
+    sqft: 1400,
+    images: [
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Executive condominium in trendy Bangsar with easy access to shopping and dining.',
+    amenities: ['Furnished', 'Gym', 'Pool', 'Security', 'Shopping Nearby'],
+    agent: {
+      name: 'Rachel Tan',
+      phone: '+60 13-000-1111',
+      email: 'rachel@bangsarrentals.my',
+      image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: false,
+    listedDate: '2025-01-11'
   }
 ];
