@@ -66,7 +66,7 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
     if (inputMessage.trim()) {
       const userMessage: ChatMessage = {
         id: Date.now().toString(),
-        text: inputMessage,
+        text: 'Hi! I\'m your Smart Property AI assistant. Tell me what kind of home you\'re looking for - location, budget, size, amenities, or any specific preferences. I can also help you understand neighborhoods and provide expert advice. What can I help you find today?',
         sender: 'user',
         timestamp: new Date()
       };
@@ -125,13 +125,7 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
     "I'm looking for a luxury apartment in downtown with city views",
     "Show me affordable family homes with gardens under $500k", 
     "I have a salary of $60,000, what can I afford?",
-    "Where is Taman Daya and are there properties there?",
-    "Calculate monthly payment for a $800k house",
-    "What neighborhoods are good for young professionals?",
-    "I need investment properties with good rental potential",
-    "Tell me about market trends in Miami",
-    "Find me properties with pools and gyms under $1M",
-    "What's the average price per square foot in Austin?"
+    "Where is Taman Daya and are there properties there?"
   ];
 
   const handleUseCurrentLocation = async () => {
@@ -149,10 +143,10 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Find Your Perfect Home with ChatGPT AI
+            Find Your Perfect Home with Smart Property AI
           </h1>
           <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            Chat with our ChatGPT-powered assistant about your dream home. Get location-aware recommendations and neighborhood insights.
+            Chat with our Smart Property AI assistant about your dream home. Get personalized recommendations and neighborhood insights.
           </p>
         </div>
 
@@ -164,8 +158,8 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
               <Bot className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="font-semibold">ChatGPT Property Assistant</h3>
-              <p className="text-xs text-blue-100">Location-aware • Real estate expert</p>
+              <h3 className="font-semibold">Smart Property AI</h3>
+              <p className="text-xs text-blue-100">Real estate expert</p>
             </div>
             <div className="ml-auto flex items-center">
               <Sparkles className="h-5 w-5 text-yellow-300" />
@@ -244,7 +238,7 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
               )}
               
               <p className="text-sm text-gray-600 mb-3">Try these examples:</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 {quickPrompts.map((prompt, index) => (
                   <button
                     key={index}
@@ -297,22 +291,22 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
             <div className="bg-white bg-opacity-20 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
               <Bot className="h-8 w-8" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">ChatGPT Integration</h3>
-            <p className="text-blue-100">Powered by OpenAI's ChatGPT for intelligent conversations</p>
+            <h3 className="text-lg font-semibold mb-2">Smart AI Integration</h3>
+            <p className="text-blue-100">Powered by advanced AI for intelligent property conversations</p>
           </div>
           <div className="text-center">
             <div className="bg-white bg-opacity-20 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
               <MapPin className="h-8 w-8" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Location Intelligence</h3>
-            <p className="text-blue-100">Google Maps integration for accurate location data and insights</p>
+            <h3 className="text-lg font-semibold mb-2">Smart Recommendations</h3>
+            <p className="text-blue-100">Intelligent property matching with neighborhood expertise</p>
           </div>
           <div className="text-center">
             <div className="bg-white bg-opacity-20 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
               <Sparkles className="h-8 w-8" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Smart Recommendations</h3>
-            <p className="text-blue-100">AI-powered property matching with neighborhood expertise</p>
+            <h3 className="text-lg font-semibold mb-2">Expert Insights</h3>
+            <p className="text-blue-100">Market analysis and investment guidance from AI expertise</p>
           </div>
         </div>
       </div>
