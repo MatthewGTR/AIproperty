@@ -119,6 +119,24 @@ Respond in a friendly, professional tone as a knowledgeable real estate expert. 
 const findMatchingProperties = (query: string, properties: Property[]): Property[] => {
   const queryLower = query.toLowerCase();
   
+  // Handle salary-based affordability first
+  if (queryLower.includes('salary') || queryLower.includes('income') || queryLower.includes('earn') || queryLower.includes('afford')) {
+    const salaryMatch = query.match(/(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/);
+    if (salaryMatch) {
+      const salary = parseFloat(salaryMatch[1].replace(/,/g, ''));
+      const affordablePrice = calculateAffordablePrice(salary);
+      const affordableProperties = properties.filter(p => p.price <= affordablePrice);
+      
+      // Return affordable properties if found, otherwise return cheapest properties
+      if (affordableProperties.length > 0) {
+        return affordableProperties.sort((a, b) => a.price - b.price);
+      } else {
+        // If no properties within budget, show the 5 cheapest properties
+        return properties.sort((a, b) => a.price - b.price).slice(0, 5);
+      }
+    }
+  }
+  
   let matchedProperties = properties.filter(property => {
     const searchText = `${property.title} ${property.location} ${property.description} ${property.amenities.join(' ')} ${property.type}`.toLowerCase();
     
@@ -208,9 +226,8 @@ const generateFallbackResponse = (query: string, properties: Property[], locatio
     if (salaryMatch) {
       const salary = parseFloat(salaryMatch[1].replace(/,/g, ''));
       const affordablePrice = calculateAffordablePrice(salary);
-      const affordableProperties = properties.filter(p => p.price <= affordablePrice);
       
-      return `Based on a salary of RM${salary.toLocaleString()}, you can typically afford a property up to RM${affordablePrice.toLocaleString()} (following the 28% rule). I found ${affordableProperties.length} properties within your budget. Your estimated monthly payment would be around RM${calculateMonthlyPayment(affordablePrice).toLocaleString()}. Would you like to see these affordable options?`;
+      return `Based on a salary of RM${salary.toLocaleString()}, you can typically afford a property up to RM${affordablePrice.toLocaleString()} (following the 28% rule). Your estimated monthly payment would be around RM${calculateMonthlyPayment(affordablePrice).toLocaleString()}. Let me show you properties within your budget range.`;
     }
     return "I'd be happy to help you find properties within your budget! Could you tell me your monthly or annual salary in RM? I'll calculate what you can afford and show you suitable options.";
   }
