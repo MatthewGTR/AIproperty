@@ -138,138 +138,176 @@ const AgentsPage: React.FC<AgentsPageProps> = ({ onClose }) => {
   ];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-7xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center rounded-t-2xl">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900">Our Top Agents</h2>
-            <p className="text-gray-600">Meet Malaysia's most trusted property experts</p>
+    <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+      {/* Header */}
+      <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm z-40">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Our Top Agents</h1>
+          <p className="text-gray-600">Meet Malaysia's most trusted property experts</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+        >
+          <X className="h-6 w-6 text-gray-600" />
+        </button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="bg-gray-50 px-6 py-4 sticky top-[88px] z-30">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative">
+            <Users className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search agents by name, location, or specialization..."
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-          >
-            <X className="h-6 w-6 text-gray-600" />
-          </button>
+        </div>
+      </div>
+
+      {/* Agents Grid */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="mb-6 flex justify-between items-center">
+          <p className="text-gray-600">{topAgents.length} top agents in Malaysia</p>
+          <div className="flex space-x-2">
+            <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <option>Sort by Rating</option>
+              <option>Most Properties Sold</option>
+              <option>Most Experience</option>
+              <option>Location</option>
+            </select>
+          </div>
         </div>
 
-        {/* Agents Grid */}
-        <div className="p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {topAgents.map((agent) => (
-              <div key={agent.id} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow duration-300">
-                {/* Agent Header */}
-                <div className="flex items-start space-x-4 mb-6">
-                  <img
-                    src={agent.image}
-                    alt={agent.name}
-                    className="w-20 h-20 rounded-full object-cover"
-                  />
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900">{agent.name}</h3>
-                    <p className="text-blue-600 font-medium">{agent.title}</p>
-                    <div className="flex items-center mt-2">
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-4 w-4 ${
-                              i < Math.floor(agent.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                        <span className="ml-2 text-sm text-gray-600">
-                          {agent.rating} ({agent.reviews} reviews)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <div className="flex items-center justify-center mb-1">
-                      <TrendingUp className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div className="text-2xl font-bold text-blue-600">{agent.propertiesSold}</div>
-                    <div className="text-xs text-gray-600">Properties Sold</div>
-                  </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <div className="flex items-center justify-center mb-1">
-                      <Award className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div className="text-2xl font-bold text-green-600">{agent.experience}</div>
-                    <div className="text-xs text-gray-600">Experience</div>
-                  </div>
-                  <div className="text-center p-3 bg-purple-50 rounded-lg">
-                    <div className="flex items-center justify-center mb-1">
-                      <Users className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div className="text-2xl font-bold text-purple-600">{agent.reviews}</div>
-                    <div className="text-xs text-gray-600">Happy Clients</div>
-                  </div>
-                </div>
-
-                {/* Location & Languages */}
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center text-gray-600">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    <span className="text-sm">{agent.location}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {agent.languages.map((lang) => (
-                      <span key={lang} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-                        {lang}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {topAgents.map((agent) => (
+            <div key={agent.id} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow duration-300">
+              {/* Agent Header */}
+              <div className="flex items-start space-x-4 mb-6">
+                <img
+                  src={agent.image}
+                  alt={agent.name}
+                  className="w-20 h-20 rounded-full object-cover"
+                />
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900">{agent.name}</h3>
+                  <p className="text-blue-600 font-medium">{agent.title}</p>
+                  <div className="flex items-center mt-2">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${
+                            i < Math.floor(agent.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                      <span className="ml-2 text-sm text-gray-600">
+                        {agent.rating} ({agent.reviews} reviews)
                       </span>
-                    ))}
+                    </div>
                   </div>
-                </div>
-
-                {/* Specialization */}
-                <div className="mb-6">
-                  <h4 className="font-semibold text-gray-900 mb-2">Specialization</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {agent.specialization.map((spec) => (
-                      <span key={spec} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                        {spec}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div className="mb-6">
-                  <p className="text-gray-600 text-sm leading-relaxed">{agent.description}</p>
-                </div>
-
-                {/* Achievements */}
-                <div className="mb-6">
-                  <h4 className="font-semibold text-gray-900 mb-2">Achievements</h4>
-                  <ul className="space-y-1">
-                    {agent.achievements.map((achievement, index) => (
-                      <li key={index} className="flex items-center text-sm text-gray-600">
-                        <Award className="h-3 w-3 text-yellow-500 mr-2 flex-shrink-0" />
-                        {achievement}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Contact Buttons */}
-                <div className="flex space-x-3">
-                  <button className="flex-1 flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
-                    <Phone className="h-4 w-4 mr-2" />
-                    Call
-                  </button>
-                  <button className="flex-1 flex items-center justify-center px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Email
-                  </button>
                 </div>
               </div>
-            ))}
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-center justify-center mb-1">
+                    <TrendingUp className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="text-2xl font-bold text-blue-600">{agent.propertiesSold}</div>
+                  <div className="text-xs text-gray-600">Properties Sold</div>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <div className="flex items-center justify-center mb-1">
+                    <Award className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div className="text-2xl font-bold text-green-600">{agent.experience}</div>
+                  <div className="text-xs text-gray-600">Experience</div>
+                </div>
+                <div className="text-center p-3 bg-purple-50 rounded-lg">
+                  <div className="flex items-center justify-center mb-1">
+                    <Users className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div className="text-2xl font-bold text-purple-600">{agent.reviews}</div>
+                  <div className="text-xs text-gray-600">Happy Clients</div>
+                </div>
+              </div>
+
+              {/* Location & Languages */}
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center text-gray-600">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  <span className="text-sm">{agent.location}</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {agent.languages.map((lang) => (
+                    <span key={lang} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
+                      {lang}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Specialization */}
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 mb-2">Specialization</h4>
+                <div className="flex flex-wrap gap-2">
+                  {agent.specialization.map((spec) => (
+                    <span key={spec} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                      {spec}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="mb-6">
+                <p className="text-gray-600 text-sm leading-relaxed">{agent.description}</p>
+              </div>
+
+              {/* Achievements */}
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 mb-2">Achievements</h4>
+                <ul className="space-y-1">
+                  {agent.achievements.map((achievement, index) => (
+                    <li key={index} className="flex items-center text-sm text-gray-600">
+                      <Award className="h-3 w-3 text-yellow-500 mr-2 flex-shrink-0" />
+                      {achievement}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Contact Buttons */}
+              <div className="flex space-x-3">
+                <button className="flex-1 flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                  <Phone className="h-4 w-4 mr-2" />
+                  Call
+                </button>
+                <button className="flex-1 flex items-center justify-center px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Email
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Call to Action */}
+        <div className="mt-12 text-center">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+            <h3 className="text-2xl font-bold mb-4">Looking for a Specific Agent?</h3>
+            <p className="text-blue-100 mb-6">Our AI assistant can help you find the perfect agent based on your property type, location, and specific requirements.</p>
+            <button 
+              onClick={onClose}
+              className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors duration-200"
+            >
+              Ask Our AI Assistant
+            </button>
           </div>
         </div>
       </div>
