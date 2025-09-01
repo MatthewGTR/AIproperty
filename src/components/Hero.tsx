@@ -30,15 +30,6 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
   const [isTyping, setIsTyping] = useState(false);
   const [userLocation, setUserLocation] = useState<LocationInfo | null>(null);
 
-  // Get user's current location on component mount
-  React.useEffect(() => {
-    getCurrentLocation().then(location => {
-      if (location) {
-        setUserLocation(location);
-      }
-    });
-  }, []);
-
   const handleLocationSearch = async (query: string): Promise<LocationInfo | null> => {
     // Check if the query contains location-related keywords
     const locationKeywords = ['in ', 'near ', 'around ', 'at ', 'location', 'address', 'area'];
@@ -135,53 +126,6 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
     "Where is Taman Daya and are there properties there?"
   ];
 
-  const handleUseCurrentLocation = async () => {
-    try {
-      const location = await getCurrentLocation();
-      if (location) {
-        setUserLocation(location);
-        const locationMessage = `My current location is ${location.address}. Can you show me properties nearby?`;
-        setInputMessage(locationMessage);
-        
-        // Automatically send the message
-        const userMessage: ChatMessage = {
-          id: Date.now().toString(),
-          text: 'Hi! I\'m your AI property assistant. Tell me what kind of home you\'re looking for - location, budget, size, amenities, or any specific preferences. I can also help you understand neighborhoods and provide location-based advice. What can I help you find today?',
-          sender: 'user',
-          timestamp: new Date()
-        };
-
-        setMessages(prev => [...prev, userMessage]);
-        setIsTyping(true);
-
-        // Get AI response with location context
-        const { response, matchedProperties } = await searchPropertiesWithAI(
-          locationMessage, 
-          allProperties,
-          location
-        );
-        
-        const aiMessage: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          text: response,
-          sender: 'ai',
-          timestamp: new Date(),
-          properties: matchedProperties
-        };
-
-        setMessages(prev => [...prev, aiMessage]);
-        onPropertiesRecommended(matchedProperties);
-        setIsTyping(false);
-      } else {
-        // Fallback if location detection fails
-        alert('Location access was denied. Please check your browser settings and allow location access for this site, then try again.');
-      }
-    } catch (error) {
-      console.error('Location error:', error);
-      alert('Location access was denied or unavailable. Please enable location permissions in your browser settings and try again.');
-    }
-  };
-
   return (
     <section className="relative bg-gradient-to-r from-blue-600 to-blue-800 py-12">
       <div className="absolute inset-0 bg-black opacity-20"></div>
@@ -273,15 +217,6 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
           {/* Quick Prompts */}
           {messages.length === 1 && (
             <div className="px-6 py-4 border-t border-gray-200 bg-white">
-              {userLocation && (
-                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                  <div className="flex items-center text-sm text-blue-700">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    <span>Current location: {userLocation.city}, {userLocation.state}</span>
-                  </div>
-                </div>
-              )}
-              
               <p className="text-sm text-gray-600 mb-3">Try these examples:</p>
               <div className="grid grid-cols-1 gap-2">
                 {quickPrompts.map((prompt, index) => (
@@ -293,16 +228,6 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
                     "{prompt}"
                   </button>
                 ))}
-              </div>
-              
-              <div className="mt-3 pt-3 border-t border-gray-100">
-                <button
-                  onClick={handleUseCurrentLocation}
-                  className="text-sm text-blue-600 hover:text-blue-700 flex items-center"
-                >
-                  <MapPin className="h-4 w-4 mr-1" />
-                  Use my current location
-                </button>
               </div>
             </div>
           )}
