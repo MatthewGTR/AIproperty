@@ -175,7 +175,7 @@ export const getCurrentLocation = (): Promise<LocationInfo | null> => {
         }
       },
       (error) => {
-        console.error('Geolocation error:', error);
+        console.warn('Geolocation access denied or unavailable:', error.message);
         switch(error.code) {
           case error.PERMISSION_DENIED:
             console.warn('User denied the request for Geolocation.');
@@ -189,7 +189,6 @@ export const getCurrentLocation = (): Promise<LocationInfo | null> => {
           default:
             console.warn('An unknown error occurred.');
             break;
-        }
         resolve(null);
       },
       { 
