@@ -497,7 +497,6 @@ export const mockProperties: Property[] = [
     images: [
       'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
-    ],
     description: 'Cozy studio in the heart of KL entertainment district. Walking distance to shopping and dining.',
     amenities: ['Furnished', 'Near Monorail', 'Shopping Nearby', 'Restaurants'],
     agent: {
