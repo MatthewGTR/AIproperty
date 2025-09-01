@@ -212,7 +212,7 @@ const NewDevelopmentPage: React.FC<NewDevelopmentPageProps> = ({ onClose, user }
   return (
     <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
       {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm">
+      <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm z-40">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">New Developments</h1>
           <p className="text-gray-600">Discover upcoming and launching projects in Johor Bahru</p>
@@ -226,7 +226,7 @@ const NewDevelopmentPage: React.FC<NewDevelopmentPageProps> = ({ onClose, user }
       </div>
 
       {/* Search and Filter Bar */}
-      <div className="bg-gray-50 px-6 py-4">
+      <div className="bg-gray-50 px-6 py-4 sticky top-[88px] z-30">
         <div className="max-w-4xl mx-auto flex space-x-4">
           <div className="flex-1 relative">
             <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
