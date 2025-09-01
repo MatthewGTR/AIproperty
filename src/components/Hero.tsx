@@ -167,11 +167,11 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
         setIsTyping(false);
       } else {
         // Fallback if location detection fails
-        alert('Unable to detect your location. Please ensure location services are enabled in your browser.');
+        alert('Location access was denied. Please check your browser settings and allow location access for this site, then try again.');
       }
     } catch (error) {
       console.error('Location error:', error);
-      alert('Unable to access your location. Please check your browser permissions and try again.');
+      alert('Location access was denied or unavailable. Please enable location permissions in your browser settings and try again.');
     }
   };
 
