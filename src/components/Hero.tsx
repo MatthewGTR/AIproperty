@@ -123,11 +123,13 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
 
   const quickPrompts = [
     "I'm looking for a luxury apartment in downtown with city views",
-    "Show me affordable family homes with gardens under $500k",
-    "Find me beachfront properties in Miami under $1.5M",
-    "I need a modern condo with parking and gym near my work",
-    "What neighborhoods in Austin are good for young professionals?",
-    "Tell me about the best areas for families with children"
+    "Show me affordable family homes with gardens under $500k", 
+    "Calculate monthly payment for a $800k house",
+    "What neighborhoods are good for young professionals?",
+    "I need investment properties with good rental potential",
+    "Tell me about market trends in Miami",
+    "Find me properties with pools and gyms under $1M",
+    "What's the average price per square foot in Austin?"
   ];
 
   const handleUseCurrentLocation = async () => {

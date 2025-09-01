@@ -162,13 +162,61 @@ const findMatchingProperties = (query: string, properties: Property[]): Property
 };
 
 const generateFallbackResponse = (query: string, properties: Property[], locationInfo?: LocationInfo): string => {
+  const queryLower = query.toLowerCase();
+  
+  // Handle calculations
+  if (queryLower.includes('calculate') || queryLower.includes('monthly payment') || queryLower.includes('mortgage')) {
+    const priceMatch = query.match(/\$?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/);
+    if (priceMatch) {
+      const price = parseFloat(priceMatch[1].replace(/,/g, ''));
+      const monthlyPayment = calculateMonthlyPayment(price);
+      return `Based on a property price of $${price.toLocaleString()}, with a 20% down payment and 6.5% interest rate over 30 years, your estimated monthly payment would be around $${monthlyPayment.toLocaleString()}. This includes principal and interest only. Would you like me to show you properties in this price range?`;
+    }
+  }
+  
+  // Handle greetings and general questions
+  if (queryLower.includes('hello') || queryLower.includes('hi') || queryLower.includes('hey')) {
+    return "Hello! I'm your AI property assistant. I can help you find the perfect home, calculate mortgage payments, provide neighborhood insights, and answer any real estate questions. What are you looking for today?";
+  }
+  
+  if (queryLower.includes('how are you') || queryLower.includes('how do you work')) {
+    return "I'm doing great, thank you for asking! I'm here to help you navigate the real estate market. I can search through our property database, provide market insights, calculate costs, and give you personalized recommendations. What would you like to know about?";
+  }
+  
+  // Handle market questions
+  if (queryLower.includes('market') || queryLower.includes('trend') || queryLower.includes('price trend')) {
+    return "The real estate market varies by location, but I can help you understand pricing in specific areas. Based on our current listings, I'm seeing a range from $420,000 to $2.5M. Would you like me to analyze trends for a specific location or price range?";
+  }
+  
+  // Handle neighborhood questions
+  if (queryLower.includes('neighborhood') || queryLower.includes('area') || queryLower.includes('location advice')) {
+    const neighborhoods = ['Downtown areas offer urban convenience', 'Suburban areas provide family-friendly environments', 'Beachfront locations offer lifestyle benefits'];
+    return `Great question about neighborhoods! ${neighborhoods[Math.floor(Math.random() * neighborhoods.length)]}. I can provide specific insights if you tell me which areas you're considering. What type of lifestyle are you looking for?`;
+  }
+  
+  // Handle investment questions
+  if (queryLower.includes('investment') || queryLower.includes('roi') || queryLower.includes('rental')) {
+    return "For investment properties, I recommend looking at factors like location growth potential, rental yield, and market demand. Properties in growing areas like Austin and Miami often show good investment potential. Would you like me to show you properties that could work well as investments?";
+  }
+  
+  // Enhanced property search responses
   if (properties.length === 0) {
-    return "I'm currently experiencing high demand and using my backup search system. I couldn't find properties matching your exact criteria, but let me show you some featured properties that might interest you. Could you provide more details about what you're looking for?";
+    const suggestions = [
+      "I couldn't find exact matches for your criteria, but I have some great alternatives! Could you tell me more about your must-haves vs nice-to-haves?",
+      "No perfect matches right now, but let me show you some similar options that might surprise you. What's most important to you - location, price, or specific features?",
+      "I'm not seeing exact matches, but I have some properties that might work with slight adjustments to your criteria. What's your biggest priority?"
+    ];
+    return suggestions[Math.floor(Math.random() * suggestions.length)];
   }
   
   if (properties.length === 1) {
     const property = properties[0];
-    return `Great! Using my backup search system, I found an excellent match: "${property.title}" in ${property.location}. It's a ${property.bedrooms}-bedroom ${property.type} priced at $${property.price.toLocaleString()}. This property features ${property.amenities.slice(0, 3).join(', ')} and more. Would you like to see more details?`;
+    const responses = [
+      `Perfect! I found an excellent match: "${property.title}" in ${property.location}. This ${property.bedrooms}-bedroom ${property.type} is priced at $${property.price.toLocaleString()} and features ${property.amenities.slice(0, 3).join(', ')}. The price per square foot is $${Math.round(property.price / property.sqft)}, which is competitive for the area.`,
+      `Great news! "${property.title}" looks like exactly what you're looking for. Located in ${property.location}, this ${property.type} offers ${property.bedrooms} bedrooms and ${property.bathrooms} bathrooms for $${property.price.toLocaleString()}. What catches my eye is the ${property.amenities[0]} - that's a great feature!`,
+      `I found a fantastic option: "${property.title}" in ${property.location}. At $${property.price.toLocaleString()} for ${property.sqft.toLocaleString()} sq ft, you're getting great value. Plus, it includes ${property.amenities.slice(0, 2).join(' and ')}. Would you like to know more about the neighborhood?`
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
   }
   
   const priceRange = {
@@ -178,5 +226,20 @@ const generateFallbackResponse = (query: string, properties: Property[], locatio
   
   const locationText = locationInfo ? ` in the ${locationInfo.city || locationInfo.address} area` : '';
   
-  return `I'm using my backup search system due to high demand, but I found ${properties.length} great properties${locationText} that match your criteria! The price range is from $${priceRange.min.toLocaleString()} to $${priceRange.max.toLocaleString()}. You can see all the recommendations below. Would you like me to help narrow down the search?`;
+  const multipleResponses = [
+    `Excellent! I found ${properties.length} properties${locationText} that match what you're looking for. Prices range from $${priceRange.min.toLocaleString()} to $${priceRange.max.toLocaleString()}. I've arranged them by how well they match your criteria. Which one catches your eye?`,
+    `Great search results! I discovered ${properties.length} options${locationText} in your criteria. The price spread is $${priceRange.min.toLocaleString()} - $${priceRange.max.toLocaleString()}. Each has unique advantages - would you like me to highlight the best features of each?`,
+    `Perfect timing! I have ${properties.length} properties${locationText} that fit your needs. Budget-wise, you're looking at $${priceRange.min.toLocaleString()} to $${priceRange.max.toLocaleString()}. Should I help you compare them or do you want to focus on a specific price range?`
+  ];
+  
+  return multipleResponses[Math.floor(Math.random() * multipleResponses.length)];
+};
+
+// Simple mortgage calculator
+const calculateMonthlyPayment = (price: number, downPaymentPercent: number = 20, interestRate: number = 6.5, years: number = 30): number => {
+  const principal = price * (1 - downPaymentPercent / 100);
+  const monthlyRate = interestRate / 100 / 12;
+  const numPayments = years * 12;
+  const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1);
+  return Math.round(monthlyPayment);
 };
