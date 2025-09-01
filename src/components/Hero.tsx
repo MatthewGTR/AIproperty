@@ -66,7 +66,7 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
     if (inputMessage.trim()) {
       const userMessage: ChatMessage = {
         id: Date.now().toString(),
-        text: 'Hi! I\'m your Smart Property AI assistant. Tell me what kind of home you\'re looking for - location, budget, size, amenities, or any specific preferences. I can also help you understand neighborhoods and provide expert advice. What can I help you find today?',
+        text: inputMessage,
         sender: 'user',
         timestamp: new Date()
       };
