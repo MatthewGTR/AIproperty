@@ -96,7 +96,14 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
         };
 
         setMessages(prev => [...prev, aiMessage]);
-        onPropertiesRecommended(matchedProperties);
+        
+        // Always update property recommendations, even if empty
+        if (matchedProperties && matchedProperties.length > 0) {
+          onPropertiesRecommended(matchedProperties);
+        } else {
+          // If no matches, show featured properties as fallback
+          onPropertiesRecommended(allProperties.filter(p => p.featured));
+        }
       } catch (error) {
         const errorMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),

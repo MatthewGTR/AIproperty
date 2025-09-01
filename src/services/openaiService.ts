@@ -119,17 +119,40 @@ Respond in a friendly, professional tone as a knowledgeable real estate expert. 
 const findMatchingProperties = (query: string, properties: Property[]): Property[] => {
   const queryLower = query.toLowerCase();
   
-  const matchedProperties = properties.filter(property => {
+  let matchedProperties = properties.filter(property => {
     const searchText = `${property.title} ${property.location} ${property.description} ${property.amenities.join(' ')} ${property.type}`.toLowerCase();
+    
+    // Price range matching
+    const priceMatch = queryLower.match(/rm\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/);
+    if (priceMatch) {
+      const maxPrice = parseFloat(priceMatch[1].replace(/,/g, ''));
+      if (queryLower.includes('under') || queryLower.includes('below') || queryLower.includes('less than')) {
+        if (property.price <= maxPrice) return true;
+      }
+      if (queryLower.includes('around') || queryLower.includes('about')) {
+        if (property.price >= maxPrice * 0.8 && property.price <= maxPrice * 1.2) return true;
+      }
+    }
+    
+    // Malaysian location matching
+    if (queryLower.includes('johor') && searchText.includes('johor')) return true;
+    if (queryLower.includes('kuala lumpur') && searchText.includes('kuala lumpur')) return true;
+    if (queryLower.includes('kl') && searchText.includes('kuala lumpur')) return true;
+    if (queryLower.includes('selangor') && searchText.includes('selangor')) return true;
+    if (queryLower.includes('penang') && searchText.includes('penang')) return true;
+    if (queryLower.includes('sabah') && searchText.includes('sabah')) return true;
+    if (queryLower.includes('klcc') && searchText.includes('klcc')) return true;
+    if (queryLower.includes('mont kiara') && searchText.includes('mont kiara')) return true;
+    if (queryLower.includes('bangsar') && searchText.includes('bangsar')) return true;
+    if (queryLower.includes('petaling jaya') && searchText.includes('petaling jaya')) return true;
+    if (queryLower.includes('cyberjaya') && searchText.includes('cyberjaya')) return true;
+    if (queryLower.includes('putrajaya') && searchText.includes('putrajaya')) return true;
     
     // Location matching
     if (queryLower.includes('downtown') && searchText.includes('downtown')) return true;
     if (queryLower.includes('beach') && searchText.includes('beach')) return true;
-    if (queryLower.includes('new york') && searchText.includes('new york')) return true;
-    if (queryLower.includes('california') && searchText.includes('california')) return true;
-    if (queryLower.includes('austin') && searchText.includes('austin')) return true;
-    if (queryLower.includes('boston') && searchText.includes('boston')) return true;
-    if (queryLower.includes('miami') && searchText.includes('miami')) return true;
+    if (queryLower.includes('city center') && searchText.includes('city')) return true;
+    if (queryLower.includes('waterfront') && searchText.includes('waterfront')) return true;
     
     // Property type matching
     if (queryLower.includes('apartment') && property.type === 'apartment') return true;
@@ -155,9 +178,24 @@ const findMatchingProperties = (query: string, properties: Property[]): Property
     if (queryLower.includes('4 bed') && property.bedrooms === 4) return true;
     if (queryLower.includes('5 bed') && property.bedrooms === 5) return true;
     
+    // General keyword matching
+    const keywords = queryLower.split(' ').filter(word => word.length > 2);
+    const matchCount = keywords.filter(keyword => searchText.includes(keyword)).length;
+    if (matchCount >= Math.min(2, keywords.length)) return true;
+    
     return false;
   });
 
+  // If no matches found, try broader search
+  if (matchedProperties.length === 0) {
+    matchedProperties = properties.filter(property => {
+      const searchText = `${property.title} ${property.location} ${property.description}`.toLowerCase();
+      const keywords = queryLower.split(' ').filter(word => word.length > 3);
+      return keywords.some(keyword => searchText.includes(keyword));
+    });
+  }
+  
+  // Return matched properties or featured as fallback
   return matchedProperties.length > 0 ? matchedProperties : properties.filter(p => p.featured);
 };
 
