@@ -588,47 +588,120 @@ const isPropertyRelatedQuery = (query: string): boolean => {
   return hasPropertyKeywords || isAffordabilityQuery || isLocationQuery;
 };
 
-// Function to handle non-property queries
-const handleNonPropertyQuery = (query: string): string => {
+// Enhanced function to handle all types of queries with intelligent responses
+const generateEnhancedFallbackResponse = (query: string, properties: Property[], locationInfo?: LocationInfo): { response: string; matchedProperties: Property[] } => {
   const queryLower = query.toLowerCase();
+  let matchedProperties: Property[] = [];
   
-  // Math questions
+  // Check if there's any property relevance even in general questions
+  const propertyRelevance = analyzePropertyRelevance(query);
+  if (propertyRelevance.isPropertyRelated) {
+    matchedProperties = findMatchingProperties(query, properties);
+  }
+  
+  // Enhanced Math questions with detailed explanations
   if (queryLower.includes('+') || queryLower.includes('-') || queryLower.includes('*') || queryLower.includes('/') || 
       queryLower.includes('plus') || queryLower.includes('minus') || queryLower.includes('times') || queryLower.includes('divided')) {
     
-    // Simple math evaluation for basic operations
     try {
-      // Handle "1+1" type questions
-      const mathMatch = query.match(/(\d+)\s*[\+\-\*\/]\s*(\d+)/);
+      const mathMatch = query.match(/(\d+(?:\.\d+)?)\s*([\+\-\*\/])\s*(\d+(?:\.\d+)?)/);
       if (mathMatch) {
-        const result = eval(mathMatch[0]); // Note: eval is generally unsafe, but for simple math it's okay
-        return `The answer is ${result}! 😊\n\nBy the way, I'm primarily a real estate assistant. Is there anything about properties or homes I can help you with today?`;
+        const num1 = parseFloat(mathMatch[1]);
+        const operator = mathMatch[2];
+        const num2 = parseFloat(mathMatch[3]);
+        let result;
+        let operation;
+        
+        switch (operator) {
+          case '+': result = num1 + num2; operation = 'addition'; break;
+          case '-': result = num1 - num2; operation = 'subtraction'; break;
+          case '*': result = num1 * num2; operation = 'multiplication'; break;
+          case '/': result = num2 !== 0 ? num1 / num2 : 'undefined (division by zero)'; operation = 'division'; break;
+        }
+        
+        const response = `The answer to ${num1} ${operator} ${num2} is **${result}**! 🧮\n\nThat's a simple ${operation} calculation. Math can be quite useful in real estate too - like calculating mortgage payments, property appreciation, or rental yields. Speaking of which, if you're ever curious about property investments or need help with real estate calculations, I'm here to help!`;
+        
+        return { response, matchedProperties };
       }
     } catch (error) {
-      return `I can help with simple math, but I'm primarily a real estate assistant! Is there anything about properties or homes I can help you with?`;
+      const response = `I can help with basic math calculations! For more complex equations, feel free to break them down into simpler parts. I'm also excellent with real estate calculations like mortgage payments, ROI analysis, and affordability assessments if you need help with those! 📊`;
+      return { response, matchedProperties };
     }
   }
   
-  // Greetings
+  // Enhanced greetings with personality
   if (queryLower.includes('hello') || queryLower.includes('hi') || queryLower.includes('hey')) {
-    return `Hello there! 👋 I'm your AI property assistant. While I can chat about various topics, I'm especially good at helping you find the perfect home! Are you looking to buy or rent a property?`;
+    const greetings = [
+      `Hello there! 👋 Great to meet you! I'm your AI assistant - I can chat about almost anything you're curious about, from science and technology to history and culture. I'm also a Malaysian real estate expert, so if you're ever thinking about properties, I'm your go-to guide! What's on your mind today?`,
+      `Hi! 😊 I'm here and ready to help with whatever you'd like to discuss - whether it's answering questions about the world, solving problems, or helping you find the perfect property in Malaysia. What would you like to explore?`,
+      `Hey! 🌟 Nice to chat with you! I'm an AI assistant with knowledge across many topics, plus I specialize in Malaysian real estate. Feel free to ask me anything - from general knowledge to property advice. What interests you today?`
+    ];
+    const response = greetings[Math.floor(Math.random() * greetings.length)];
+    return { response, matchedProperties };
   }
   
-  // General questions
+  // Enhanced personal questions
   if (queryLower.includes('how are you')) {
-    return `I'm doing great, thanks for asking! 😊 I'm here and ready to help you with all your property needs. Are you looking for a new home, or do you have questions about the real estate market?`;
+    const responses = [
+      `I'm doing wonderfully, thank you for asking! 😊 I'm energized and ready to help with whatever you're curious about. Whether you want to discuss science, solve a problem, learn something new, or explore property options in Malaysia - I'm here for it all! What's got your interest today?`,
+      `I'm fantastic, thanks! 🌟 Always excited to learn and help with new questions. I love the variety - one moment I might be explaining quantum physics, the next helping someone find their dream home in Kuala Lumpur! What would you like to dive into?`,
+      `I'm great, appreciate you asking! 😄 I'm like a Swiss Army knife of knowledge - ready to tackle anything from creative writing to complex calculations to Malaysian property market insights. What's on your mind?`
+    ];
+    const response = responses[Math.floor(Math.random() * responses.length)];
+    return { response, matchedProperties };
   }
   
-  // Weather questions
+  // Science questions
+  if (queryLower.includes('science') || queryLower.includes('physics') || queryLower.includes('chemistry') || queryLower.includes('biology')) {
+    const response = `I love science questions! 🔬 Science helps us understand everything from the smallest atoms to the vast universe. Whether you're curious about how things work, natural phenomena, or scientific discoveries, I'm here to explore it with you. What specific aspect of science interests you? And fun fact - science even applies to real estate through things like building materials, energy efficiency, and smart home technology!`;
+    return { response, matchedProperties };
+  }
+  
+  // Technology questions
+  if (queryLower.includes('technology') || queryLower.includes('computer') || queryLower.includes('ai') || queryLower.includes('artificial intelligence')) {
+    const response = `Technology is fascinating! 💻 From AI and machine learning to smartphones and space exploration, tech shapes our world in incredible ways. I can discuss anything from how computers work to the latest innovations. Technology is also revolutionizing real estate with virtual tours, smart homes, and AI-powered property matching (like what I do!). What tech topic interests you most?`;
+    return { response, matchedProperties };
+  }
+  
+  // History questions
+  if (queryLower.includes('history') || queryLower.includes('historical') || queryLower.includes('ancient') || queryLower.includes('past')) {
+    const response = `History is like a treasure trove of stories! 📚 From ancient civilizations to modern events, history helps us understand how we got to where we are today. I can discuss world history, Malaysian history, historical figures, or any period that interests you. Interestingly, understanding historical development patterns also helps in real estate - knowing how areas developed over time! What historical topic would you like to explore?`;
+    return { response, matchedProperties };
+  }
+  
+  // Creative questions
+  if (queryLower.includes('creative') || queryLower.includes('art') || queryLower.includes('music') || queryLower.includes('literature') || queryLower.includes('poetry')) {
+    const response = `Creativity is what makes life beautiful! 🎨 Whether it's art, music, literature, poetry, or any form of creative expression, I love exploring the creative side of human experience. I can discuss famous works, help with creative projects, or just chat about what inspires you. Even in real estate, creativity matters - in home design, architecture, and creating spaces that reflect personality! What creative topic sparks your interest?`;
+    return { response, matchedProperties };
+  }
+  
+  // Enhanced weather questions
   if (queryLower.includes('weather')) {
-    return `I don't have access to current weather data, but I can tell you about properties with great weather protection features like covered parking, indoor pools, or climate-controlled spaces! What kind of property are you interested in?`;
+    const response = `I don't have access to real-time weather data, but I can discuss weather patterns, climate science, or how weather affects our daily lives! 🌤️ Weather is fascinating - from understanding how storms form to why different regions have different climates. In real estate, weather considerations are crucial too - like flood zones, wind resistance, and energy-efficient cooling systems in Malaysia's tropical climate. What aspect of weather interests you?`;
+    return { response, matchedProperties };
   }
   
-  // Time questions
+  // Enhanced time questions
   if (queryLower.includes('time') || queryLower.includes('date')) {
-    return `I don't have access to real-time information, but I can help you find properties available right now! Are you looking to move in soon? I can show you properties with immediate availability.`;
+    const response = `I don't have access to real-time information, but I can discuss concepts of time, time zones, calendars, or time management! ⏰ Time is such an interesting concept - from physics perspectives to how different cultures view time. If you're planning something time-sensitive like property purchases, I can help you understand typical timelines for buying or renting in Malaysia. What time-related topic interests you?`;
+    return { response, matchedProperties };
   }
   
-  // Default response for other non-property questions
-  return `That's an interesting question! While I can chat about various topics, I'm specifically designed to be your real estate expert. I can help you find properties, calculate affordability, provide neighborhood insights, and answer all your property-related questions. What kind of home are you looking for?`;
+  // Food and culture questions
+  if (queryLower.includes('food') || queryLower.includes('culture') || queryLower.includes('tradition') || queryLower.includes('malaysia')) {
+    const response = `Food and culture are wonderful topics! 🍜 Malaysia especially has such rich cultural diversity and amazing cuisine - from nasi lemak to roti canai, and the beautiful blend of Malay, Chinese, and Indian influences. I can discuss Malaysian culture, food from around the world, traditions, or cultural practices. Culture also influences housing preferences - like how Malaysian homes often have wet and dry kitchens! What cultural aspect would you like to explore?`;
+    return { response, matchedProperties };
+  }
+  
+  // Default enhanced response for any other topic
+  const defaultResponses = [
+    `That's a great question! I'm designed to be helpful across a wide range of topics - from science and technology to history, culture, mathematics, and creative subjects. I can also provide detailed assistance with Malaysian real estate when needed. Could you tell me more about what specifically interests you? I'd love to dive deeper into the topic! 🤔`,
+    
+    `Interesting topic! I enjoy exploring all kinds of subjects with people. Whether it's explaining complex concepts, helping solve problems, discussing ideas, or providing insights on various topics, I'm here to help. I also happen to be quite knowledgeable about Malaysian property markets if that ever comes up! What aspect would you like to explore further? 💭`,
+    
+    `I'd be happy to help with that! I have knowledge across many domains and love engaging in thoughtful conversations. From practical questions to philosophical discussions, creative projects to analytical problems - I'm equipped to assist. Plus, if you ever need property advice in Malaysia, that's a specialty of mine! What would you like to focus on? 🌟`
+  ];
+  
+  const response = defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+  return { response, matchedProperties };
 };
