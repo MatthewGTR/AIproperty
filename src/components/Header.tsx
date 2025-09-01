@@ -7,8 +7,8 @@ interface HeaderProps {
   onSubmitClick: () => void;
   onLogout: () => void;
   onAgentsClick: () => void;
-  onRentClick: () => void;
   onBuyClick: () => void;
+  onRentClick: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onSubmitClick, onLogout, onAgentsClick, onRentClick, onBuyClick }) => {
