@@ -145,6 +145,12 @@ Your task:
 7. Ask clarifying questions when information is missing
 
 Respond in a friendly, professional tone as a knowledgeable real estate expert. Keep responses concise but informative.`;
+      } else {
+        systemPrompt = `You are a helpful AI assistant. Answer the user's question in a friendly, professional manner.`;
+      }
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userQuery }
@@ -158,19 +164,19 @@ Respond in a friendly, professional tone as a knowledgeable real estate expert. 
 
       return {
         response: aiResponse,
-        matchedProperties
+        matchedProperties: findMatchingPropertiesEnhanced(userQuery, properties, locationInfo)
       };
     }
 
-    // If no AI service is available, use fallback
-    console.warn('No AI services available. Using fallback.');
-    if (isPropertyQuery) {
-      const matchedProperties = findMatchingProperties(userQuery, properties);
-      const fallbackResponse = generateFallbackResponse(userQuery, matchedProperties, locationInfo);
+    // Fallback to OpenAI if Gemini is not available
+    if (hasOpenAI && openai) {
+      let systemPrompt: string;
+      let matchedProperties: Property[] = [];
       
-      return {
-        response: fallbackResponse,
-        matchedProperties
+      if (isPropertyQuery) {
+        matchedProperties = findMatchingPropertiesEnhanced(userQuery, properties, locationInfo);
+        
+        const propertyContext = properties.map(p => ({
       };
     } else {
       // Handle non-property questions with simple responses
