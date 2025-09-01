@@ -218,7 +218,7 @@ const generateFallbackResponse = (query: string, properties: Property[], locatio
   
   // Handle investment questions
   if (queryLower.includes('investment') || queryLower.includes('roi') || queryLower.includes('rental')) {
-    return "For investment properties, I recommend looking at factors like location growth potential, rental yield, and market demand. Properties in growing areas like Austin and Miami often show good investment potential. Would you like me to show you properties that could work well as investments?";
+    return "For investment properties, I recommend looking at factors like location growth potential, rental yield, and market demand. Properties in growing areas like Johor Bahru and Kuala Lumpur often show good investment potential. Would you like me to show you properties that could work well as investments?";
   }
   
   // Enhanced property search responses
