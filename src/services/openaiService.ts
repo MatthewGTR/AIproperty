@@ -102,6 +102,14 @@ Your task:
 CRITICAL: When filtering by location, be EXACT. If user asks for "Taman Daya", only show properties with "Taman Daya" in the location field. Do not show properties from other areas.
 
 Respond in a friendly, conversational tone as a knowledgeable Malaysian real estate expert. Use natural expressions and ask follow-up questions when needed.`;
+
+        matchedProperties = findMatchingPropertiesEnhanced(userQuery, properties, locationInfo);
+      } else {
+        prompt = `You are a helpful AI assistant. The user asked: "${userQuery}"
+
+While I can help with general questions, I'm primarily designed to be a Malaysian real estate expert. I can help you find properties, calculate affordability, provide neighborhood insights, and answer property-related questions.
+
+Please provide a helpful response to their question, but also gently guide them toward how I can help with real estate needs.`;
       }
 
       const result = await model.generateContent(prompt);
@@ -110,7 +118,7 @@ Respond in a friendly, conversational tone as a knowledgeable Malaysian real est
 
       return {
         response: aiResponse,
-        matchedProperties: isPropertyQuery ? findMatchingPropertiesEnhanced(userQuery, properties, locationInfo) : []
+        matchedProperties: isPropertyQuery ? matchedProperties : []
       };
     }
 
@@ -123,6 +131,72 @@ Respond in a friendly, conversational tone as a knowledgeable Malaysian real est
         matchedProperties = findMatchingPropertiesEnhanced(userQuery, properties, locationInfo);
         
         const propertyContext = properties.map(p => ({
+          id: p.id,
+          title: p.title,
+          location: p.location,
+          price: p.price,
+          type: p.type,
+          bedrooms: p.bedrooms,
+          bathrooms: p.bathrooms,
+          sqft: p.sqft,
+          amenities: p.amenities,
+          description: p.description
+        }));
+
+        const locationContext = locationInfo ? 
+          `User's current/searched location: ${locationInfo.address} (${locationInfo.lat}, ${locationInfo.lng})` : 
+          '';
+
+        systemPrompt = `You are an expert Malaysian real estate AI assistant with 15+ years of experience in the property market. You provide professional consultation on all aspects of real estate including:
+
+EXPERTISE AREAS:
+• Property Search & Matching
+• Investment Analysis & ROI Calculations
+• Financing & Mortgage Guidance
+• Legal Process & Documentation
+• Market Trends & Neighborhood Analysis
+• First-time Buyer Support
+• Rental Market Insights
+
+CONSULTATION APPROACH:
+1. Assess client needs (own stay vs investment, timeline, budget)
+2. Provide data-driven recommendations with specific numbers
+3. Explain market context and opportunities
+4. Offer strategic advice on timing and negotiation
+5. Address financing options and requirements
+6. Highlight potential risks and mitigation strategies
+
+Available Properties: ${JSON.stringify(propertyContext, null, 2)}
+${locationContext}
+
+CRITICAL GUIDELINES:
+- ONLY recommend properties from the available list that match criteria
+- For location queries, be EXACT (e.g., "Taman Daya" only shows Taman Daya properties)
+- Calculate affordability using 28% rule for salary-based queries
+- Provide professional insights on investment potential, market trends
+- Ask clarifying questions to better understand client needs
+- Use Malaysian market knowledge (KLCC premium, JB value, Penang heritage)
+
+Respond as a senior property consultant with professional expertise and friendly approach.`;
+      } else {
+        systemPrompt = `You are a helpful AI assistant. While you can answer general questions, you're primarily a Malaysian real estate expert specializing in property consultation, market analysis, and helping clients find their perfect home or investment property.`;
+      }
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userQuery }
+        ],
+        max_tokens: 500,
+        temperature: 0.7,
+      });
+
+      const aiResponse = completion.choices[0]?.message?.content || "I'd be happy to help you with your property needs. Could you tell me more about what you're looking for?";
+
+      return {
+        response: aiResponse,
+        matchedProperties: isPropertyQuery ? matchedProperties : []
       };
     } else {
       // Handle non-property questions with simple responses
