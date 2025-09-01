@@ -8,6 +8,7 @@ import ChatBot from './components/ChatBot';
 import SubmitProperty from './components/SubmitProperty';
 import AgentsPage from './components/AgentsPage';
 import RentPage from './components/RentPage';
+import BuyPage from './components/BuyPage';
 import { Property } from './types/Property';
 import { mockProperties } from './data/mockProperties';
 
@@ -17,6 +18,7 @@ function App() {
   const [showSubmit, setShowSubmit] = useState(false);
   const [showAgents, setShowAgents] = useState(false);
   const [showRent, setShowRent] = useState(false);
+  const [showBuy, setShowBuy] = useState(false);
   const [recommendedProperties, setRecommendedProperties] = useState<Property[]>(mockProperties);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
 
@@ -32,6 +34,7 @@ function App() {
         onSubmitClick={() => setShowSubmit(true)}
         onAgentsClick={() => setShowAgents(true)}
         onRentClick={() => setShowRent(true)}
+        onBuyClick={() => setShowBuy(true)}
         onLogout={() => setUser(null)}
       />
       
@@ -76,6 +79,13 @@ function App() {
       {showRent && (
         <RentPage 
           onClose={() => setShowRent(false)}
+          user={user}
+        />
+      )}
+      
+      {showBuy && (
+        <BuyPage 
+          onClose={() => setShowBuy(false)}
           user={user}
         />
       )}
