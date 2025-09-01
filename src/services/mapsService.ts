@@ -97,6 +97,7 @@ export const geocodeAddress = async (address: string): Promise<LocationInfo | nu
 export const getCurrentLocation = (): Promise<LocationInfo | null> => {
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
+      console.warn('Geolocation is not supported by this browser');
       resolve(null);
       return;
     }
@@ -104,11 +105,13 @@ export const getCurrentLocation = (): Promise<LocationInfo | null> => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
+        console.log('Got coordinates:', latitude, longitude);
         
         try {
           await initializeGoogleMaps();
           
           if (!window.google) {
+            console.warn('Google Maps not available, using coordinates only');
             resolve({
               address: `${latitude}, ${longitude}`,
               lat: latitude,
@@ -154,6 +157,7 @@ export const getCurrentLocation = (): Promise<LocationInfo | null> => {
                 country
               });
             } else {
+              console.warn('Geocoding failed:', status);
               resolve({
                 address: `${latitude}, ${longitude}`,
                 lat: latitude,
@@ -162,6 +166,7 @@ export const getCurrentLocation = (): Promise<LocationInfo | null> => {
             }
           });
         } catch (error) {
+          console.error('Error in getCurrentLocation:', error);
           resolve({
             address: `${latitude}, ${longitude}`,
             lat: latitude,
@@ -169,8 +174,29 @@ export const getCurrentLocation = (): Promise<LocationInfo | null> => {
           });
         }
       },
-      () => resolve(null),
-      { timeout: 10000 }
+      (error) => {
+        console.error('Geolocation error:', error);
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            console.warn('User denied the request for Geolocation.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            console.warn('Location information is unavailable.');
+            break;
+          case error.TIMEOUT:
+            console.warn('The request to get user location timed out.');
+            break;
+          default:
+            console.warn('An unknown error occurred.');
+            break;
+        }
+        resolve(null);
+      },
+      { 
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 300000 // 5 minutes
+      }
     );
   });
 };

@@ -129,11 +129,49 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
   ];
 
   const handleUseCurrentLocation = async () => {
-    const location = await getCurrentLocation();
-    if (location) {
-      setUserLocation(location);
-      const locationMessage = `My current location is ${location.address}. Can you show me properties nearby?`;
-      setInputMessage(locationMessage);
+    try {
+      const location = await getCurrentLocation();
+      if (location) {
+        setUserLocation(location);
+        const locationMessage = `My current location is ${location.address}. Can you show me properties nearby?`;
+        setInputMessage(locationMessage);
+        
+        // Automatically send the message
+        const userMessage: ChatMessage = {
+          id: Date.now().toString(),
+          text: locationMessage,
+          sender: 'user',
+          timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, userMessage]);
+        setIsTyping(true);
+
+        // Get AI response with location context
+        const { response, matchedProperties } = await searchPropertiesWithAI(
+          locationMessage, 
+          allProperties,
+          location
+        );
+        
+        const aiMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          text: response,
+          sender: 'ai',
+          timestamp: new Date(),
+          properties: matchedProperties
+        };
+
+        setMessages(prev => [...prev, aiMessage]);
+        onPropertiesRecommended(matchedProperties);
+        setIsTyping(false);
+      } else {
+        // Fallback if location detection fails
+        alert('Unable to detect your location. Please ensure location services are enabled in your browser.');
+      }
+    } catch (error) {
+      console.error('Location error:', error);
+      alert('Unable to access your location. Please check your browser permissions and try again.');
     }
   };
 
