@@ -177,6 +177,18 @@ const findMatches = (query: string, properties: Property[], locationInfo?: Locat
 const generateIntelligentFallback = (query: string, properties: Property[], locationInfo?: LocationInfo): string => {
   const q = query.toLowerCase();
   
+  // Check if question is related to property or finance
+  const propertyKeywords = ['property', 'house', 'apartment', 'condo', 'villa', 'rent', 'buy', 'sell', 'real estate', 'home', 'building', 'land', 'development'];
+  const financeKeywords = ['invest', 'loan', 'mortgage', 'finance', 'money', 'bank', 'insurance', 'tax', 'epf', 'retirement', 'savings', 'budget', 'afford', 'price', 'cost', 'payment', 'interest', 'rate', 'return', 'yield', 'portfolio', 'wealth', 'income', 'salary', 'economics', 'market', 'inflation', 'gdp'];
+  
+  const isPropertyRelated = propertyKeywords.some(keyword => q.includes(keyword));
+  const isFinanceRelated = financeKeywords.some(keyword => q.includes(keyword));
+  
+  // If question is not related to property or finance, admit we don't know
+  if (!isPropertyRelated && !isFinanceRelated) {
+    return "I don't know the answer to that question. I'm specialized in property and finance topics. Please ask me about real estate, property investment, mortgages, or financial planning.";
+  }
+  
   // Finance and Investment Questions
   if (q.includes('invest') || q.includes('portfolio') || q.includes('return') || q.includes('roi')) {
     return `**Investment Analysis (30 Years Finance Teaching Experience):**
