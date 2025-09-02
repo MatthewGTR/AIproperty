@@ -6,10 +6,7 @@ let openai: OpenAI | null = null;
 let genAI: GoogleGenerativeAI | null = null;
 let isInitialized = false;
 
-// Initialize AI services when module loads
-initAI();
-
-const initAI = () => {
+function initAI() {
   if (isInitialized) return;
   
   const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
@@ -40,7 +37,10 @@ const initAI = () => {
   }
   
   isInitialized = true;
-};
+}
+
+// Initialize AI services when module loads
+initAI();
 
 export interface LocationInfo {
   address: string;
