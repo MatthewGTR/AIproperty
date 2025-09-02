@@ -91,7 +91,7 @@ export const searchPropertiesWithAI = async (
           console.log('Gemini response received');
         } else {
           console.log('No backup AI service available, using fallback');
-          aiResponse = generateIntelligentFallback(userQuery);
+          aiResponse = generateFallbackResponse(userQuery);
         }
       }
     } else if (genAI) {
@@ -103,7 +103,7 @@ export const searchPropertiesWithAI = async (
       console.log('Gemini response received');
     } else {
       console.log('No AI services available, using intelligent fallback');
-      aiResponse = generateIntelligentFallback(userQuery);
+      aiResponse = generateFallbackResponse(userQuery);
     }
 
     // Check if the response is property-related
