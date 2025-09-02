@@ -176,6 +176,12 @@ const isResponsePropertyRelated = (response: string): boolean => {
 const generateFallbackResponse = (userQuery: string): string => {
   const q = userQuery.toLowerCase();
   
+  // Check for funny/entertaining questions first
+  const funnyResponse = generateFunnyResponse(q);
+  if (funnyResponse) {
+    return funnyResponse;
+  }
+  
   // Property-related fallback responses
   if (q.includes('property') || q.includes('house') || q.includes('apartment') || q.includes('condo') || q.includes('buy') || q.includes('rent')) {
     return "I can help you search our property database. Let me find relevant properties for you based on your requirements.";
@@ -188,6 +194,125 @@ const generateFallbackResponse = (userQuery: string): string => {
   
   // General fallback
   return "I'm a property search assistant. I can help you find properties in our database. Please ask me about houses, apartments, condos, or rental properties in Malaysia.";
+};
+
+const generateFunnyResponse = (query: string): string | null => {
+  const funnyPatterns = [
+    // Relationship/Dating questions
+    {
+      keywords: ['girlfriend', 'boyfriend', 'wife', 'husband', 'dating', 'love', 'relationship', 'marry', 'marriage'],
+      responses: [
+        "I'm a property AI, not a dating app! But I can help you find a lovely home where you can bring your future partner for romantic dinners! 🏠💕",
+        "Sorry, I only match people with houses, not with each other! Though a beautiful home might help with the dating game... 😉",
+        "I can't find you love, but I can find you a love nest! How about a cozy 2-bedroom condo with city views? 🏙️❤️"
+      ]
+    },
+    // Food questions
+    {
+      keywords: ['hungry', 'food', 'eat', 'restaurant', 'pizza', 'burger', 'nasi lemak', 'roti canai'],
+      responses: [
+        "I don't serve food, but I can find you a house near the best mamak stalls in town! 🍜🏠",
+        "Sorry, I'm not Foodpanda! But I can show you properties near amazing food courts and restaurants! 🍕🏡",
+        "I can't cook, but I can find you a home with a beautiful kitchen where YOU can cook! Plus, near the best food spots! 👨‍🍳🏠"
+      ]
+    },
+    // Weather questions
+    {
+      keywords: ['weather', 'rain', 'sunny', 'hot', 'cold', 'temperature'],
+      responses: [
+        "I'm not a weather app, but I can find you a house with great air conditioning for those hot Malaysian days! ☀️❄️",
+        "I don't predict weather, but I can predict you'll love a home with a covered parking for rainy days! 🌧️🚗",
+        "Weather forecast? Nope! But house forecast? 100% chance of finding your dream home! 🏠⛅"
+      ]
+    },
+    // Technology/AI questions
+    {
+      keywords: ['robot', 'ai', 'artificial intelligence', 'skynet', 'terminator', 'matrix'],
+      responses: [
+        "I'm just a friendly property AI! I promise I won't take over the world... just help you take over the property market! 🤖🏠",
+        "Beep boop! I'm a good robot who only wants to help you find amazing homes, not destroy humanity! 🤖✨",
+        "I'm like JARVIS, but for houses! No world domination plans, just property recommendations! 🏠🤖"
+      ]
+    },
+    // Money/lottery questions
+    {
+      keywords: ['lottery', 'jackpot', 'rich', 'millionaire', 'billionaire', 'money tree'],
+      responses: [
+        "I can't make you win the lottery, but I can help you invest wisely in property - the real path to wealth! 💰🏠",
+        "No lottery numbers here, but I have property numbers that might make you rich over time! 📈🏡",
+        "Money doesn't grow on trees, but property values do grow over time! Let me show you some great investments! 🌳💰"
+      ]
+    },
+    // Existential/philosophical questions
+    {
+      keywords: ['meaning of life', 'purpose', 'why exist', 'philosophy', 'universe'],
+      responses: [
+        "The meaning of life? 42... bedrooms in your dream mansion! Let me help you find it! 🏰✨",
+        "I exist to help you find the perfect home. That's my purpose! What's yours? Maybe a nice villa? 🏠🤔",
+        "Life's too short for bad housing! Let me help you find a place that makes every day meaningful! 🏡💫"
+      ]
+    },
+    // Superhero/fantasy questions
+    {
+      keywords: ['superman', 'batman', 'spiderman', 'superhero', 'magic', 'wizard', 'dragon'],
+      responses: [
+        "I'm not Superman, but I can help you find a fortress of solitude... I mean, a beautiful home! 🦸‍♂️🏠",
+        "No magic powers here, but finding the perfect property at the right price? That's pretty magical! ✨🏡",
+        "I can't fly like Superman, but I can help your property dreams take flight! 🚀🏠"
+      ]
+    },
+    // Random silly questions
+    {
+      keywords: ['banana', 'monkey', 'elephant', 'purple', 'unicorn', 'dinosaur'],
+      responses: [
+        "That's... random! But speaking of random, did you know I have some randomly amazing properties to show you? 🦄🏠",
+        "Interesting question! Here's an interesting answer: I have some fascinating properties that might interest you more! 🏡😄",
+        "You're funny! I like that! Now let me show you something that's seriously amazing - our property listings! 😂🏠"
+      ]
+    },
+    // Time/space questions
+    {
+      keywords: ['time travel', 'future', 'past', 'space', 'mars', 'moon'],
+      responses: [
+        "I can't time travel, but I can help you travel to your future dream home! 🚀🏠",
+        "No Mars properties yet, but I have some out-of-this-world homes on Earth! 🌍🏡",
+        "The future is now! And in the future, you'll be living in an amazing home I help you find! ⏰🏠"
+      ]
+    }
+  ];
+
+  // Check each pattern
+  for (const pattern of funnyPatterns) {
+    if (pattern.keywords.some(keyword => query.includes(keyword))) {
+      // Return a random response from the matching pattern
+      const randomIndex = Math.floor(Math.random() * pattern.responses.length);
+      return pattern.responses[randomIndex];
+    }
+  }
+
+  // Check for question marks with non-property content
+  if (query.includes('?') && !isQueryPropertyRelated(query)) {
+    const genericFunnyResponses = [
+      "That's a great question! Here's a better one: What kind of amazing home would you like to live in? 🏠😊",
+      "Hmm, interesting! But you know what's more interesting? The perfect property waiting for you! ✨🏡",
+      "I love curious minds! Now let me satisfy your curiosity with some incredible property options! 🤔🏠",
+      "You're asking the real questions! Speaking of real... real estate! Let me show you some amazing homes! 🏡💭"
+    ];
+    const randomIndex = Math.floor(Math.random() * genericFunnyResponses.length);
+    return genericFunnyResponses[randomIndex];
+  }
+
+  return null; // Not a funny question
+};
+
+const isQueryPropertyRelated = (query: string): boolean => {
+  const propertyKeywords = [
+    'property', 'properties', 'house', 'home', 'apartment', 'condo', 'villa',
+    'rent', 'buy', 'sell', 'price', 'bedroom', 'bathroom', 'location',
+    'investment', 'mortgage', 'agent', 'listing'
+  ];
+  
+  return propertyKeywords.some(keyword => query.includes(keyword));
 };
 
 const findRelevantProperties = (query: string, properties: Property[], locationInfo?: LocationInfo): Property[] => {
