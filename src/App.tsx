@@ -4,7 +4,6 @@ import Hero from './components/Hero';
 import PropertyListings from './components/PropertyListings';
 import PropertyDetails from './components/PropertyDetails';
 import AuthModal from './components/AuthModal';
-import ChatBot from './components/ChatBot';
 import SubmitProperty from './components/SubmitProperty';
 import AgentsPage from './components/AgentsPage';
 import RentPage from './components/RentPage';
@@ -100,7 +99,6 @@ function App() {
         />
       )}
       
-      <ChatBot />
     </div>
   );
 }
