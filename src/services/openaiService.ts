@@ -54,71 +54,91 @@ export const searchPropertiesWithAI = async (
   properties: Property[],
   locationInfo?: LocationInfo
 ): Promise<{ response: string; matchedProperties: Property[] }> => {
-  initAI();
-
-  console.log('AI Service Status:', { openai: !!openai, genAI: !!genAI });
+  // Always try to initialize AI services fresh
+  const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  
+  console.log('API Keys Status:', { 
+    openaiAvailable: !!openaiKey && openaiKey !== 'your_openai_api_key_here',
+    geminiAvailable: !!geminiKey && geminiKey !== 'your_gemini_api_key_here'
+  });
 
   try {
     let aiResponse = '';
     
-    // Try ChatGPT first
-    if (openai) {
+    // Try ChatGPT first if API key is available
+    if (openaiKey && openaiKey !== 'your_openai_api_key_here' && openaiKey.trim()) {
       try {
         console.log('Attempting OpenAI request...');
+        const openaiClient = new OpenAI({ 
+          apiKey: openaiKey, 
+          dangerouslyAllowBrowser: true 
+        });
+        
         const completion = await openai.chat.completions.create({
-          model: "gpt-4o",
+          model: "gpt-3.5-turbo",
           messages: [
+            { 
+              role: "system",
+              content: "You are a helpful assistant. Answer questions directly and honestly. If you don't know something, say you don't know."
+            },
             { 
               role: "user", 
               content: userQuery 
             }
           ],
-          max_tokens: 1500,
+          max_tokens: 500,
           temperature: 0.7,
         });
 
         aiResponse = completion.choices[0]?.message?.content || "I couldn't generate a response.";
         console.log('OpenAI response received');
       } catch (openaiError: any) {
-        console.warn('OpenAI API Error:', openaiError.message);
+        console.error('OpenAI API Error:', openaiError.message);
         
-        // Try Gemini as backup
-        if (genAI) {
+        // Try Gemini as backup if available
+        if (geminiKey && geminiKey !== 'your_gemini_api_key_here' && geminiKey.trim()) {
           console.log('Falling back to Gemini...');
-          const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-          const result = await model.generateContent(userQuery);
-          aiResponse = result.response.text();
-          console.log('Gemini response received');
+          try {
+            const geminiClient = new GoogleGenerativeAI(geminiKey);
+            const model = geminiClient.getGenerativeModel({ model: "gemini-1.5-pro" });
+            const result = await model.generateContent(userQuery);
+            aiResponse = result.response.text();
+            console.log('Gemini response received');
+          } catch (geminiError: any) {
+            console.error('Gemini API Error:', geminiError.message);
+            aiResponse = generateFallbackResponse(userQuery);
+          }
         } else {
-          console.log('No backup AI service available, using fallback');
           aiResponse = generateFallbackResponse(userQuery);
         }
       }
-    } else if (genAI) {
+    } else if (geminiKey && geminiKey !== 'your_gemini_api_key_here' && geminiKey.trim()) {
       // Use Gemini if OpenAI not available
       console.log('Using Gemini as primary AI service...');
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-      const result = await model.generateContent(userQuery);
-      aiResponse = result.response.text();
-      console.log('Gemini response received');
+      try {
+        const geminiClient = new GoogleGenerativeAI(geminiKey);
+        const model = geminiClient.getGenerativeModel({ model: "gemini-1.5-pro" });
+        const result = await model.generateContent(userQuery);
+        aiResponse = result.response.text();
+        console.log('Gemini response received');
+      } catch (geminiError: any) {
+        console.error('Gemini API Error:', geminiError.message);
+        aiResponse = generateFallbackResponse(userQuery);
+      }
     } else {
-      console.log('No AI services available, using intelligent fallback');
+      console.log('No AI API keys configured, using fallback');
       aiResponse = generateFallbackResponse(userQuery);
     }
 
-    // Check if the response is property-related
-    const isPropertyRelated = checkIfPropertyRelated(aiResponse, userQuery);
+    // Check if the ChatGPT response is property-related
+    const isPropertyRelated = isResponsePropertyRelated(aiResponse);
     
     let matchedProperties: Property[] = [];
     
     if (isPropertyRelated) {
-      // Find relevant properties from our database
+      console.log('Property-related response detected, searching database...');
       matchedProperties = findRelevantProperties(userQuery, properties, locationInfo);
-      
-      // Add property suggestions to the response if we found matches
-      if (matchedProperties.length > 0) {
-        aiResponse += `\n\n**🏠 Relevant Properties from Our Database:**\nI found ${matchedProperties.length} properties that might interest you. Check them out below!`;
-      }
     }
 
     return {
@@ -129,10 +149,26 @@ export const searchPropertiesWithAI = async (
   } catch (error) {
     console.error('AI Service Error:', error);
     return {
-      response: "I'm sorry, I'm having trouble connecting to the AI service right now. Please try again later.",
+      response: "I'm sorry, I'm having trouble connecting to the AI service right now. Please try again later or check your API key configuration.",
       matchedProperties: []
     };
   }
+};
+
+// Check if ChatGPT's response is about property/real estate
+const isResponsePropertyRelated = (response: string): boolean => {
+  const propertyKeywords = [
+    'property', 'properties', 'real estate', 'house', 'houses', 'home', 'homes',
+    'apartment', 'apartments', 'condo', 'condos', 'condominium', 'villa', 'villas',
+    'rent', 'rental', 'buy', 'buying', 'sell', 'selling', 'purchase', 'investment',
+    'mortgage', 'loan', 'financing', 'down payment', 'deposit', 'market value',
+    'bedroom', 'bedrooms', 'bathroom', 'bathrooms', 'sqft', 'square feet',
+    'location', 'neighborhood', 'area', 'district', 'development', 'listing',
+    'agent', 'broker', 'realtor', 'landlord', 'tenant', 'lease', 'ownership'
+  ];
+
+  const responseText = response.toLowerCase();
+  return propertyKeywords.some(keyword => responseText.includes(keyword));
 };
 
 const generateFallbackResponse = (userQuery: string): string => {
@@ -140,35 +176,16 @@ const generateFallbackResponse = (userQuery: string): string => {
   
   // Property-related fallback responses
   if (q.includes('property') || q.includes('house') || q.includes('apartment') || q.includes('condo') || q.includes('buy') || q.includes('rent')) {
-    return "I can help you find properties in our database. Let me search for relevant options based on your query.";
+    return "I can help you search our property database. Let me find relevant properties for you based on your requirements.";
   }
   
   // Finance-related fallback responses
   if (q.includes('mortgage') || q.includes('loan') || q.includes('finance') || q.includes('investment') || q.includes('price') || q.includes('afford')) {
-    return "For detailed financial advice and calculations, please configure an AI API key. I can still help you browse our property listings.";
+    return "For detailed financial advice, I'd need to connect to an AI service. However, I can help you browse our property listings and provide basic information.";
   }
   
   // General fallback
-  return "I'm a property search assistant. I can help you find properties in our database. Please ask me about houses, apartments, condos, or rental properties.";
-};
-
-const checkIfPropertyRelated = (aiResponse: string, userQuery: string): boolean => {
-  const propertyKeywords = [
-    'property', 'properties', 'real estate', 'house', 'houses', 'home', 'homes',
-    'apartment', 'apartments', 'condo', 'condos', 'condominium', 'villa', 'villas',
-    'rent', 'rental', 'buy', 'buying', 'sell', 'selling', 'purchase', 'investment',
-    'mortgage', 'loan', 'financing', 'down payment', 'deposit',
-    'bedroom', 'bedrooms', 'bathroom', 'bathrooms', 'sqft', 'square feet',
-    'location', 'neighborhood', 'area', 'district', 'development',
-    'malaysia', 'kuala lumpur', 'johor bahru', 'penang', 'selangor', 'klcc',
-    'mont kiara', 'bangsar', 'cyberjaya', 'petaling jaya', 'subang jaya',
-    'taman', 'jalan', 'bukit', 'shah alam', 'ampang', 'cheras',
-    'agent', 'broker', 'listing', 'market', 'price', 'value', 'valuation'
-  ];
-
-  const combinedText = (aiResponse + ' ' + userQuery).toLowerCase();
-  
-  return propertyKeywords.some(keyword => combinedText.includes(keyword));
+  return "I'm a property search assistant. I can help you find properties in our database. Please ask me about houses, apartments, condos, or rental properties in Malaysia.";
 };
 
 const findRelevantProperties = (query: string, properties: Property[], locationInfo?: LocationInfo): Property[] => {
