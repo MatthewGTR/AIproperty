@@ -38,9 +38,10 @@ export const searchPropertiesWithAI = async (
   try {
     // Try OpenAI first (ChatGPT)
     if (openai) {
-      const matchedProperties = findMatches(userQuery, properties, locationInfo);
-      
-      const systemPrompt = `You are an expert AI assistant with the knowledge of a finance lecturer with 30 years of experience AND a Malaysian real estate expert. You can answer ANY question intelligently.
+      try {
+        const matchedProperties = findMatches(userQuery, properties, locationInfo);
+        
+        const systemPrompt = `You are an expert AI assistant with the knowledge of a finance lecturer with 30 years of experience AND a Malaysian real estate expert. You can answer ANY question intelligently.
 
 FINANCE EXPERTISE (30 Years Teaching Experience):
 - Investment analysis, portfolio management, risk assessment
@@ -64,20 +65,29 @@ ${locationInfo ? `User location context: ${locationInfo.address}` : ''}
 
 Provide comprehensive, intelligent responses. For property queries, recommend specific properties. For finance questions, give detailed professional advice. For general questions, provide thorough, helpful answers.`;
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // Using latest GPT-4 model
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userQuery }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
-      });
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o", // Using latest GPT-4 model
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userQuery }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7,
+        });
 
-      return {
-        response: completion.choices[0]?.message?.content || "I'm here to help with any questions you have!",
-        matchedProperties
-      };
+        return {
+          response: completion.choices[0]?.message?.content || "I'm here to help with any questions you have!",
+          matchedProperties
+        };
+      } catch (openaiError: any) {
+        console.warn('OpenAI API Error:', openaiError.message);
+        
+        // If quota exceeded or other API error, fall back to Gemini or intelligent fallback
+        if (openaiError.status === 429) {
+          console.log('OpenAI quota exceeded, falling back to alternative AI service...');
+        }
+        // Continue to try Gemini or fallback
+      }
     }
 
     // Try Google Gemini as backup
