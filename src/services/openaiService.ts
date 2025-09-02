@@ -95,6 +95,11 @@ export const searchPropertiesWithAI = async (
       } catch (openaiError: any) {
         console.error('OpenAI API Error:', openaiError.message);
         
+        // Check if it's a quota/billing error
+        if (openaiError.message?.includes('429') || openaiError.message?.includes('quota')) {
+          console.log('OpenAI quota exceeded, trying Gemini backup...');
+        }
+        
         // Try Gemini as backup if available
         if (genAI) {
           console.log('Falling back to Gemini...');
