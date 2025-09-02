@@ -1,8 +1,8 @@
 import React from 'react';
-import { Search, User, PlusCircle, Menu, MessageCircle } from 'lucide-react';
+import { Search, User, PlusCircle, Menu, MessageCircle, Settings, CreditCard } from 'lucide-react';
 
 interface HeaderProps {
-  user: { name: string; email: string } | null;
+  user: { id: string; name: string; email: string; userType: string; credits: number } | null;
   onAuthClick: () => void;
   onSubmitClick: () => void;
   onLogout: () => void;
@@ -10,9 +10,20 @@ interface HeaderProps {
   onBuyClick: () => void;
   onRentClick: () => void;
   onNewDevelopmentClick: () => void;
+  onAdminClick: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onSubmitClick, onLogout, onAgentsClick, onRentClick, onBuyClick, onNewDevelopmentClick }) => {
+const Header: React.FC<HeaderProps> = ({ 
+  user, 
+  onAuthClick, 
+  onSubmitClick, 
+  onLogout, 
+  onAgentsClick, 
+  onRentClick, 
+  onBuyClick, 
+  onNewDevelopmentClick,
+  onAdminClick 
+}) => {
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -53,16 +64,25 @@ const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onSubmitClick, onLog
 
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
-            <button
-              onClick={onSubmitClick}
-              className="hidden sm:flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200"
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              List Property
-            </button>
+            {user && (user.userType === 'agent' || user.userType === 'seller') && (
+              <button
+                onClick={onSubmitClick}
+                className="hidden sm:flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200"
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                List Property
+              </button>
+            )}
 
             {user ? (
               <div className="flex items-center space-x-3">
+                {user.userType === 'agent' && (
+                  <div className="flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-lg">
+                    <CreditCard className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-700">{user.credits} credits</span>
+                  </div>
+                )}
+                
                 <div className="flex items-center space-x-2">
                   <MessageCircle className="h-5 w-5 text-gray-600" />
                   <span className="hidden sm:inline text-sm text-gray-700">Messages</span>
@@ -77,6 +97,15 @@ const Header: React.FC<HeaderProps> = ({ user, onAuthClick, onSubmitClick, onLog
                       <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
                       <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Properties</a>
                       <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Saved Searches</a>
+                      {user.userType === 'admin' && (
+                        <button 
+                          onClick={onAdminClick}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          <Settings className="inline h-4 w-4 mr-2" />
+                          Admin Panel
+                        </button>
+                      )}
                       <button 
                         onClick={onLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
