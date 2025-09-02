@@ -25,7 +25,7 @@ interface BuyProperty {
 
 interface BuyPageProps {
   onClose: () => void;
-  user: { name: string; email: string } | null;
+  user: { id: string; name: string; email: string; userType: string; credits: number } | null;
 }
 
 const BuyPage: React.FC<BuyPageProps> = ({ onClose, user }) => {

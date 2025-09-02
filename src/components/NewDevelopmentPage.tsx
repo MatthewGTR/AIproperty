@@ -31,7 +31,7 @@ interface NewDevelopment {
 
 interface NewDevelopmentPageProps {
   onClose: () => void;
-  user: { name: string; email: string } | null;
+  user: { id: string; name: string; email: string; userType: string; credits: number } | null;
 }
 
 const NewDevelopmentPage: React.FC<NewDevelopmentPageProps> = ({ onClose, user }) => {

@@ -6,6 +6,7 @@ import PropertyDetails from './components/PropertyDetails';
 import AuthModal from './components/AuthModal';
 import SubmitProperty from './components/SubmitProperty';
 import AgentsPage from './components/AgentsPage';
+import AdminPanel from './components/AdminPanel';
 import RentPage from './components/RentPage';
 import BuyPage from './components/BuyPage';
 import NewDevelopmentPage from './components/NewDevelopmentPage';
@@ -20,8 +21,9 @@ function App() {
   const [showRent, setShowRent] = useState(false);
   const [showBuy, setShowBuy] = useState(false);
   const [showNewDevelopment, setShowNewDevelopment] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const [recommendedProperties, setRecommendedProperties] = useState<Property[]>(mockProperties);
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; name: string; email: string; userType: string; credits: number } | null>(null);
 
   const handlePropertiesRecommended = (properties: Property[]) => {
     setRecommendedProperties(properties);
@@ -37,6 +39,7 @@ function App() {
         onRentClick={() => setShowRent(true)}
         onBuyClick={() => setShowBuy(true)}
         onNewDevelopmentClick={() => setShowNewDevelopment(true)}
+        onAdminClick={() => setShowAdmin(true)}
         onLogout={() => setUser(null)}
       />
       
@@ -69,6 +72,7 @@ function App() {
         <SubmitProperty 
           onClose={() => setShowSubmit(false)}
           user={user}
+          onUserUpdate={setUser}
         />
       )}
       
@@ -96,6 +100,13 @@ function App() {
         <NewDevelopmentPage 
           onClose={() => setShowNewDevelopment(false)}
           user={user}
+        />
+      )}
+      
+      {showAdmin && user && (
+        <AdminPanel 
+          onClose={() => setShowAdmin(false)}
+          currentUser={user}
         />
       )}
       

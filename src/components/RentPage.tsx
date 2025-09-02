@@ -26,7 +26,7 @@ interface RentalProperty {
 
 interface RentPageProps {
   onClose: () => void;
-  user: { name: string; email: string } | null;
+  user: { id: string; name: string; email: string; userType: string; credits: number } | null;
 }
 
 const RentPage: React.FC<RentPageProps> = ({ onClose, user }) => {

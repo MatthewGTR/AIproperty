@@ -5,7 +5,7 @@ import { Property } from '../types/Property';
 interface PropertyDetailsProps {
   property: Property;
   onClose: () => void;
-  user: { name: string; email: string } | null;
+  user: { id: string; name: string; email: string; userType: string; credits: number } | null;
 }
 
 const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onClose, user }) => {
