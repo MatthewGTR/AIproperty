@@ -6,6 +6,9 @@ let openai: OpenAI | null = null;
 let genAI: GoogleGenerativeAI | null = null;
 let isInitialized = false;
 
+// Initialize AI services when module loads
+initAI();
+
 const initAI = () => {
   if (isInitialized) return;
   
@@ -67,13 +70,9 @@ export const searchPropertiesWithAI = async (
     let aiResponse = '';
     
     // Try ChatGPT first if API key is available
-    if (openaiKey && openaiKey !== 'your_openai_api_key_here' && openaiKey.trim()) {
+    if (openai) {
       try {
         console.log('Attempting OpenAI request...');
-        const openaiClient = new OpenAI({ 
-          apiKey: openaiKey, 
-          dangerouslyAllowBrowser: true 
-        });
         
         const completion = await openai.chat.completions.create({
           model: "gpt-3.5-turbo",
@@ -97,11 +96,10 @@ export const searchPropertiesWithAI = async (
         console.error('OpenAI API Error:', openaiError.message);
         
         // Try Gemini as backup if available
-        if (geminiKey && geminiKey !== 'your_gemini_api_key_here' && geminiKey.trim()) {
+        if (genAI) {
           console.log('Falling back to Gemini...');
           try {
-            const geminiClient = new GoogleGenerativeAI(geminiKey);
-            const model = geminiClient.getGenerativeModel({ model: "gemini-1.5-pro" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
             const result = await model.generateContent(userQuery);
             aiResponse = result.response.text();
             console.log('Gemini response received');
@@ -113,12 +111,11 @@ export const searchPropertiesWithAI = async (
           aiResponse = generateFallbackResponse(userQuery);
         }
       }
-    } else if (geminiKey && geminiKey !== 'your_gemini_api_key_here' && geminiKey.trim()) {
+    } else if (genAI) {
       // Use Gemini if OpenAI not available
       console.log('Using Gemini as primary AI service...');
       try {
-        const geminiClient = new GoogleGenerativeAI(geminiKey);
-        const model = geminiClient.getGenerativeModel({ model: "gemini-1.5-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
         const result = await model.generateContent(userQuery);
         aiResponse = result.response.text();
         console.log('Gemini response received');
