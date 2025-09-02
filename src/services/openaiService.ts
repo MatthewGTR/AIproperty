@@ -72,7 +72,8 @@ export const searchPropertiesWithAI = async (
       const result = await model.generateContent(userQuery);
       aiResponse = result.response.text();
     } else {
-      throw new Error('No AI service configured');
+      // Fallback response when no AI service is available
+      aiResponse = generateFallbackResponse(userQuery);
     }
 
     // Check if the response is property-related
@@ -102,6 +103,23 @@ export const searchPropertiesWithAI = async (
       matchedProperties: []
     };
   }
+};
+
+const generateFallbackResponse = (userQuery: string): string => {
+  const q = userQuery.toLowerCase();
+  
+  // Property-related fallback responses
+  if (q.includes('property') || q.includes('house') || q.includes('apartment') || q.includes('condo') || q.includes('buy') || q.includes('rent')) {
+    return "I can help you find properties in our database. Let me search for relevant options based on your query.";
+  }
+  
+  // Finance-related fallback responses
+  if (q.includes('mortgage') || q.includes('loan') || q.includes('finance') || q.includes('investment') || q.includes('price') || q.includes('afford')) {
+    return "For detailed financial advice and calculations, please configure an AI API key. I can still help you browse our property listings.";
+  }
+  
+  // General fallback
+  return "I'm a property search assistant. I can help you find properties in our database. Please ask me about houses, apartments, condos, or rental properties.";
 };
 
 const checkIfPropertyRelated = (aiResponse: string, userQuery: string): boolean => {
@@ -228,4 +246,3 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
   
   // Return empty array if no matches found
   return [];
-};
