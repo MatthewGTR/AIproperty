@@ -4,18 +4,39 @@ import { Property } from '../types/Property';
 
 let openai: OpenAI | null = null;
 let genAI: GoogleGenerativeAI | null = null;
+let isInitialized = false;
 
 const initAI = () => {
+  if (isInitialized) return;
+  
   const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
   const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
   
+  console.log('Initializing AI services...');
+  console.log('OpenAI key available:', !!openaiKey && openaiKey !== 'your_openai_api_key_here');
+  console.log('Gemini key available:', !!geminiKey && geminiKey !== 'your_gemini_api_key_here');
+  
   if (openaiKey && openaiKey !== 'your_openai_api_key_here' && openaiKey.trim()) {
-    openai = new OpenAI({ apiKey: openaiKey, dangerouslyAllowBrowser: true });
+    try {
+      openai = new OpenAI({ apiKey: openaiKey, dangerouslyAllowBrowser: true });
+      console.log('OpenAI initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize OpenAI:', error);
+      openai = null;
+    }
   }
   
   if (geminiKey && geminiKey !== 'your_gemini_api_key_here' && geminiKey.trim()) {
-    genAI = new GoogleGenerativeAI(geminiKey);
+    try {
+      genAI = new GoogleGenerativeAI(geminiKey);
+      console.log('Gemini initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize Gemini:', error);
+      genAI = null;
+    }
   }
+  
+  isInitialized = true;
 };
 
 export interface LocationInfo {
@@ -35,12 +56,15 @@ export const searchPropertiesWithAI = async (
 ): Promise<{ response: string; matchedProperties: Property[] }> => {
   initAI();
 
+  console.log('AI Service Status:', { openai: !!openai, genAI: !!genAI });
+
   try {
     let aiResponse = '';
     
     // Try ChatGPT first
     if (openai) {
       try {
+        console.log('Attempting OpenAI request...');
         const completion = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
@@ -54,26 +78,32 @@ export const searchPropertiesWithAI = async (
         });
 
         aiResponse = completion.choices[0]?.message?.content || "I couldn't generate a response.";
+        console.log('OpenAI response received');
       } catch (openaiError: any) {
         console.warn('OpenAI API Error:', openaiError.message);
         
         // Try Gemini as backup
         if (genAI) {
+          console.log('Falling back to Gemini...');
           const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
           const result = await model.generateContent(userQuery);
           aiResponse = result.response.text();
+          console.log('Gemini response received');
         } else {
-          throw new Error('No AI service available');
+          console.log('No backup AI service available, using fallback');
+          aiResponse = generateIntelligentFallback(userQuery);
         }
       }
     } else if (genAI) {
       // Use Gemini if OpenAI not available
+      console.log('Using Gemini as primary AI service...');
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
       const result = await model.generateContent(userQuery);
       aiResponse = result.response.text();
+      console.log('Gemini response received');
     } else {
-      // Fallback response when no AI service is available
-      aiResponse = generateFallbackResponse(userQuery);
+      console.log('No AI services available, using intelligent fallback');
+      aiResponse = generateIntelligentFallback(userQuery);
     }
 
     // Check if the response is property-related
