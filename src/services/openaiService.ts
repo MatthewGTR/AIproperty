@@ -15,7 +15,6 @@ function initAI() {
   if (openaiKey && openaiKey !== 'your_openai_api_key_here' && openaiKey.trim()) {
     try {
       openai = new OpenAI({ apiKey: openaiKey, dangerouslyAllowBrowser: true });
-      console.log('OpenAI initialized successfully');
     } catch (error) {
       console.error('Failed to initialize OpenAI:', error);
       openai = null;
@@ -25,7 +24,6 @@ function initAI() {
   if (geminiKey && geminiKey !== 'your_gemini_api_key_here' && geminiKey.trim()) {
     try {
       genAI = new GoogleGenerativeAI(geminiKey);
-      console.log('Gemini initialized successfully');
     } catch (error) {
       console.error('Failed to initialize Gemini:', error);
       genAI = null;
@@ -37,90 +35,240 @@ function initAI() {
 
 initAI();
 
-export interface LocationInfo {
-  address: string;
-  lat: number;
-  lng: number;
-  neighborhood?: string;
-  city?: string;
-  state?: string;
-  country?: string;
+interface ConversationContext {
+  intent?: 'buy' | 'rent';
+  location?: string;
+  priceRange?: { min?: number; max?: number };
+  propertyType?: string;
+  bedrooms?: number;
+  amenities?: string[];
+  askedQuestions: string[];
 }
 
 export const searchPropertiesWithAI = async (
   userQuery: string, 
   properties: PropertyWithImages[],
-  locationInfo?: LocationInfo,
+  locationInfo?: any,
   conversationHistory?: string[]
 ): Promise<{ response: string; matchedProperties: PropertyWithImages[] }> => {
+  
+  // Build conversation context from history
+  const context = buildConversationContext(conversationHistory || [], userQuery);
   
   // Check if this is a property-related query
   const isPropertyQuery = isPropertyRelated(userQuery);
   
   if (!isPropertyQuery) {
     // Handle non-property questions with ChatGPT
-    const chatResponse = await handleGeneralChat(userQuery, conversationHistory);
+    const chatResponse = await handleGeneralChat(userQuery);
     return {
       response: chatResponse,
       matchedProperties: []
     };
   }
 
-  // Enhanced property matching with aggressive keyword detection
-  const matchedProperties = findRelevantPropertiesEnhanced(userQuery, properties, locationInfo, conversationHistory);
+  // Find matching properties using context
+  const matchedProperties = findPropertiesWithContext(userQuery, properties, context);
   
-  let aiResponse = '';
+  // Generate intelligent response with reasoning
+  const response = generateIntelligentResponse(userQuery, matchedProperties, context);
   
-  if (matchedProperties.length > 0) {
-    aiResponse = generatePropertyResponse(userQuery, matchedProperties);
-  } else {
-    aiResponse = generateSmartFollowUp(userQuery, conversationHistory);
-  }
-
   return {
-    response: aiResponse,
+    response,
     matchedProperties
   };
 };
 
+const buildConversationContext = (history: string[], currentQuery: string): ConversationContext => {
+  const context: ConversationContext = {
+    askedQuestions: []
+  };
+  
+  const allMessages = [...history, currentQuery];
+  const fullConversation = allMessages.join(' ').toLowerCase();
+  
+  // Extract intent (buy/rent) - once mentioned, remember it
+  if (fullConversation.includes('buy') || fullConversation.includes('purchase') || fullConversation.includes('buying')) {
+    context.intent = 'buy';
+  } else if (fullConversation.includes('rent') || fullConversation.includes('rental') || fullConversation.includes('renting')) {
+    context.intent = 'rent';
+  }
+  
+  // Extract location - remember any mentioned location
+  const locations = [
+    'johor bahru', 'jb', 'johor', 'kuala lumpur', 'kl', 'penang', 'georgetown',
+    'selangor', 'klcc', 'mont kiara', 'bangsar', 'petaling jaya', 'pj',
+    'cyberjaya', 'putrajaya', 'shah alam', 'subang', 'damansara', 'cheras',
+    'ampang', 'kajang', 'taman daya', 'taman molek', 'sutera', 'mount austin',
+    'horizon hills', 'medini', 'iskandar', 'city square', 'paradigm'
+  ];
+  
+  for (const location of locations) {
+    if (fullConversation.includes(location)) {
+      context.location = location;
+      break;
+    }
+  }
+  
+  // Extract price range
+  const pricePatterns = [
+    /(?:under|below|less than|max|maximum|budget)\s*rm?\s*(\d+)k?/g,
+    /(?:above|over|more than|min|minimum)\s*rm?\s*(\d+)k?/g,
+    /rm?\s*(\d+)k?\s*to\s*rm?\s*(\d+)k?/g
+  ];
+  
+  for (const pattern of pricePatterns) {
+    const matches = Array.from(fullConversation.matchAll(pattern));
+    for (const match of matches) {
+      if (match[0].includes('under') || match[0].includes('below') || match[0].includes('max') || match[0].includes('budget')) {
+        let maxPrice = parseInt(match[1]);
+        if (match[1].includes('k') || maxPrice < 1000) maxPrice *= 1000;
+        context.priceRange = { ...context.priceRange, max: maxPrice };
+      } else if (match[0].includes('above') || match[0].includes('over') || match[0].includes('min')) {
+        let minPrice = parseInt(match[1]);
+        if (match[1].includes('k') || minPrice < 1000) minPrice *= 1000;
+        context.priceRange = { ...context.priceRange, min: minPrice };
+      } else if (match[0].includes('to')) {
+        let minPrice = parseInt(match[1]);
+        let maxPrice = parseInt(match[2]);
+        if (match[1].includes('k') || minPrice < 1000) minPrice *= 1000;
+        if (match[2].includes('k') || maxPrice < 1000) maxPrice *= 1000;
+        context.priceRange = { min: minPrice, max: maxPrice };
+      }
+    }
+  }
+  
+  // Extract property type
+  const typeKeywords = {
+    'house': ['house', 'home', 'landed', 'terrace', 'semi-d', 'bungalow', 'townhouse'],
+    'apartment': ['apartment', 'flat', 'unit'],
+    'condo': ['condo', 'condominium'],
+    'villa': ['villa'],
+    'studio': ['studio'],
+    'shophouse': ['shophouse', 'shop house']
+  };
+  
+  for (const [type, keywords] of Object.entries(typeKeywords)) {
+    if (keywords.some(keyword => fullConversation.includes(keyword))) {
+      context.propertyType = type;
+      break;
+    }
+  }
+  
+  // Extract bedrooms
+  const bedroomMatch = fullConversation.match(/(\d+)\s*(?:bed|bedroom|br|room)/);
+  if (bedroomMatch) {
+    context.bedrooms = parseInt(bedroomMatch[1]);
+  }
+  
+  // Extract amenities
+  const amenityKeywords = [
+    'pool', 'swimming', 'gym', 'fitness', 'parking', 'security', 'garden',
+    'furnished', 'wifi', 'internet', 'playground', 'clubhouse', 'tennis',
+    'near school', 'near mall', 'near university', 'city view', 'sea view'
+  ];
+  
+  context.amenities = amenityKeywords.filter(amenity => fullConversation.includes(amenity));
+  
+  return context;
+};
+
+const findPropertiesWithContext = (query: string, properties: PropertyWithImages[], context: ConversationContext): PropertyWithImages[] => {
+  let filtered = [...properties];
+  
+  // Apply intent filter
+  if (context.intent) {
+    filtered = filtered.filter(p => p.listing_type === context.intent);
+  }
+  
+  // Apply location filter
+  if (context.location) {
+    filtered = filtered.filter(p => 
+      p.city?.toLowerCase().includes(context.location!) ||
+      p.state?.toLowerCase().includes(context.location!) ||
+      p.address?.toLowerCase().includes(context.location!)
+    );
+  }
+  
+  // Apply price filter
+  if (context.priceRange) {
+    if (context.priceRange.max) {
+      filtered = filtered.filter(p => p.price <= context.priceRange!.max!);
+    }
+    if (context.priceRange.min) {
+      filtered = filtered.filter(p => p.price >= context.priceRange!.min!);
+    }
+  }
+  
+  // Apply property type filter
+  if (context.propertyType) {
+    filtered = filtered.filter(p => p.property_type === context.propertyType);
+  }
+  
+  // Apply bedroom filter
+  if (context.bedrooms) {
+    filtered = filtered.filter(p => p.bedrooms === context.bedrooms);
+  }
+  
+  // Apply amenity filter
+  if (context.amenities && context.amenities.length > 0) {
+    filtered = filtered.filter(p => 
+      context.amenities!.some(amenity => 
+        p.amenities.some(propAmenity => 
+          propAmenity.toLowerCase().includes(amenity)
+        )
+      )
+    );
+  }
+  
+  return filtered.slice(0, 6);
+};
+
+const generateIntelligentResponse = (query: string, properties: PropertyWithImages[], context: ConversationContext): string => {
+  if (properties.length > 0) {
+    // Generate response with reasoning
+    let response = `Based on our conversation, I found ${properties.length} properties that match your criteria:`;
+    
+    const reasons = [];
+    if (context.intent) reasons.push(`${context.intent === 'buy' ? 'for sale' : 'for rent'}`);
+    if (context.location) reasons.push(`in ${context.location}`);
+    if (context.priceRange?.max) reasons.push(`under RM${context.priceRange.max.toLocaleString()}`);
+    if (context.priceRange?.min) reasons.push(`above RM${context.priceRange.min.toLocaleString()}`);
+    if (context.propertyType) reasons.push(`${context.propertyType} type`);
+    if (context.bedrooms) reasons.push(`${context.bedrooms} bedrooms`);
+    
+    if (reasons.length > 0) {
+      response += ` These are ${reasons.join(', ')}.`;
+    }
+    
+    return response;
+  }
+  
+  // No matches found - provide helpful guidance
+  const missing = [];
+  if (!context.intent) missing.push('buy or rent');
+  if (!context.location) missing.push('location');
+  if (!context.priceRange) missing.push('budget');
+  
+  if (missing.length > 0) {
+    return `I need more details: ${missing.join(', ')}?`;
+  }
+  
+  return "No properties match your exact criteria. Try adjusting your budget or location?";
+};
+
 const isPropertyRelated = (query: string): boolean => {
   const propertyKeywords = [
-    // Transaction types
-    'buy', 'buying', 'purchase', 'rent', 'rental', 'lease', 'sell', 'selling',
-    // Property types
-    'house', 'apartment', 'condo', 'villa', 'studio', 'room', 'flat', 'home', 'property', 'unit',
-    'terrace', 'semi-d', 'bungalow', 'townhouse', 'duplex', 'penthouse', 'shophouse',
-    // Features
-    'bedroom', 'bathroom', 'sqft', 'parking', 'furnished', 'pool', 'gym', 'security',
-    // Locations (Malaysia specific)
-    'johor', 'kuala lumpur', 'kl', 'penang', 'selangor', 'klcc', 'mont kiara', 'bangsar',
-    'petaling jaya', 'pj', 'cyberjaya', 'shah alam', 'subang', 'damansara', 'cheras',
-    'ampang', 'kajang', 'putrajaya', 'taman', 'jalan', 'bukit', 'bandar',
-    // Price related
-    'rm', 'ringgit', 'price', 'budget', 'cost', 'expensive', 'cheap', 'affordable',
-    'under', 'below', 'above', 'maximum', 'minimum', 'k', '000',
-    // Real estate terms
-    'agent', 'listing', 'mortgage', 'loan', 'deposit', 'investment', 'viewing', 'tour'
+    'buy', 'rent', 'house', 'apartment', 'condo', 'villa', 'studio', 'property',
+    'bedroom', 'bathroom', 'sqft', 'rm', 'price', 'budget', 'johor', 'kl',
+    'penang', 'selangor', 'furnished', 'pool', 'gym', 'parking', 'agent'
   ];
   
   const query_lower = query.toLowerCase();
   return propertyKeywords.some(keyword => query_lower.includes(keyword));
 };
 
-const handleGeneralChat = async (query: string, conversationHistory?: string[]): Promise<string> => {
-  // Check if user is asking the same question repeatedly
-  if (conversationHistory && conversationHistory.length > 2) {
-    const lastQueries = conversationHistory.slice(-3);
-    const isRepeating = lastQueries.some(prev => 
-      query.toLowerCase().includes(prev.toLowerCase()) || 
-      prev.toLowerCase().includes(query.toLowerCase())
-    );
-    
-    if (isRepeating) {
-      return "I notice you're asking similar questions. Let me help you differently! What specific type of property are you looking for? House, apartment, or condo?";
-    }
-  }
-
+const handleGeneralChat = async (query: string): Promise<string> => {
   try {
     if (openai) {
       const completion = await openai.chat.completions.create({
@@ -128,307 +276,28 @@ const handleGeneralChat = async (query: string, conversationHistory?: string[]):
         messages: [
           {
             role: "system",
-            content: "You are a friendly AI assistant for a property website. Keep responses concise (1-2 sentences max). Always end with a gentle redirect to property search."
+            content: "You are a helpful assistant. Keep responses brief (1-2 sentences). Always end by asking if they're looking for properties."
           },
           {
             role: "user",
             content: query
           }
         ],
-        max_tokens: 100,
+        max_tokens: 80,
         temperature: 0.7
       });
       
       const response = completion.choices[0]?.message?.content || "I'm here to help!";
-      return response + " Looking for any properties today?";
+      return response + " Are you looking for any properties?";
     } else if (genAI) {
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      const result = await model.generateContent(`You are a friendly AI assistant for a property website. Keep responses concise (1-2 sentences max). Always end with asking about properties. User query: ${query}`);
+      const result = await model.generateContent(`Keep response brief (1-2 sentences). Always end asking about properties. Query: ${query}`);
       const response = await result.response;
-      return response.text() || "I'm here to help! Looking for any properties?";
+      return response.text() || "I'm here to help! Looking for properties?";
     }
   } catch (error) {
     console.error('Error with AI chat:', error);
   }
   
-  // Fallback responses for entertainment
-  const fallbackResponses = [
-    "That's interesting! Are you looking for any properties today?",
-    "Cool! By the way, need help finding a house or apartment?",
-    "Nice! Looking for any properties to buy or rent?",
-    "Awesome! Want to see some great property deals?"
-  ];
-  
-  return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-};
-
-const findRelevantPropertiesEnhanced = (query: string, properties: PropertyWithImages[], locationInfo?: LocationInfo, conversationHistory?: string[]): PropertyWithImages[] => {
-  const q = query.toLowerCase();
-  
-  // If no properties available, return empty
-  if (!properties || properties.length === 0) {
-    return [];
-  }
-
-  // Start with all properties
-  let filteredProperties = [...properties];
-  
-  // Enhanced intent detection
-  const buyKeywords = ['buy', 'buying', 'purchase', 'purchasing', 'own', 'ownership', 'invest', 'investment', 'for sale'];
-  const rentKeywords = ['rent', 'rental', 'renting', 'lease', 'leasing', 'tenant', 'monthly', 'for rent'];
-  
-  const isBuyIntent = buyKeywords.some(keyword => q.includes(keyword));
-  const isRentIntent = rentKeywords.some(keyword => q.includes(keyword));
-  
-  // Apply intent filter
-  if (isBuyIntent && !isRentIntent) {
-    filteredProperties = filteredProperties.filter(p => p.listing_type === 'sale');
-  } else if (isRentIntent && !isBuyIntent) {
-    filteredProperties = filteredProperties.filter(p => p.listing_type === 'rent');
-  }
-
-  // Apply location filter
-  const locationMatches = findLocationMatches(q, filteredProperties);
-  if (locationMatches.length > 0) {
-    filteredProperties = locationMatches;
-  }
-  
-  // Apply price filter
-  const priceMatches = findPriceMatches(q, filteredProperties);
-  if (priceMatches.length > 0) {
-    filteredProperties = priceMatches;
-  }
-  
-  // Apply property type filter
-  const typeMatches = findTypeMatches(q, filteredProperties);
-  if (typeMatches.length > 0) {
-    filteredProperties = typeMatches;
-  }
-  
-  // Apply bedroom filter
-  const bedroomMatches = findBedroomMatches(q, filteredProperties);
-  if (bedroomMatches.length > 0) {
-    filteredProperties = bedroomMatches;
-  }
-  
-  // Apply amenity filter
-  const amenityMatches = findAmenityMatches(q, filteredProperties);
-  if (amenityMatches.length > 0) {
-    filteredProperties = amenityMatches;
-  }
-  
-  // Return filtered results (limit to 6 for better display)
-  return filteredProperties.slice(0, 6);
-};
-
-const findLocationMatches = (query: string, properties: PropertyWithImages[]): PropertyWithImages[] => {
-  const query_lower = query.toLowerCase();
-  
-  // Check for Johor Bahru variations
-  if (query_lower.includes('johor bahru') || query_lower.includes('jb') || query_lower.includes('johor')) {
-    const matches = properties.filter(p => 
-      p.city?.toLowerCase().includes('johor') || 
-      p.state?.toLowerCase().includes('johor') ||
-      p.address?.toLowerCase().includes('johor')
-    );
-    if (matches.length > 0) return matches;
-  }
-  
-  // Check for KL variations
-  if (query_lower.includes('kuala lumpur') || query_lower.includes('kl')) {
-    const matches = properties.filter(p => 
-      p.city?.toLowerCase().includes('kuala lumpur') || 
-      p.city?.toLowerCase().includes('kl') ||
-      p.state?.toLowerCase().includes('kuala lumpur')
-    );
-    if (matches.length > 0) return matches;
-  }
-  
-  // Check for other major locations
-  const locations = ['penang', 'selangor', 'klcc', 'mont kiara', 'bangsar', 'petaling jaya', 'pj', 'cyberjaya'];
-  for (const location of locations) {
-    if (query_lower.includes(location)) {
-      const matches = properties.filter(p => 
-        p.city?.toLowerCase().includes(location) || 
-        p.address?.toLowerCase().includes(location) ||
-        p.state?.toLowerCase().includes(location)
-      );
-      if (matches.length > 0) return matches;
-    }
-  }
-  
-  return [];
-};
-
-const findPriceMatches = (query: string, properties: PropertyWithImages[]): PropertyWithImages[] => {
-  const query_lower = query.toLowerCase();
-  
-  // Check for "under" or "below" price
-  let match = query_lower.match(/(?:under|below|less than|max|maximum)\s*rm?\s*(\d+)k?/);
-  if (match) {
-    let maxPrice = parseInt(match[1]);
-    if (query_lower.includes('k') || maxPrice < 1000) {
-      maxPrice *= 1000;
-    }
-    const matches = properties.filter(p => p.price <= maxPrice);
-    if (matches.length > 0) return matches.sort((a, b) => a.price - b.price);
-  }
-  
-  // Check for "above" or "over" price
-  match = query_lower.match(/(?:above|over|more than|min|minimum)\s*rm?\s*(\d+)k?/);
-  if (match) {
-    let minPrice = parseInt(match[1]);
-    if (query_lower.includes('k') || minPrice < 1000) {
-      minPrice *= 1000;
-    }
-    const matches = properties.filter(p => p.price >= minPrice);
-  }
-  
-  return [];
-};
-
-const findTypeMatches = (query: string, properties: PropertyWithImages[]): PropertyWithImages[] => {
-  const typeKeywords = {
-    'house': ['house', 'home', 'landed', 'terrace', 'semi-d', 'bungalow', 'townhouse'],
-    'apartment': ['apartment', 'flat', 'unit'],
-    'condo': ['condo', 'condominium'],
-    'villa': ['villa', 'luxury home'],
-    'studio': ['studio', 'studio apartment'],
-    'shophouse': ['shophouse', 'shop house']
-  };
-  
-  for (const [type, keywords] of Object.entries(typeKeywords)) {
-    if (keywords.some(keyword => query.includes(keyword))) {
-      const matches = properties.filter(p => p.property_type === type);
-      if (matches.length > 0) return matches;
-    }
-  }
-  
-  return [];
-};
-
-const findBedroomMatches = (query: string, properties: PropertyWithImages[]): PropertyWithImages[] => {
-  const bedroomPatterns = [
-    /(\d+)\s*(?:bed|bedroom|br)/i,
-    /(\d+)br/i,
-    /(\d+)\s*room/i
-  ];
-  
-  for (const pattern of bedroomPatterns) {
-    const match = query.match(pattern);
-    if (match) {
-      const bedrooms = parseInt(match[1]);
-      const matches = properties.filter(p => p.bedrooms === bedrooms);
-      if (matches.length > 0) return matches;
-    }
-  }
-  
-  return [];
-};
-
-const findAmenityMatches = (query: string, properties: PropertyWithImages[]): PropertyWithImages[] => {
-  const amenityKeywords = [
-    'pool', 'swimming', 'gym', 'fitness', 'parking', 'security', 'garden',
-    'balcony', 'furnished', 'wifi', 'internet', 'elevator', 'lift',
-    'playground', 'clubhouse', 'tennis', 'basketball', 'bbq'
-  ];
-  
-  const queryAmenities = amenityKeywords.filter(amenity => query.includes(amenity));
-  
-  if (queryAmenities.length > 0) {
-    const matches = properties.filter(p => 
-      queryAmenities.some(amenity => 
-        p.amenities.some(propAmenity => 
-          propAmenity.toLowerCase().includes(amenity)
-        )
-      )
-    );
-    if (matches.length > 0) return matches;
-  }
-  
-  return [];
-};
-
-const extractLocationFromQuery = (query: string): string | null => {
-  const locationKeywords = [
-    'johor bahru', 'jb', 'kuala lumpur', 'kl', 'penang', 'selangor',
-    'klcc', 'mont kiara', 'bangsar', 'petaling jaya', 'pj', 'cyberjaya',
-    'taman daya', 'taman molek', 'sutera', 'mount austin'
-  ];
-  
-  const query_lower = query.toLowerCase();
-  for (const location of locationKeywords) {
-    if (query_lower.includes(location)) {
-      return location.toUpperCase();
-    }
-  }
-  
-  return null;
-};
-
-const extractPriceFromQuery = (query: string): string | null => {
-  const priceMatch = query.match(/rm?\s*(\d{1,3}(?:,?\d{3})*(?:k|000)?)/i);
-  if (priceMatch) {
-    return `RM${priceMatch[1]}`;
-  }
-  return null;
-};
-
-const generatePropertyResponse = (query: string, properties: PropertyWithImages[]): string => {
-  const q = query.toLowerCase();
-  const intentInfo = getIntentInfo(query);
-  const locationInfo = extractLocationFromQuery(query);
-  const priceInfo = extractPriceFromQuery(query);
-  
-  let response = `Great! Found ${properties.length} ${intentInfo}`;
-  if (locationInfo) response += ` in ${locationInfo}`;
-  if (priceInfo) response += ` within budget`;
-  response += `:`;
-  
-  return response;
-};
-
-const generateSmartFollowUp = (query: string, conversationHistory?: string[]): string => {
-  const q = query.toLowerCase();
-  
-  // Analyze what information is missing and provide specific guidance
-  const hasIntent = q.includes('buy') || q.includes('rent') || q.includes('purchase') || q.includes('lease');
-  const hasLocation = q.includes('johor') || q.includes('jb') || q.includes('kl') || q.includes('penang') || q.includes('selangor');
-  const hasPrice = /(?:rm?\s*\d|under|above|below|over)/.test(q);
-  const hasType = q.includes('house') || q.includes('apartment') || q.includes('condo') || q.includes('studio');
-  
-  if (!hasIntent) {
-    return "Are you looking to buy or rent? Let me know and I'll find suitable properties!";
-  }
-  
-  if (!hasLocation) {
-    return "Which area interests you? Try: Johor Bahru, KL, Penang, or any specific location.";
-  }
-  
-  if (!hasPrice) {
-    return "What's your budget? For example: 'under RM500k' or 'RM200k to RM400k'.";
-  }
-  
-  if (!hasType) {
-    return "What type of property? House, apartment, condo, or studio?";
-  }
-  
-  return "I couldn't find matching properties. Try different criteria like location, price range, or property type.";
-};
-
-const getIntentInfo = (userQuery: string): string => {
-  const q = userQuery.toLowerCase();
-  const buyKeywords = ['buy', 'buying', 'purchase', 'purchasing', 'own', 'ownership', 'invest', 'investment'];
-  const rentKeywords = ['rent', 'rental', 'renting', 'lease', 'leasing', 'tenant', 'monthly'];
-  
-  const isBuyIntent = buyKeywords.some(keyword => q.includes(keyword));
-  const isRentIntent = rentKeywords.some(keyword => q.includes(keyword));
-  
-  if (isBuyIntent && !isRentIntent) {
-    return 'properties for sale';
-  } else if (isRentIntent && !isBuyIntent) {
-    return 'rental properties';
-  } else {
-    return 'properties';
-  }
+  return "That's interesting! Are you looking for any properties today?";
 };

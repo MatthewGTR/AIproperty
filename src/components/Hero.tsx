@@ -45,11 +45,17 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended }) => {
       setIsTyping(true);
 
       try {
-        // Search properties using the database
-        const matchedProperties = await propertyService.searchProperties(inputMessage);
+        // Get all properties for AI to analyze
+        const allProperties = await propertyService.getProperties({ limit: 50 });
         
-        // Get AI response
-        const { response } = await searchPropertiesWithAI(inputMessage, matchedProperties, undefined, conversationHistory);
+        // Get AI response with conversation context
+        const conversationHistory = messages.map(m => m.text);
+        const { response, matchedProperties } = await searchPropertiesWithAI(
+          inputMessage, 
+          allProperties, 
+          undefined, 
+          conversationHistory
+        );
         
         const aiMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
