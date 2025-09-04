@@ -26,15 +26,15 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onPrope
         ))}
       </div>
 
-      {properties.length === 0 && (
+      {properties.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">
             <Search className="h-16 w-16 mx-auto" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No properties found</h3>
-          <p className="text-gray-600">Try adjusting your search filters to see more results.</p>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">Ask our AI assistant above</h3>
+          <p className="text-gray-600">Tell our AI what you're looking for and get personalized property recommendations!</p>
         </div>
-      )}
+      ) : null}
     </section>
   );
 };

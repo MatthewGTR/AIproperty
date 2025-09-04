@@ -66,18 +66,24 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
 
         setMessages(prev => [...prev, aiMessage]);
         
-        onPropertiesRecommended(matchedProperties.length > 0 ? matchedProperties : allProperties.filter(p => p.featured));
+        // Only show properties if there are relevant matches
+        if (matchedProperties.length > 0) {
+          onPropertiesRecommended(matchedProperties);
+        } else {
+          // Don't show any properties if no relevant matches
+          onPropertiesRecommended([]);
+        }
       } catch (error) {
         const errorMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
           text: "Sorry, I'm having trouble right now. Please try again!",
           sender: 'ai',
           timestamp: new Date(),
-          properties: allProperties.filter(p => p.featured)
+          properties: []
         };
 
         setMessages(prev => [...prev, errorMessage]);
-        onPropertiesRecommended(allProperties.filter(p => p.featured));
+        onPropertiesRecommended([]);
       } finally {
         setIsTyping(false);
       }

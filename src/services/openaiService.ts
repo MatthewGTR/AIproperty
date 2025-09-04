@@ -137,14 +137,24 @@ export const searchPropertiesWithAI = async (
     const isPropertyRelated = isResponsePropertyRelated(aiResponse);
     
     let matchedProperties: Property[] = [];
+    let enhancedResponse = aiResponse;
     
     if (isPropertyRelated) {
       console.log('Property-related response detected, searching database...');
       matchedProperties = findRelevantProperties(userQuery, properties, locationInfo);
+      
+      // If no relevant properties found, enhance the response
+      if (matchedProperties.length === 0) {
+        enhancedResponse = enhanceResponseForNoMatches(userQuery, aiResponse);
+      } else {
+        // Add context about the matched properties
+        const intentInfo = getIntentInfo(userQuery);
+        enhancedResponse = `${aiResponse}\n\nI found ${matchedProperties.length} ${intentInfo} that match your criteria. Take a look at the recommendations below!`;
+      }
     }
 
     return {
-      response: aiResponse,
+      response: enhancedResponse,
       matchedProperties
     };
 
@@ -173,6 +183,46 @@ const isResponsePropertyRelated = (response: string): boolean => {
   return propertyKeywords.some(keyword => responseText.includes(keyword));
 };
 
+const enhanceResponseForNoMatches = (userQuery: string, originalResponse: string): string => {
+  const q = userQuery.toLowerCase();
+  
+  // Detect intent
+  const buyKeywords = ['buy', 'buying', 'purchase', 'purchasing', 'own', 'ownership', 'invest', 'investment'];
+  const rentKeywords = ['rent', 'rental', 'renting', 'lease', 'leasing', 'tenant', 'monthly'];
+  
+  const isBuyIntent = buyKeywords.some(keyword => q.includes(keyword));
+  const isRentIntent = rentKeywords.some(keyword => q.includes(keyword));
+  
+  let enhancedResponse = originalResponse;
+  
+  if (isBuyIntent) {
+    enhancedResponse += "\n\nI couldn't find properties for sale that exactly match your criteria. Could you help me by providing more details? For example:\n• What's your budget range?\n• Which area or city are you interested in?\n• How many bedrooms do you need?\n• Any specific amenities you're looking for?";
+  } else if (isRentIntent) {
+    enhancedResponse += "\n\nI couldn't find rental properties that exactly match your requirements. Could you provide more details? For example:\n• What's your monthly budget?\n• Which area would you prefer?\n• How many bedrooms do you need?\n• Do you prefer furnished or unfurnished?\n• When do you need to move in?";
+  } else {
+    enhancedResponse += "\n\nI'd love to help you find the perfect property! Could you tell me:\n• Are you looking to buy or rent?\n• What's your budget?\n• Which area interests you?\n• What type of property are you looking for?";
+  }
+  
+  return enhancedResponse;
+};
+
+const getIntentInfo = (userQuery: string): string => {
+  const q = userQuery.toLowerCase();
+  const buyKeywords = ['buy', 'buying', 'purchase', 'purchasing', 'own', 'ownership', 'invest', 'investment'];
+  const rentKeywords = ['rent', 'rental', 'renting', 'lease', 'leasing', 'tenant', 'monthly'];
+  
+  const isBuyIntent = buyKeywords.some(keyword => q.includes(keyword));
+  const isRentIntent = rentKeywords.some(keyword => q.includes(keyword));
+  
+  if (isBuyIntent && !isRentIntent) {
+    return 'properties for sale';
+  } else if (isRentIntent && !isBuyIntent) {
+    return 'rental properties';
+  } else {
+    return 'properties';
+  }
+};
+
 const generateFallbackResponse = (userQuery: string): string => {
   const q = userQuery.toLowerCase();
   
@@ -184,7 +234,20 @@ const generateFallbackResponse = (userQuery: string): string => {
   
   // Property-related fallback responses
   if (q.includes('property') || q.includes('house') || q.includes('apartment') || q.includes('condo') || q.includes('buy') || q.includes('rent')) {
-    return "I can help you search our property database. Let me find relevant properties for you based on your requirements.";
+    // Detect intent and provide specific guidance
+    const buyKeywords = ['buy', 'buying', 'purchase', 'purchasing', 'own', 'ownership', 'invest', 'investment'];
+    const rentKeywords = ['rent', 'rental', 'renting', 'lease', 'leasing', 'tenant', 'monthly'];
+    
+    const isBuyIntent = buyKeywords.some(keyword => q.includes(keyword));
+    const isRentIntent = rentKeywords.some(keyword => q.includes(keyword));
+    
+    if (isBuyIntent) {
+      return "I can help you find properties for sale! To give you the best recommendations, could you tell me:\n• Your budget range?\n• Preferred location?\n• Number of bedrooms needed?\n• Any specific requirements?";
+    } else if (isRentIntent) {
+      return "I can help you find rental properties! To show you the most suitable options, please let me know:\n• Your monthly budget?\n• Preferred area?\n• Number of bedrooms?\n• Furnished or unfurnished preference?";
+    } else {
+      return "I can help you search our property database! Are you looking to buy or rent? Please provide more details about your requirements.";
+    }
   }
   
   // Finance-related fallback responses
@@ -325,15 +388,23 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
   const isBuyIntent = buyKeywords.some(keyword => q.includes(keyword));
   const isRentIntent = rentKeywords.some(keyword => q.includes(keyword));
   
-  // Filter properties based on intent
-  let filteredProperties = properties;
+  // Filter properties based on intent - be more strict
+  let filteredProperties: Property[] = [];
   
   if (isBuyIntent && !isRentIntent) {
-    // User wants to buy - show properties for sale (higher prices, investment focus)
-    filteredProperties = properties.filter(p => p.price > 300000); // Assume sale properties are higher priced
+    // User wants to buy - show only sale properties (higher prices)
+    filteredProperties = properties.filter(p => p.price >= 300000);
   } else if (isRentIntent && !isBuyIntent) {
-    // User wants to rent - show rental properties (lower prices, monthly focus)
-    filteredProperties = properties.filter(p => p.price <= 10000); // Assume rental properties are lower priced (monthly rent)
+    // User wants to rent - show only rental properties (monthly rates)
+    filteredProperties = properties.filter(p => p.price <= 10000);
+  } else {
+    // No clear intent detected - use all properties for other filtering
+    filteredProperties = properties;
+  }
+  
+  // If no properties match the intent, return empty array
+  if ((isBuyIntent || isRentIntent) && filteredProperties.length === 0) {
+    return [];
   }
   
   // Location-based matching
@@ -341,31 +412,34 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
     'taman daya', 'taman molek', 'sutera utama', 'mount austin', 'klcc', 
     'mont kiara', 'bangsar', 'johor bahru', 'kuala lumpur', 'penang', 
     'cyberjaya', 'petaling jaya', 'subang jaya', 'damansara', 'cheras',
-    'ampang', 'shah alam', 'putrajaya', 'kajang', 'setia alam'
+    'ampang', 'shah alam', 'putrajaya', 'kajang', 'setia alam', 'kl',
+    'jb', 'pj', 'kota kinabalu', 'georgetown', 'bukit bintang', 'mid valley',
+    'wangsa maju', 'horizon hills', 'medini', 'iskandar', 'city centre',
+    'paradigm mall', 'skudai', 'batu ferringhi'
   ];
   
   for (const location of locationKeywords) {
     if (q.includes(location)) {
       const matches = filteredProperties.filter(p => p.location.toLowerCase().includes(location));
-      if (matches.length > 0) return matches.slice(0, 6);
+      if (matches.length > 0) return matches.slice(0, 4);
     }
   }
   
   // Price range matching
-  const priceMatch = query.match(/rm\s*(\d{1,3}(?:,?\d{3})*(?:k|000)?)/i);
+  const priceMatch = query.match(/(?:under|below|less than|maximum|max|up to|budget)\s*rm\s*(\d{1,3}(?:,?\d{3})*(?:k|000)?)/i) ||
+                     query.match(/rm\s*(\d{1,3}(?:,?\d{3})*(?:k|000)?)\s*(?:or less|maximum|max|budget)/i);
   if (priceMatch) {
     let targetPrice = parseFloat(priceMatch[1].replace(/,/g, ''));
     if (priceMatch[1].toLowerCase().includes('k')) {
       targetPrice *= 1000;
     }
     
-    // Find properties within 20% of target price
-    const tolerance = targetPrice * 0.2;
+    // Find properties under the specified budget
     const matches = filteredProperties.filter(p => 
-      Math.abs(p.price - targetPrice) <= tolerance
-    ).sort((a, b) => Math.abs(a.price - targetPrice) - Math.abs(b.price - targetPrice));
+      p.price <= targetPrice
+    ).sort((a, b) => a.price - b.price);
     
-    if (matches.length > 0) return matches.slice(0, 6);
+    if (matches.length > 0) return matches.slice(0, 4);
   }
   
   // Property type matching
@@ -374,20 +448,23 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
     'houses': 'house',
     'terrace': 'house',
     'bungalow': 'house',
+    'landed': 'house',
     'villa': 'villa',
     'villas': 'villa',
     'apartment': 'apartment',
     'apartments': 'apartment',
     'flat': 'apartment',
+    'studio': 'apartment',
     'condo': 'condo',
     'condos': 'condo',
-    'condominium': 'condo'
+    'condominium': 'condo',
+    'room': 'apartment'
   };
   
   for (const [keyword, type] of Object.entries(typeKeywords)) {
     if (q.includes(keyword)) {
       const matches = filteredProperties.filter(p => p.type === type);
-      if (matches.length > 0) return matches.slice(0, 6);
+      if (matches.length > 0) return matches.slice(0, 4);
     }
   }
   
@@ -396,7 +473,7 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
   if (bedroomMatch) {
     const bedrooms = parseInt(bedroomMatch[1]);
     const matches = filteredProperties.filter(p => p.bedrooms === bedrooms);
-    if (matches.length > 0) return matches.slice(0, 6);
+    if (matches.length > 0) return matches.slice(0, 4);
   }
   
   // Budget/affordability matching
@@ -409,13 +486,15 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
     const maxPrice = salary * 12 * 0.28 * 30; // 28% rule, 30-year loan approximation
     const matches = filteredProperties.filter(p => p.price <= maxPrice)
                               .sort((a, b) => a.price - b.price);
-    if (matches.length > 0) return matches.slice(0, 6);
+    if (matches.length > 0) return matches.slice(0, 4);
   }
   
   // Amenity matching
   const amenityKeywords = [
     'pool', 'swimming', 'gym', 'fitness', 'security', 'parking', 'garden',
-    'playground', 'school', 'mall', 'shopping', 'transport', 'mrt', 'lrt'
+    'playground', 'school', 'mall', 'shopping', 'transport', 'mrt', 'lrt',
+    'furnished', 'unfurnished', 'city view', 'sea view', 'near university',
+    'near ciq', 'near singapore', 'golf', 'club house', 'concierge'
   ];
   
   for (const amenity of amenityKeywords) {
@@ -424,25 +503,19 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
         p.amenities.some(a => a.toLowerCase().includes(amenity)) ||
         p.description.toLowerCase().includes(amenity)
       );
-      if (matches.length > 0) return matches.slice(0, 6);
+      if (matches.length > 0) return matches.slice(0, 4);
     }
   }
   
-  // General keyword matching
+  // General keyword matching - only if specific criteria found
   const matches = filteredProperties.filter(p => {
     const searchText = `${p.title} ${p.location} ${p.description} ${p.amenities.join(' ')} ${p.type}`.toLowerCase();
-    return q.split(' ').some(word => word.length > 2 && searchText.includes(word));
+    const queryWords = q.split(' ').filter(word => word.length > 3); // Only longer words
+    return queryWords.length > 0 && queryWords.some(word => searchText.includes(word));
   });
   
-  if (matches.length > 0) return matches.slice(0, 6);
+  if (matches.length > 0) return matches.slice(0, 4);
   
-  // If no specific matches but intent detected, return relevant subset
-  if (isBuyIntent && !isRentIntent) {
-    return filteredProperties.slice(0, 6);
-  } else if (isRentIntent && !isBuyIntent) {
-    return filteredProperties.slice(0, 6);
-  }
-  
-  // Return featured properties as fallback
-  return properties.filter(p => p.featured).slice(0, 6);
+  // Return empty array if no relevant matches found
+  return [];
 }
