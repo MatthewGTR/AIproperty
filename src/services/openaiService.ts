@@ -225,36 +225,41 @@ const findPropertiesWithContext = (query: string, properties: PropertyWithImages
 };
 
 const generateIntelligentResponse = (query: string, properties: PropertyWithImages[], context: ConversationContext): string => {
-  if (properties.length > 0) {
-    // Generate response with reasoning
-    let response = `Based on our conversation, I found ${properties.length} properties that match your criteria:`;
-    
-    const reasons = [];
-    if (context.intent) reasons.push(`${context.intent === 'buy' ? 'for sale' : 'for rent'}`);
-    if (context.location) reasons.push(`in ${context.location}`);
-    if (context.priceRange?.max) reasons.push(`under RM${context.priceRange.max.toLocaleString()}`);
-    if (context.priceRange?.min) reasons.push(`above RM${context.priceRange.min.toLocaleString()}`);
-    if (context.propertyType) reasons.push(`${context.propertyType} type`);
-    if (context.bedrooms) reasons.push(`${context.bedrooms} bedrooms`);
-    
-    if (reasons.length > 0) {
-      response += ` These are ${reasons.join(', ')}.`;
+  // If user has clear intent, find properties immediately - don't ask more questions
+  if (context.intent) {
+    if (properties.length > 0) {
+      const reasons = [];
+      if (context.location) reasons.push(`in ${context.location}`);
+      if (context.priceRange?.max) reasons.push(`under RM${context.priceRange.max.toLocaleString()}`);
+      if (context.priceRange?.min) reasons.push(`above RM${context.priceRange.min.toLocaleString()}`);
+      if (context.propertyType) reasons.push(`${context.propertyType} type`);
+      if (context.bedrooms) reasons.push(`${context.bedrooms} bedrooms`);
+      
+      const reasonsText = reasons.length > 0 ? ' ' + reasons.join(', ') : '';
+      return `Perfect! I found ${properties.length} ${context.intent === 'buy' ? 'properties for sale' : 'rental properties'}${reasonsText}. Here are the best matches:`;
+    } else {
+      // No matches - suggest alternatives
+      const missing = [];
+      if (!context.location) missing.push('try different locations');
+      if (!context.priceRange) missing.push('adjust your budget');
+      
+      const suggestions = missing.length > 0 ? missing.join(' or ') : 'try different criteria';
+      return `No exact matches found. ${suggestions}`;
     }
-    
-    return response;
   }
   
-  // No matches found - provide helpful guidance
-  const missing = [];
-  if (!context.intent) missing.push('buy or rent');
-  if (!context.location) missing.push('location');
-  if (!context.priceRange) missing.push('budget');
-  
-  if (missing.length > 0) {
-    return `I need more details: ${missing.join(', ')}?`;
+  // Only ask for info if user hasn't provided any intent
+  if (!context.intent) {
+    return "Are you looking to buy or rent a property?";
   }
   
-  return "No properties match your exact criteria. Try adjusting your budget or location?";
+  // If they have intent but no other details, show all properties of that type
+  const allPropertiesOfType = properties.filter(p => p.listing_type === context.intent);
+  if (allPropertiesOfType.length > 0) {
+    return `Here are some great ${context.intent === 'buy' ? 'properties for sale' : 'rental properties'} I can recommend:`;
+  }
+  
+  return "Let me help you find the perfect property. Which area interests you?";
 };
 
 const isPropertyRelated = (query: string): boolean => {
