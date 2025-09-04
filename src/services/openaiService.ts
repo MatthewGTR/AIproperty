@@ -216,6 +216,14 @@ const findRelevantPropertiesEnhanced = (query: string, properties: PropertyWithI
   if (amenityMatches.length > 0) {
     filteredProperties = amenityMatches;
   }
+  
+  // Return filtered results (limit to 6 for better display)
+  return filteredProperties.slice(0, 6);
+};
+
+const findLocationMatches = (query: string, properties: PropertyWithImages[]): PropertyWithImages[] => {
+  const query_lower = query.toLowerCase();
+  
   // Check for Johor Bahru variations
   if (query_lower.includes('johor bahru') || query_lower.includes('jb') || query_lower.includes('johor')) {
     const matches = properties.filter(p => 
@@ -383,41 +391,29 @@ const generatePropertyResponse = (query: string, properties: PropertyWithImages[
 const generateSmartFollowUp = (query: string, conversationHistory?: string[]): string => {
   const q = query.toLowerCase();
   
-  // Check if we've asked similar questions before
-  if (conversationHistory && conversationHistory.length > 1) {
-    const lastResponse = conversationHistory[conversationHistory.length - 1];
-    if (lastResponse && lastResponse.includes('budget') && q.includes('budget')) {
-      return "I see you mentioned budget again. Could you be more specific? For example: 'under RM500k' or 'RM200k to RM400k'?";
-    }
-    if (lastResponse && lastResponse.includes('location') && (q.includes('area') || q.includes('location'))) {
-      return "Which specific area interests you? Try: 'Johor Bahru', 'KL', 'Penang', or any specific neighborhood.";
-    }
-  }
-
-  // Check what information is missing
+  // Analyze what information is missing and provide specific guidance
   const hasIntent = q.includes('buy') || q.includes('rent') || q.includes('purchase') || q.includes('lease');
-  const hasLocation = q.includes('johor') || q.includes('kl') || q.includes('penang') || q.includes('selangor');
-  const hasPrice = /rm?\s*\d/.test(q);
+  const hasLocation = q.includes('johor') || q.includes('jb') || q.includes('kl') || q.includes('penang') || q.includes('selangor');
+  const hasPrice = /(?:rm?\s*\d|under|above|below|over)/.test(q);
   const hasType = q.includes('house') || q.includes('apartment') || q.includes('condo') || q.includes('studio');
   
   if (!hasIntent) {
-    return "Are you looking to buy or rent a property? Please let me know your preference and I'll find perfect matches!";
+    return "Are you looking to buy or rent? Let me know and I'll find suitable properties!";
   }
   
   if (!hasLocation) {
-    return "Which area are you interested in? I have properties in Johor Bahru, Kuala Lumpur, Penang, and other major cities.";
+    return "Which area interests you? Try: Johor Bahru, KL, Penang, or any specific location.";
   }
   
   if (!hasPrice) {
-    const intentType = q.includes('rent') ? 'monthly budget' : 'budget';
-    return `What's your ${intentType}? This will help me show you the most suitable properties.`;
+    return "What's your budget? For example: 'under RM500k' or 'RM200k to RM400k'.";
   }
   
   if (!hasType) {
-    return "What type of property are you looking for? House, apartment, condo, or studio?";
+    return "What type of property? House, apartment, condo, or studio?";
   }
   
-  return "I couldn't find exact matches. Could you provide more details about your requirements?";
+  return "I couldn't find matching properties. Try different criteria like location, price range, or property type.";
 };
 
 const getIntentInfo = (userQuery: string): string => {
