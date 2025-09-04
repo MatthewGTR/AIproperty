@@ -31,7 +31,10 @@ const Header: React.FC<HeaderProps> = ({
           {/* Logo */}
           <div className="flex items-center">
             <Search className="h-8 w-8 text-blue-600 mr-2" />
-            <span className="text-2xl font-bold text-gray-900">AI Property</span>
+            <div className="flex flex-col">
+              <span className="text-2xl font-bold text-gray-900">AI Property</span>
+              <span className="text-xs text-gray-600 -mt-1">by Ursa Warrior Technology</span>
+            </div>
           </div>
 
           {/* Navigation */}
