@@ -2,6 +2,46 @@ import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { PropertyWithImages } from './propertyService';
 
+export interface UserProfile {
+  intent: 'buy' | 'rent' | null;
+  budget: {
+    min: number | null;
+    max: number | null;
+  };
+  property_type: string[];
+  states: string[];
+  areas: string[];
+  bedrooms: number | null;
+  bathrooms: number | null;
+  purpose: 'own_stay' | 'investment' | null;
+  tenure: 'freehold' | 'leasehold' | null;
+  new_launch: boolean | null;
+  amenities: string[];
+  known_fields_count: number;
+  last_question: string | null;
+}
+
+const createDefaultUserProfile = (): UserProfile => {
+  return {
+    intent: null,
+    budget: {
+      min: null,
+      max: null
+    },
+    property_type: [],
+    states: [],
+    areas: [],
+    bedrooms: null,
+    bathrooms: null,
+    purpose: null,
+    tenure: null,
+    new_launch: null,
+    amenities: [],
+    known_fields_count: 0,
+    last_question: null
+  };
+};
+
 let openai: OpenAI | null = null;
 let genAI: GoogleGenerativeAI | null = null;
 let isInitialized = false;
