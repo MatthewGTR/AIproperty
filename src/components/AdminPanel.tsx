@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { X, Users, CreditCard, CheckCircle, XCircle, Plus, Minus, Search, Filter, Calendar } from 'lucide-react';
 import { authService } from '../services/authService';
-import { User, PendingRegistration, CreditTransaction } from '../types/User';
+import { Database } from '../lib/database.types';
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
+type CreditTransaction = Database['public']['Tables']['credit_transactions']['Row'];
 
 interface AdminPanelProps {
   onClose: () => void;
@@ -10,10 +13,10 @@ interface AdminPanelProps {
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, currentUser }) => {
   const [activeTab, setActiveTab] = useState<'pending' | 'users' | 'credits'>('pending');
-  const [pendingRegistrations, setPendingRegistrations] = useState<PendingRegistration[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+  const [pendingRegistrations, setPendingRegistrations] = useState<Profile[]>([]);
+  const [users, setUsers] = useState<Profile[]>([]);
   const [creditTransactions, setCreditTransactions] = useState<CreditTransaction[]>([]);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [creditAmount, setCreditAmount] = useState('');
   const [creditReason, setCreditReason] = useState('');
 
@@ -21,33 +24,51 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, currentUser }) => {
     loadData();
   }, []);
 
-  const loadData = () => {
-    setPendingRegistrations(authService.getPendingRegistrations());
-    setUsers(authService.getAllUsers());
-    setCreditTransactions(authService.getCreditTransactions());
-  };
-
-  const handleApproveRegistration = (registrationId: string) => {
-    const result = authService.approveRegistration(registrationId, currentUser.id);
-    if (result.success) {
-      loadData();
-      alert('Registration approved successfully!');
-    } else {
-      alert(result.message);
+  const loadData = async () => {
+    try {
+      const [pending, allUsers, transactions] = await Promise.all([
+        authService.getPendingRegistrations(),
+        authService.getAllUsers(),
+        authService.getCreditTransactions()
+      ]);
+      
+      setPendingRegistrations(pending);
+      setUsers(allUsers);
+      setCreditTransactions(transactions);
+    } catch (error) {
+      console.error('Error loading admin data:', error);
     }
   };
 
-  const handleRejectRegistration = (registrationId: string) => {
-    if (confirm('Are you sure you want to reject this registration?')) {
-      const result = authService.rejectRegistration(registrationId, currentUser.id);
+  const handleApproveRegistration = async (registrationId: string) => {
+    try {
+      const result = await authService.approveRegistration(registrationId, currentUser.id);
       if (result.success) {
         loadData();
-        alert('Registration rejected');
+        alert('Registration approved successfully!');
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      alert('Failed to approve registration');
+    }
+  };
+
+  const handleRejectRegistration = async (registrationId: string) => {
+    if (confirm('Are you sure you want to reject this registration?')) {
+      try {
+        const result = await authService.rejectRegistration(registrationId, currentUser.id);
+        if (result.success) {
+          loadData();
+          alert('Registration rejected');
+        }
+      } catch (error) {
+        alert('Failed to reject registration');
       }
     }
   };
 
-  const handleAddCredits = () => {
+  const handleAddCredits = async () => {
     if (!selectedUser || !creditAmount || !creditReason) {
       alert('Please fill in all fields');
       return;
@@ -59,25 +80,33 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, currentUser }) => {
       return;
     }
 
-    const result = authService.addCredits(selectedUser.id, amount, creditReason, currentUser.id);
-    if (result.success) {
-      loadData();
-      setCreditAmount('');
-      setCreditReason('');
-      setSelectedUser(null);
-      alert(`${amount} credits added to ${selectedUser.name}`);
-    } else {
-      alert(result.message);
+    try {
+      const result = await authService.addCredits(selectedUser.id, amount, creditReason, currentUser.id);
+      if (result.success) {
+        loadData();
+        setCreditAmount('');
+        setCreditReason('');
+        setSelectedUser(null);
+        alert(`${amount} credits added to ${selectedUser.full_name}`);
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      alert('Failed to add credits');
     }
   };
 
-  const handleUpdateUserStatus = (userId: string, status: User['status']) => {
-    const result = authService.updateUserStatus(userId, status, currentUser.id);
-    if (result.success) {
-      loadData();
-      alert(`User status updated to ${status}`);
-    } else {
-      alert(result.message);
+  const handleUpdateUserStatus = async (userId: string, status: Profile['status']) => {
+    try {
+      const result = await authService.updateUserStatus(userId, status, currentUser.id);
+      if (result.success) {
+        loadData();
+        alert(`User status updated to ${status}`);
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      alert('Failed to update user status');
     }
   };
 
@@ -165,8 +194,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, currentUser }) => {
                   <div key={registration.id} className="bg-white border border-gray-200 rounded-xl p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{registration.name}</h3>
-                        <p className="text-blue-600 font-medium capitalize">{registration.userType}</p>
+                        <h3 className="text-lg font-semibold text-gray-900">{registration.full_name}</h3>
+                        <p className="text-blue-600 font-medium capitalize">{registration.user_type}</p>
                       </div>
                       <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
                         Pending
@@ -177,8 +206,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, currentUser }) => {
                       <p><strong>Email:</strong> {registration.email}</p>
                       <p><strong>Phone:</strong> {registration.phone}</p>
                       {registration.company && <p><strong>Company:</strong> {registration.company}</p>}
-                      {registration.licenseNumber && <p><strong>License:</strong> {registration.licenseNumber}</p>}
-                      <p><strong>Registered:</strong> {new Date(registration.registrationDate).toLocaleDateString()}</p>
+                      {registration.license_number && <p><strong>License:</strong> {registration.license_number}</p>}
+                      <p><strong>Registered:</strong> {new Date(registration.created_at).toLocaleDateString()}</p>
                     </div>
                     
                     <div className="flex space-x-3">
@@ -227,12 +256,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, currentUser }) => {
                       <tr key={user.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                            <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
                             <div className="text-sm text-gray-500">{user.email}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="capitalize text-sm text-gray-900">{user.userType}</span>
+                          <span className="capitalize text-sm text-gray-900">{user.user_type}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -248,10 +277,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, currentUser }) => {
                           {user.credits}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(user.registrationDate).toLocaleDateString()}
+                          {new Date(user.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                          {user.userType === 'agent' && (
+                          {user.user_type === 'agent' && (
                             <button
                               onClick={() => setSelectedUser(user)}
                               className="text-blue-600 hover:text-blue-900"
@@ -299,7 +328,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, currentUser }) => {
                     <h3 className="text-lg font-semibold text-blue-900">Total Credits Issued</h3>
                     <p className="text-2xl font-bold text-blue-600">
                       {creditTransactions
-                        .filter(t => t.type === 'addition')
+                        .filter(t => t.transaction_type === 'addition')
                         .reduce((sum, t) => sum + t.amount, 0)}
                     </p>
                   </div>
@@ -312,7 +341,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, currentUser }) => {
                   <div>
                     <h3 className="text-lg font-semibold text-green-900">Active Agents</h3>
                     <p className="text-2xl font-bold text-green-600">
-                      {users.filter(u => u.userType === 'agent' && u.status === 'approved').length}
+                      {users.filter(u => u.user_type === 'agent' && u.status === 'approved').length}
                     </p>
                   </div>
                 </div>
@@ -325,7 +354,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, currentUser }) => {
                     <h3 className="text-lg font-semibold text-purple-900">This Month</h3>
                     <p className="text-2xl font-bold text-purple-600">
                       {creditTransactions
-                        .filter(t => new Date(t.timestamp).getMonth() === new Date().getMonth())
+                        .filter(t => new Date(t.created_at).getMonth() === new Date().getMonth())
                         .length}
                     </p>
                     <p className="text-sm text-purple-600">Transactions</p>
@@ -348,10 +377,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, currentUser }) => {
                 >
                   <option value="">Select Agent</option>
                   {users
-                    .filter(u => u.userType === 'agent' && u.status === 'approved')
+                    .filter(u => u.user_type === 'agent' && u.status === 'approved')
                     .map(user => (
                       <option key={user.id} value={user.id}>
-                        {user.name} ({user.credits} credits)
+                        {user.full_name} ({user.credits} credits)
                       </option>
                     ))}
                 </select>
@@ -402,23 +431,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, currentUser }) => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {creditTransactions
-                      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                       .slice(0, 20)
                       .map((transaction) => {
-                        const user = users.find(u => u.id === transaction.userId);
+                        const user = users.find(u => u.id === transaction.user_id);
                         return (
                           <tr key={transaction.id}>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">{user?.name || 'Unknown'}</div>
+                              <div className="text-sm font-medium text-gray-900">{user?.full_name || 'Unknown'}</div>
                               <div className="text-sm text-gray-500">{user?.email}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                transaction.type === 'addition' 
+                                transaction.transaction_type === 'addition' 
                                   ? 'bg-green-100 text-green-800' 
                                   : 'bg-red-100 text-red-800'
                               }`}>
-                                {transaction.type === 'addition' ? '+' : '-'}{transaction.amount}
+                                {transaction.transaction_type === 'addition' ? '+' : '-'}{transaction.amount}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -428,7 +457,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, currentUser }) => {
                               {transaction.reason}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {new Date(transaction.timestamp).toLocaleDateString()}
+                              {new Date(transaction.created_at).toLocaleDateString()}
                             </td>
                           </tr>
                         );
