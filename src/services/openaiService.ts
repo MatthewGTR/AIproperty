@@ -318,6 +318,24 @@ const isQueryPropertyRelated = (query: string): boolean => {
 const findRelevantProperties = (query: string, properties: Property[], locationInfo?: LocationInfo): Property[] => {
   const q = query.toLowerCase();
   
+  // Intent detection - Buy vs Rent
+  const buyKeywords = ['buy', 'buying', 'purchase', 'purchasing', 'own', 'ownership', 'invest', 'investment', 'mortgage', 'loan', 'down payment', 'for sale'];
+  const rentKeywords = ['rent', 'rental', 'renting', 'lease', 'leasing', 'tenant', 'monthly', 'deposit', 'furnished', 'for rent'];
+  
+  const isBuyIntent = buyKeywords.some(keyword => q.includes(keyword));
+  const isRentIntent = rentKeywords.some(keyword => q.includes(keyword));
+  
+  // Filter properties based on intent
+  let filteredProperties = properties;
+  
+  if (isBuyIntent && !isRentIntent) {
+    // User wants to buy - show properties for sale (higher prices, investment focus)
+    filteredProperties = properties.filter(p => p.price > 300000); // Assume sale properties are higher priced
+  } else if (isRentIntent && !isBuyIntent) {
+    // User wants to rent - show rental properties (lower prices, monthly focus)
+    filteredProperties = properties.filter(p => p.price <= 10000); // Assume rental properties are lower priced (monthly rent)
+  }
+  
   // Location-based matching
   const locationKeywords = [
     'taman daya', 'taman molek', 'sutera utama', 'mount austin', 'klcc', 
@@ -328,7 +346,7 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
   
   for (const location of locationKeywords) {
     if (q.includes(location)) {
-      const matches = properties.filter(p => p.location.toLowerCase().includes(location));
+      const matches = filteredProperties.filter(p => p.location.toLowerCase().includes(location));
       if (matches.length > 0) return matches.slice(0, 6);
     }
   }
@@ -343,7 +361,7 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
     
     // Find properties within 20% of target price
     const tolerance = targetPrice * 0.2;
-    const matches = properties.filter(p => 
+    const matches = filteredProperties.filter(p => 
       Math.abs(p.price - targetPrice) <= tolerance
     ).sort((a, b) => Math.abs(a.price - targetPrice) - Math.abs(b.price - targetPrice));
     
@@ -368,7 +386,7 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
   
   for (const [keyword, type] of Object.entries(typeKeywords)) {
     if (q.includes(keyword)) {
-      const matches = properties.filter(p => p.type === type);
+      const matches = filteredProperties.filter(p => p.type === type);
       if (matches.length > 0) return matches.slice(0, 6);
     }
   }
@@ -377,7 +395,7 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
   const bedroomMatch = query.match(/(\d+)\s*(?:bed|bedroom)/i);
   if (bedroomMatch) {
     const bedrooms = parseInt(bedroomMatch[1]);
-    const matches = properties.filter(p => p.bedrooms === bedrooms);
+    const matches = filteredProperties.filter(p => p.bedrooms === bedrooms);
     if (matches.length > 0) return matches.slice(0, 6);
   }
   
@@ -389,7 +407,7 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
   if (salaryMatch) {
     const salary = parseFloat(salaryMatch[1].replace(/,/g, ''));
     const maxPrice = salary * 12 * 0.28 * 30; // 28% rule, 30-year loan approximation
-    const matches = properties.filter(p => p.price <= maxPrice)
+    const matches = filteredProperties.filter(p => p.price <= maxPrice)
                               .sort((a, b) => a.price - b.price);
     if (matches.length > 0) return matches.slice(0, 6);
   }
@@ -402,7 +420,7 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
   
   for (const amenity of amenityKeywords) {
     if (q.includes(amenity)) {
-      const matches = properties.filter(p => 
+      const matches = filteredProperties.filter(p => 
         p.amenities.some(a => a.toLowerCase().includes(amenity)) ||
         p.description.toLowerCase().includes(amenity)
       );
@@ -411,13 +429,20 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
   }
   
   // General keyword matching
-  const matches = properties.filter(p => {
+  const matches = filteredProperties.filter(p => {
     const searchText = `${p.title} ${p.location} ${p.description} ${p.amenities.join(' ')} ${p.type}`.toLowerCase();
     return q.split(' ').some(word => word.length > 2 && searchText.includes(word));
   });
   
   if (matches.length > 0) return matches.slice(0, 6);
   
-  // Return empty array if no matches found
-  return [];
+  // If no specific matches but intent detected, return relevant subset
+  if (isBuyIntent && !isRentIntent) {
+    return filteredProperties.slice(0, 6);
+  } else if (isRentIntent && !isBuyIntent) {
+    return filteredProperties.slice(0, 6);
+  }
+  
+  // Return featured properties as fallback
+  return properties.filter(p => p.featured).slice(0, 6);
 }

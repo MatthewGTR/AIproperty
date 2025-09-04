@@ -92,8 +92,10 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
   };
 
   const quickPrompts = [
-    "Show me luxury apartments with city views",
-    "Find affordable family homes under RM500k"
+    "I want to buy a 3-bedroom house in Johor Bahru under RM600k",
+    "Looking for a rental apartment near universities",
+    "Show me luxury condos for sale with swimming pools",
+    "Find affordable rooms for rent under RM1000"
   ];
 
   return (

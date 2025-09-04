@@ -488,6 +488,121 @@ export const mockProperties: Property[] = [
     listedDate: '2025-01-17'
   },
   {
+    id: 'r1',
+    title: 'Luxury 3BR Condo for Rent - Sutera Avenue',
+    location: 'Sutera Utama, Johor Bahru',
+    price: 3200,
+    type: 'condo',
+    bedrooms: 3,
+    bathrooms: 2,
+    sqft: 1400,
+    images: [
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Stunning 3-bedroom condominium with city views in premium Sutera development. Close to Singapore CIQ checkpoint.',
+    amenities: ['City View', 'Infinity Pool', 'Gym', 'Security', 'Near CIQ', 'Shopping Mall'],
+    agent: {
+      name: 'Ahmad Rahman',
+      phone: '+60 12-345-6789',
+      email: 'ahmad@suterarealty.com',
+      image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: true,
+    listedDate: '2025-01-20'
+  },
+  {
+    id: 'r2',
+    title: 'Modern 2BR Apartment for Rent - Taman Molek',
+    location: 'Taman Molek, Johor Bahru',
+    price: 1800,
+    type: 'apartment',
+    bedrooms: 2,
+    bathrooms: 2,
+    sqft: 1100,
+    images: [
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Contemporary 2-bedroom apartment in established Taman Molek. Walking distance to international schools.',
+    amenities: ['Swimming Pool', 'Playground', 'Security', 'Near International School', 'Shopping Nearby'],
+    agent: {
+      name: 'Michelle Chen',
+      phone: '+60 15-444-5555',
+      email: 'michelle@molekrentals.com',
+      image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: true,
+    listedDate: '2025-01-19'
+  },
+  {
+    id: 'r3',
+    title: 'Cozy Studio for Rent - City Square Area',
+    location: 'City Centre, Johor Bahru',
+    price: 1200,
+    type: 'apartment',
+    bedrooms: 1,
+    bathrooms: 1,
+    sqft: 550,
+    images: [
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Stylish studio apartment in the heart of JB city center. Perfect for young professionals.',
+    amenities: ['City Center', 'Near Mall', 'Public Transport', 'Restaurants', 'Business District'],
+    agent: {
+      name: 'Sarah Lim',
+      phone: '+60 13-222-3333',
+      email: 'sarah@cityrentals.my',
+      image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: false,
+    listedDate: '2025-01-18'
+  },
+  {
+    id: 'r4',
+    title: 'Family House for Rent - Taman Daya',
+    location: 'Taman Daya, Johor Bahru',
+    price: 2200,
+    type: 'house',
+    bedrooms: 4,
+    bathrooms: 3,
+    sqft: 2000,
+    images: [
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Spacious double-storey terrace house in established Taman Daya neighborhood. Perfect for families with children.',
+    amenities: ['Garden', 'Parking', 'Near Schools', 'Playground'],
+    agent: {
+      name: 'David Wong',
+      phone: '+60 14-333-4444',
+      email: 'david@dayarentals.com',
+      image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: false,
+    listedDate: '2025-01-17'
+  },
+  {
+    id: 'r5',
+    title: 'Budget Room for Rent - Taman Universiti',
+    location: 'Taman Universiti, Johor Bahru',
+    price: 600,
+    type: 'apartment',
+    bedrooms: 1,
+    bathrooms: 1,
+    sqft: 300,
+    images: [
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Affordable single room perfect for students and young professionals. Located in university area.',
+    amenities: ['Near University', 'Student Area', 'Food Courts', 'Public Transport', 'WiFi'],
+    agent: {
+      name: 'Kumar Raj',
+      phone: '+60 16-555-6666',
+      email: 'kumar@universitirentals.com',
+      image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: false,
+    listedDate: '2025-01-16'
+  },
+  {
     id: '22',
     title: 'Garden Villa in Tropicana',
     location: 'Tropicana, Selangor',
@@ -499,134 +614,156 @@ export const mockProperties: Property[] = [
     images: [
       'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
-    description: 'Cozy studio in the heart of KL entertainment district. Walking distance to shopping and dining.',
-    amenities: ['Furnished', 'Near Monorail', 'Shopping Nearby', 'Restaurants'],
+    description: 'Magnificent villa with private pool and landscaped garden in exclusive Tropicana area.',
+    amenities: ['Private Pool', 'Garden', 'Security', 'Maid Room', 'Double Garage'],
     agent: {
-      name: 'Sarah Lim',
-      phone: '+60 13-222-3333',
-      email: 'sarah@cityrentals.my',
-      image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
-    },
-    featured: false,
-    listedDate: '2025-01-19'
-  },
-  {
-    id: '23',
-    title: 'Family House for Rent - Subang Jaya',
-    location: 'Subang Jaya, Selangor',
-    price: 2200,
-    type: 'house',
-    bedrooms: 4,
-    bathrooms: 3,
-    sqft: 2000,
-    images: [
-      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    description: 'Spacious family home in established neighborhood. Great for families with children.',
-    amenities: ['Garden', 'Parking', 'Near Schools', 'Playground'],
-    agent: {
-      name: 'David Wong',
-      phone: '+60 14-333-4444',
-      email: 'david@familyrentals.my',
-      image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150'
-    },
-    featured: true,
-    listedDate: '2025-01-18'
-  },
-  {
-    id: '24',
-    title: 'Modern Condo for Rent - Mont Kiara',
-    location: 'Mont Kiara, Kuala Lumpur',
-    price: 4200,
-    type: 'condo',
-    bedrooms: 3,
-    bathrooms: 2,
-    sqft: 1500,
-    images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    description: 'Premium condominium in expat-friendly Mont Kiara with excellent facilities.',
-    amenities: ['Swimming Pool', 'Gym', 'Tennis Court', 'Security', 'Parking'],
-    agent: {
-      name: 'Michelle Chen',
-      phone: '+60 15-444-5555',
-      email: 'michelle@premiumrentals.my',
-      image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150'
-    },
-    featured: true,
-    listedDate: '2025-01-17'
-  },
-  {
-    id: '25',
-    title: 'Budget Room for Rent - Cheras',
-    location: 'Cheras, Kuala Lumpur',
-    price: 600,
-    type: 'apartment',
-    bedrooms: 1,
-    bathrooms: 1,
-    sqft: 300,
-    images: [
-      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    description: 'Affordable single room for students and young professionals. Near public transport.',
-    amenities: ['Furnished', 'Near MRT', 'Shared Kitchen', 'Utilities Included'],
-    agent: {
-      name: 'Kumar Raj',
-      phone: '+60 16-555-6666',
-      email: 'kumar@budgetrentals.my',
-      image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'
-    },
-    featured: false,
-    listedDate: '2025-01-16'
-  },
-  {
-    id: '26',
-    title: 'Serviced Apartment for Rent - Cyberjaya',
-    location: 'Cyberjaya, Selangor',
-    price: 2800,
-    type: 'apartment',
-    bedrooms: 2,
-    bathrooms: 2,
-    sqft: 1000,
-    images: [
-      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    description: 'Modern serviced apartment in tech hub with hotel-like amenities and services.',
-    amenities: ['Fully Serviced', 'Housekeeping', 'Gym', 'Pool', 'Business Center'],
-    agent: {
-      name: 'Lisa Tan',
-      phone: '+60 17-666-7777',
-      email: 'lisa@servicedapartments.my',
+      name: 'Catherine Lee',
+      phone: '+60 12-456-7890',
+      email: 'catherine@tropicanaluxury.com',
       image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
     },
     featured: true,
     listedDate: '2025-01-15'
   },
   {
-    id: '27',
-    title: 'Penthouse for Rent - Damansara Heights',
-    location: 'Damansara Heights, KL',
-    price: 8500,
+    id: '23',
+    title: 'Executive Condo for Rent - Paradigm Mall Area',
+    location: 'Skudai, Johor Bahru',
+    price: 2800,
     type: 'condo',
-    bedrooms: 4,
-    bathrooms: 3,
-    sqft: 2500,
+    bathrooms: 2,
+    sqft: 1000,
     images: [
       'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
-    description: 'Luxury penthouse with panoramic city views and premium finishes throughout.',
-    amenities: ['City View', 'Private Lift', 'Jacuzzi', 'Wine Cellar', 'Maid Room'],
+    description: 'Modern serviced apartment near Paradigm Mall and universities. Ideal for professionals and students.',
+    amenities: ['Near Mall', 'Housekeeping', 'High Speed Internet', 'Near University', 'Gym'],
     agent: {
-      name: 'James Lim',
-      phone: '+60 18-777-8888',
-      email: 'james@luxuryrentals.my',
-      image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150'
+      name: 'Lisa Tan',
+      phone: '+60 17-666-7777',
+      email: 'lisa@paradigmserviced.com',
+      image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150'
     },
-    featured: true,
+    featured: false,
     listedDate: '2025-01-14'
   },
   {
+    id: '24',
+    title: 'Penthouse for Rent - Mount Austin',
+    location: 'Mount Austin, Johor Bahru',
+    price: 4500,
+    type: 'condo',
+    bedrooms: 4,
+    bathrooms: 3,
+    sqft: 2200,
+    images: [
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Exclusive penthouse in prestigious Mount Austin with panoramic city views.',
+    amenities: ['City View', 'Private Balcony', 'Club House', 'Security', 'Prestigious Area'],
+    agent: {
+      name: 'James Lim',
+      phone: '+60 18-777-8888',
+      email: 'james@mountaustinrentals.com',
+      image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: true,
+    listedDate: '2025-01-13'
+  },
+  {
+    id: '25',
+    title: 'Shophouse Upper Floor for Rent - Jalan Wong Ah Fook',
+    location: 'Jalan Wong Ah Fook, Johor Bahru',
+    price: 1500,
+    type: 'house',
+    bedrooms: 2,
+    bathrooms: 1,
+    sqft: 800,
+    images: [
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Heritage shophouse upper floor in historic Jalan Wong Ah Fook. Perfect for those who appreciate old-world charm.',
+    amenities: ['Heritage Building', 'City Center', 'Historic Area', 'Near Attractions', 'Character Property'],
+    agent: {
+      name: 'Rachel Tan',
+      phone: '+60 13-000-1111',
+      email: 'rachel@heritagerentals.com',
+      image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: false,
+    listedDate: '2025-01-12'
+  },
+  {
+    id: '26',
+    title: 'Executive Condo for Rent - Horizon Hills',
+    location: 'Horizon Hills, Johor Bahru',
+    price: 3800,
+    type: 'condo',
+    bedrooms: 3,
+    bathrooms: 2,
+    sqft: 1600,
+    images: [
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Premium executive condominium in exclusive Horizon Hills golf resort community.',
+    amenities: ['Golf Course View', 'Resort Facilities', 'Swimming Pool', 'Tennis Court', '24hr Security'],
+    agent: {
+      name: 'Peter Loh',
+      phone: '+60 12-999-0000',
+      email: 'peter@horizonrentals.com',
+      image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: true,
+    listedDate: '2025-01-11'
+  },
+  {
+    id: '27',
+    title: 'Studio for Rent - Bukit Bintang',
+    location: 'Bukit Bintang, Kuala Lumpur',
+    price: 1800,
+    type: 'apartment',
+    bedrooms: 1,
+    bathrooms: 1,
+    sqft: 600,
+    images: [
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Compact studio in the heart of KL entertainment district, perfect for young professionals.',
+    amenities: ['City Center', 'Near Monorail', 'Shopping Malls', 'Restaurants', 'Nightlife'],
+    agent: {
+      name: 'Jason Wong',
+      phone: '+60 19-567-8901',
+      email: 'jason@bukitbintangrentals.com',
+      image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: false,
+    listedDate: '2025-01-10'
+  },
+  {
     id: '28',
+    title: 'Serviced Apartment for Rent - Mid Valley',
+    location: 'Mid Valley, Kuala Lumpur',
+    price: 2500,
+    type: 'apartment',
+    bedrooms: 2,
+    bathrooms: 2,
+    sqft: 1050,
+    images: [
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+    ],
+    description: 'Fully furnished serviced apartment connected to Mid Valley Megamall with hotel-like amenities.',
+    amenities: ['Fully Furnished', 'Mall Connected', 'Housekeeping', 'Concierge', 'Pool'],
+    agent: {
+      name: 'Robert Lim',
+      phone: '+60 14-789-0123',
+      email: 'robert@midvalleyserviced.com',
+      image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'
+    },
+    featured: false,
+    listedDate: '2025-01-09'
+  },
+  {
+    id: '29',
     title: 'Shared House for Rent - Petaling Jaya',
     location: 'Petaling Jaya, Selangor',
     price: 800,
@@ -646,10 +783,10 @@ export const mockProperties: Property[] = [
       image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150'
     },
     featured: false,
-    listedDate: '2025-01-13'
+    listedDate: '2025-01-08'
   },
   {
-    id: '29',
+    id: '30',
     title: 'Beachfront Condo for Rent - Penang',
     location: 'Batu Ferringhi, Penang',
     price: 3200,
@@ -668,30 +805,7 @@ export const mockProperties: Property[] = [
       email: 'peter@penangrentals.my',
       image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'
     },
-    featured: true,
-    listedDate: '2025-01-12'
-  },
-  {
-    id: '30',
-    title: 'Executive Condo for Rent - Bangsar',
-    location: 'Bangsar, Kuala Lumpur',
-    price: 4800,
-    type: 'condo',
-    bedrooms: 3,
-    bathrooms: 2,
-    sqft: 1400,
-    images: [
-      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    description: 'Executive condominium in trendy Bangsar with easy access to shopping and dining.',
-    amenities: ['Furnished', 'Gym', 'Pool', 'Security', 'Shopping Nearby'],
-    agent: {
-      name: 'Rachel Tan',
-      phone: '+60 13-000-1111',
-      email: 'rachel@bangsarrentals.my',
-      image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
-    },
     featured: false,
-    listedDate: '2025-01-11'
+    listedDate: '2025-01-05'
   }
 ];
