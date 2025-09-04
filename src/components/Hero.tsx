@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, MapPin } from 'lucide-react';
 import { PropertyWithImages, propertyService } from '../services/propertyService';
 import { searchPropertiesWithAI, UserProfile, getDefaultUserProfile } from '../services/openaiService';
@@ -174,7 +174,7 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
                     <p className="text-sm">{message.text}</p>
                     {message.properties && message.properties.length > 0 && (
                       <div className="mt-2 text-xs text-blue-600 font-medium">
-                        ✨ {message.properties.length} properties recommended below
+                        Found {message.properties.length} properties
                       </div>
                     )}
                     <p className={`text-xs mt-1 ${
@@ -219,9 +219,9 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
                   <button
                     key={index}
                     onClick={() => setInputMessage(prompt)}
-                    className="text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-700 transition-colors duration-200"
+                    className="text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-700 transition-colors duration-200 border border-gray-200"
                   >
-                    "{prompt}"
+                    {prompt}
                   </button>
                 ))}
               </div>
@@ -236,7 +236,7 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask me anything about properties... (e.g., 'I want a 3-bedroom house in Austin under $500k' or 'What's the best neighborhood for families?')"
+                placeholder="Ask me anything about properties or just chat..."
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={isTyping}
               />
@@ -258,7 +258,7 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
               <Bot className="h-6 w-6" />
             </div>
             <h3 className="text-base font-semibold mb-1">Smart AI Integration</h3>
-            <p className="text-blue-100 text-sm">Powered by advanced AI for intelligent property conversations</p>
+            <p className="text-blue-100 text-sm">Remembers your preferences across sessions</p>
           </div>
           <div className="text-center">
             <div className="bg-white bg-opacity-20 rounded-full p-3 w-12 h-12 mx-auto mb-3 flex items-center justify-center">
@@ -272,7 +272,7 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
               <Sparkles className="h-6 w-6" />
             </div>
             <h3 className="text-base font-semibold mb-1">Expert Insights</h3>
-            <p className="text-blue-100 text-sm">Market analysis and investment guidance from AI expertise</p>
+            <p className="text-blue-100 text-sm">Personalized recommendations based on your needs</p>
           </div>
         </div>
       </div>

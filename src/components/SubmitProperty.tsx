@@ -335,10 +335,29 @@ const SubmitProperty: React.FC<SubmitPropertyProps> = ({ onClose, user, onUserUp
 
           {/* Images */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Property Images</h3>
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">Property Images</h3>
+              <span className="text-sm text-gray-600">{images.filter(img => img.trim()).length} of 20 images</span>
+            </div>
             
             {images.map((image, index) => (
-              <div key={index} className="flex space-x-2">
+              <div key={index} className="flex items-center space-x-3">
+                {/* Image Preview */}
+                {image.trim() && (
+                  <div className="flex-shrink-0">
+                    <img
+                      src={image}
+                      alt={`Preview ${index + 1}`}
+                      className="w-16 h-16 object-cover rounded-md border border-gray-300"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+                
+                {/* Input Field */}
                 <input
                   type="url"
                   placeholder={`Image URL ${index + 1}${index === 0 ? ' (Primary)' : ''}`}
@@ -347,11 +366,13 @@ const SubmitProperty: React.FC<SubmitPropertyProps> = ({ onClose, user, onUserUp
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   required={index === 0}
                 />
+                
+                {/* Remove Button */}
                 {index > 0 && (
                   <button
                     type="button"
                     onClick={() => removeImageField(index)}
-                    className="p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                    className="flex-shrink-0 p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
                   >
                     <Trash2 className="h-5 w-5" />
                   </button>
@@ -362,10 +383,11 @@ const SubmitProperty: React.FC<SubmitPropertyProps> = ({ onClose, user, onUserUp
             <button
               type="button"
               onClick={addImageField}
-              className="flex items-center px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200"
+              disabled={images.length >= 20}
+              className="flex items-center px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Another Image
+              Add Another Image {images.length >= 20 ? '(Max 20)' : ''}
             </button>
           </div>
 

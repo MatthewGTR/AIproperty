@@ -94,7 +94,10 @@ function App() {
         onLogout={handleLogout}
       />
       
-      <Hero onPropertiesRecommended={handlePropertiesRecommended} />
+      <Hero 
+        user={user}
+        onPropertiesRecommended={handlePropertiesRecommended} 
+      />
       
       <PropertyListings 
         properties={recommendedProperties}
