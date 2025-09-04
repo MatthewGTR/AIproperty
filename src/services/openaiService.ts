@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { PropertyWithImages } from './propertyService';
+import { PropertyWithImages, propertyService } from './propertyService';
 
 export interface UserProfile {
   intent: 'buy' | 'rent' | null;
