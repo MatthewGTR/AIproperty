@@ -19,7 +19,7 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      text: 'How can I help you today?',
+      text: 'Hi! I can help you find properties or just chat. What are you looking for?',
       sender: 'ai',
       timestamp: new Date()
     }
@@ -37,6 +37,10 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended }) => {
       };
 
       setMessages(prev => [...prev, userMessage]);
+      
+      // Get conversation history for context
+      const conversationHistory = messages.map(m => m.text);
+      
       setInputMessage('');
       setIsTyping(true);
 
@@ -45,7 +49,7 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended }) => {
         const matchedProperties = await propertyService.searchProperties(inputMessage);
         
         // Get AI response
-        const { response } = await searchPropertiesWithAI(inputMessage, matchedProperties);
+        const { response } = await searchPropertiesWithAI(inputMessage, matchedProperties, undefined, conversationHistory);
         
         const aiMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
@@ -62,7 +66,7 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended }) => {
       } catch (error) {
         const errorMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
-          text: "Sorry, I'm having trouble right now. Please try again!",
+          text: "Sorry, having technical issues. Try asking about properties differently!",
           sender: 'ai',
           timestamp: new Date(),
           properties: []
@@ -84,10 +88,10 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended }) => {
   };
 
   const quickPrompts = [
-    "Buy 3-bedroom house Johor Bahru under RM500k",
-    "Rent apartment KL under RM2500 furnished",
-    "Condo for sale KLCC with pool and gym",
-    "Studio rent Cyberjaya under RM1200"
+    "Buy house Johor Bahru under RM500k",
+    "Rent apartment KL under RM2500",
+    "Condo for sale KLCC with pool",
+    "Studio rent under RM1200"
   ];
 
   return (

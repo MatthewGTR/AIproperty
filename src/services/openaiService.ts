@@ -50,7 +50,8 @@ export interface LocationInfo {
 export const searchPropertiesWithAI = async (
   userQuery: string, 
   properties: PropertyWithImages[],
-  locationInfo?: LocationInfo
+  locationInfo?: LocationInfo,
+  conversationHistory?: string[]
 ): Promise<{ response: string; matchedProperties: PropertyWithImages[] }> => {
   
   // Check if this is a property-related query
@@ -58,7 +59,7 @@ export const searchPropertiesWithAI = async (
   
   if (!isPropertyQuery) {
     // Handle non-property questions with ChatGPT
-    const chatResponse = await handleGeneralChat(userQuery);
+    const chatResponse = await handleGeneralChat(userQuery, conversationHistory);
     return {
       response: chatResponse,
       matchedProperties: []
@@ -66,21 +67,14 @@ export const searchPropertiesWithAI = async (
   }
 
   // Enhanced property matching with aggressive keyword detection
-  const matchedProperties = findRelevantPropertiesEnhanced(userQuery, properties, locationInfo);
+  const matchedProperties = findRelevantPropertiesEnhanced(userQuery, properties, locationInfo, conversationHistory);
   
   let aiResponse = '';
   
   if (matchedProperties.length > 0) {
-    const intentInfo = getIntentInfo(userQuery);
-    const locationInfo = extractLocationFromQuery(userQuery);
-    const priceInfo = extractPriceFromQuery(userQuery);
-    
-    aiResponse = `Perfect! I found ${matchedProperties.length} ${intentInfo}`;
-    if (locationInfo) aiResponse += ` in ${locationInfo}`;
-    if (priceInfo) aiResponse += ` within your budget`;
-    aiResponse += `. Here are my top recommendations:`;
+    aiResponse = generatePropertyResponse(userQuery, matchedProperties);
   } else {
-    aiResponse = generateSmartFollowUp(userQuery);
+    aiResponse = generateSmartFollowUp(userQuery, conversationHistory);
   }
 
   return {
@@ -113,7 +107,20 @@ const isPropertyRelated = (query: string): boolean => {
   return propertyKeywords.some(keyword => query_lower.includes(keyword));
 };
 
-const handleGeneralChat = async (query: string): Promise<string> => {
+const handleGeneralChat = async (query: string, conversationHistory?: string[]): Promise<string> => {
+  // Check if user is asking the same question repeatedly
+  if (conversationHistory && conversationHistory.length > 2) {
+    const lastQueries = conversationHistory.slice(-3);
+    const isRepeating = lastQueries.some(prev => 
+      query.toLowerCase().includes(prev.toLowerCase()) || 
+      prev.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    if (isRepeating) {
+      return "I notice you're asking similar questions. Let me help you differently! What specific type of property are you looking for? House, apartment, or condo?";
+    }
+  }
+
   try {
     if (openai) {
       const completion = await openai.chat.completions.create({
@@ -121,23 +128,24 @@ const handleGeneralChat = async (query: string): Promise<string> => {
         messages: [
           {
             role: "system",
-            content: "You are a friendly AI assistant. Keep responses concise (2-3 sentences max) and helpful. If asked about properties, redirect to property search."
+            content: "You are a friendly AI assistant for a property website. Keep responses concise (1-2 sentences max). Always end with a gentle redirect to property search."
           },
           {
             role: "user",
             content: query
           }
         ],
-        max_tokens: 150,
+        max_tokens: 100,
         temperature: 0.7
       });
       
-      return completion.choices[0]?.message?.content || "I'm here to help! Feel free to ask me anything about properties or just chat.";
+      const response = completion.choices[0]?.message?.content || "I'm here to help!";
+      return response + " Looking for any properties today?";
     } else if (genAI) {
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      const result = await model.generateContent(`You are a friendly AI assistant. Keep responses concise (2-3 sentences max). User query: ${query}`);
+      const result = await model.generateContent(`You are a friendly AI assistant for a property website. Keep responses concise (1-2 sentences max). Always end with asking about properties. User query: ${query}`);
       const response = await result.response;
-      return response.text() || "I'm here to help! Feel free to ask me anything about properties or just chat.";
+      return response.text() || "I'm here to help! Looking for any properties?";
     }
   } catch (error) {
     console.error('Error with AI chat:', error);
@@ -145,18 +153,23 @@ const handleGeneralChat = async (query: string): Promise<string> => {
   
   // Fallback responses for entertainment
   const fallbackResponses = [
-    "That's interesting! I'm primarily a property expert, but I enjoy chatting. Is there anything about real estate I can help you with?",
-    "I'd love to chat more about that! By the way, are you looking for any properties? I have some great recommendations.",
-    "Thanks for sharing! I'm here whenever you want to explore properties or just have a friendly conversation.",
-    "That's cool! I'm always here to help with property searches or just to chat when you're taking a break."
+    "That's interesting! Are you looking for any properties today?",
+    "Cool! By the way, need help finding a house or apartment?",
+    "Nice! Looking for any properties to buy or rent?",
+    "Awesome! Want to see some great property deals?"
   ];
   
   return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
 };
 
-const findRelevantPropertiesEnhanced = (query: string, properties: PropertyWithImages[], locationInfo?: LocationInfo): PropertyWithImages[] => {
+const findRelevantPropertiesEnhanced = (query: string, properties: PropertyWithImages[], locationInfo?: LocationInfo, conversationHistory?: string[]): PropertyWithImages[] => {
   const q = query.toLowerCase();
   
+  // If no properties available, return empty
+  if (!properties || properties.length === 0) {
+    return [];
+  }
+
   // Enhanced intent detection with more keywords
   const buyKeywords = ['buy', 'buying', 'purchase', 'purchasing', 'own', 'ownership', 'invest', 'investment', 'mortgage', 'loan', 'down payment', 'for sale', 'acquire', 'get', 'want to own'];
   const rentKeywords = ['rent', 'rental', 'renting', 'lease', 'leasing', 'tenant', 'monthly', 'deposit', 'furnished', 'for rent', 'stay', 'live', 'temporary'];
@@ -170,6 +183,11 @@ const findRelevantPropertiesEnhanced = (query: string, properties: PropertyWithI
     filteredProperties = properties.filter(p => p.listing_type === 'sale');
   } else if (isRentIntent && !isBuyIntent) {
     filteredProperties = properties.filter(p => p.listing_type === 'rent');
+  }
+
+  // If still no properties after intent filtering, return all
+  if (filteredProperties.length === 0) {
+    filteredProperties = properties;
   }
   
   // Enhanced location matching with more variations
@@ -377,9 +395,34 @@ const extractPriceFromQuery = (query: string): string | null => {
   return null;
 };
 
-const generateSmartFollowUp = (query: string): string => {
+const generatePropertyResponse = (query: string, properties: PropertyWithImages[]): string => {
+  const q = query.toLowerCase();
+  const intentInfo = getIntentInfo(query);
+  const locationInfo = extractLocationFromQuery(query);
+  const priceInfo = extractPriceFromQuery(query);
+  
+  let response = `Great! Found ${properties.length} ${intentInfo}`;
+  if (locationInfo) response += ` in ${locationInfo}`;
+  if (priceInfo) response += ` within budget`;
+  response += `:`;
+  
+  return response;
+};
+
+const generateSmartFollowUp = (query: string, conversationHistory?: string[]): string => {
   const q = query.toLowerCase();
   
+  // Check if we've asked similar questions before
+  if (conversationHistory && conversationHistory.length > 1) {
+    const lastResponse = conversationHistory[conversationHistory.length - 1];
+    if (lastResponse && lastResponse.includes('budget') && q.includes('budget')) {
+      return "I see you mentioned budget again. Could you be more specific? For example: 'under RM500k' or 'RM200k to RM400k'?";
+    }
+    if (lastResponse && lastResponse.includes('location') && (q.includes('area') || q.includes('location'))) {
+      return "Which specific area interests you? Try: 'Johor Bahru', 'KL', 'Penang', or any specific neighborhood.";
+    }
+  }
+
   // Check what information is missing
   const hasIntent = q.includes('buy') || q.includes('rent') || q.includes('purchase') || q.includes('lease');
   const hasLocation = q.includes('johor') || q.includes('kl') || q.includes('penang') || q.includes('selangor');
