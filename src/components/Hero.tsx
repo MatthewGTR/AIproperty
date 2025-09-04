@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { Send, Bot, User, Sparkles, MapPin } from 'lucide-react';
-import { Property } from '../types/Property';
-import { searchPropertiesWithAI, LocationInfo } from '../services/openaiService';
-import { geocodeAddress } from '../services/mapsService';
+import { PropertyWithImages, propertyService } from '../services/propertyService';
+import { searchPropertiesWithAI } from '../services/openaiService';
 
 interface HeroProps {
-  onPropertiesRecommended: (properties: Property[]) => void;
-  allProperties: Property[];
+  onPropertiesRecommended: (properties: PropertyWithImages[]) => void;
 }
 
 interface ChatMessage {
@@ -14,10 +12,10 @@ interface ChatMessage {
   text: string;
   sender: 'user' | 'ai';
   timestamp: Date;
-  properties?: Property[];
+  properties?: PropertyWithImages[];
 }
 
-const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) => {
+const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -28,16 +26,6 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-
-  const extractLocation = async (query: string): Promise<LocationInfo | null> => {
-    const keywords = ['in ', 'near ', 'around ', 'at '];
-    const hasKeyword = keywords.some(k => query.toLowerCase().includes(k));
-    if (!hasKeyword) return null;
-    
-    const words = query.split(' ');
-    const idx = words.findIndex(w => ['in', 'near', 'around', 'at'].includes(w.toLowerCase()));
-    return idx !== -1 && idx < words.length - 1 ? await geocodeAddress(words.slice(idx + 1).join(' ')) : null;
-  };
 
   const handleSendMessage = async () => {
     if (inputMessage.trim()) {
@@ -53,8 +41,11 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
       setIsTyping(true);
 
       try {
-        const location = await extractLocation(inputMessage);
-        const { response, matchedProperties } = await searchPropertiesWithAI(inputMessage, allProperties, location);
+        // Search properties using the database
+        const matchedProperties = await propertyService.searchProperties(inputMessage);
+        
+        // Get AI response
+        const { response } = await searchPropertiesWithAI(inputMessage, matchedProperties);
         
         const aiMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
@@ -66,13 +57,8 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended, allProperties }) =
 
         setMessages(prev => [...prev, aiMessage]);
         
-        // Only show properties if there are relevant matches
-        if (matchedProperties.length > 0) {
-          onPropertiesRecommended(matchedProperties);
-        } else {
-          // Don't show any properties if no relevant matches
-          onPropertiesRecommended([]);
-        }
+        // Show recommended properties
+        onPropertiesRecommended(matchedProperties);
       } catch (error) {
         const errorMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),

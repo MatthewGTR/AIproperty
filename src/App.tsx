@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import PropertyListings from './components/PropertyListings';
-import PropertyDetails from './components/PropertyDetails';
+import PropertyDetailsNew from './components/PropertyDetailsNew';
 import AuthModal from './components/AuthModal';
 import SubmitProperty from './components/SubmitProperty';
 import AgentsPage from './components/AgentsPage';
@@ -10,11 +10,12 @@ import AdminPanel from './components/AdminPanel';
 import RentPage from './components/RentPage';
 import BuyPage from './components/BuyPage';
 import NewDevelopmentPage from './components/NewDevelopmentPage';
-import { Property } from './types/Property';
-import { mockProperties } from './data/mockProperties';
+import { PropertyWithImages, propertyService } from './services/propertyService';
+import { authService } from './services/authService';
+import { supabase } from './lib/supabase';
 
 function App() {
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<PropertyWithImages | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
   const [showAgents, setShowAgents] = useState(false);
@@ -22,12 +23,62 @@ function App() {
   const [showBuy, setShowBuy] = useState(false);
   const [showNewDevelopment, setShowNewDevelopment] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
-  const [recommendedProperties, setRecommendedProperties] = useState<Property[]>(mockProperties);
+  const [recommendedProperties, setRecommendedProperties] = useState<PropertyWithImages[]>([]);
   const [user, setUser] = useState<{ id: string; name: string; email: string; userType: string; credits: number } | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handlePropertiesRecommended = (properties: Property[]) => {
+  useEffect(() => {
+    checkUser();
+    loadInitialProperties();
+  }, []);
+
+  const checkUser = async () => {
+    try {
+      const profile = await authService.getCurrentUser();
+      if (profile) {
+        setUser({
+          id: profile.id,
+          name: profile.full_name,
+          email: profile.email,
+          userType: profile.user_type,
+          credits: profile.credits
+        });
+      }
+    } catch (error) {
+      console.error('Error checking user:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadInitialProperties = async () => {
+    try {
+      const properties = await propertyService.getProperties({ limit: 12 });
+      setRecommendedProperties(properties);
+    } catch (error) {
+      console.error('Error loading properties:', error);
+    }
+  };
+
+  const handlePropertiesRecommended = (properties: PropertyWithImages[]) => {
     setRecommendedProperties(properties);
   };
+
+  const handleLogout = async () => {
+    await authService.signOut();
+    setUser(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -40,13 +91,10 @@ function App() {
         onBuyClick={() => setShowBuy(true)}
         onNewDevelopmentClick={() => setShowNewDevelopment(true)}
         onAdminClick={() => setShowAdmin(true)}
-        onLogout={() => setUser(null)}
+        onLogout={handleLogout}
       />
       
-      <Hero 
-        onPropertiesRecommended={handlePropertiesRecommended}
-        allProperties={mockProperties}
-      />
+      <Hero onPropertiesRecommended={handlePropertiesRecommended} />
       
       <PropertyListings 
         properties={recommendedProperties}
@@ -54,7 +102,7 @@ function App() {
       />
       
       {selectedProperty && (
-        <PropertyDetails 
+        <PropertyDetailsNew 
           property={selectedProperty}
           onClose={() => setSelectedProperty(null)}
           user={user}

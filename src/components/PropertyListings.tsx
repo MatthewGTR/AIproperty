@@ -1,24 +1,24 @@
 import React from 'react';
 import { Search } from 'lucide-react';
-import { Property } from '../types/Property';
-import PropertyCard from './PropertyCard';
+import { PropertyWithImages } from '../services/propertyService';
+import PropertyCardNew from './PropertyCardNew';
 
 interface PropertyListingsProps {
-  properties: Property[];
-  onPropertyClick: (property: Property) => void;
+  properties: PropertyWithImages[];
+  onPropertyClick: (property: PropertyWithImages) => void;
 }
 
 const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onPropertyClick }) => {
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">Featured Properties</h2>
+        <h2 className="text-3xl font-bold text-gray-900">Recommended Properties</h2>
         <p className="text-gray-600">{properties.length} properties found</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {properties.map((property) => (
-          <PropertyCard
+          <PropertyCardNew
             key={property.id}
             property={property}
             onClick={onPropertyClick}

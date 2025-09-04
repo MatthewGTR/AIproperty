@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Upload, MapPin, Home, Bed, Bath, Square, CreditCard, AlertCircle } from 'lucide-react';
-import { authService } from '../services/authService';
+import { X, Upload, MapPin, Home, Bed, Bath, Square, CreditCard, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { propertyService } from '../services/propertyService';
+import { supabase } from '../lib/supabase';
 
 interface SubmitPropertyProps {
   onClose: () => void;
@@ -10,8 +11,24 @@ interface SubmitPropertyProps {
 
 const SubmitProperty: React.FC<SubmitPropertyProps> = ({ onClose, user, onUserUpdate }) => {
   const [formData, setFormData] = useState({
-    title: '', location: '', price: '', type: 'house', bedrooms: '', bathrooms: '', sqft: '', description: ''
+    title: '',
+    description: '',
+    property_type: 'house',
+    listing_type: 'sale',
+    price: '',
+    bedrooms: '',
+    bathrooms: '',
+    sqft: '',
+    address: '',
+    city: '',
+    state: '',
+    amenities: [] as string[],
+    furnished: 'unfurnished',
+    availability_date: '',
+    deposit_info: ''
   });
+  const [images, setImages] = useState<string[]>(['']);
+  const [newAmenity, setNewAmenity] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -25,52 +42,89 @@ const SubmitProperty: React.FC<SubmitPropertyProps> = ({ onClose, user, onUserUp
     setLoading(true);
     setError('');
 
-    // Check if user has enough credits (for agents)
-    if (user.userType === 'agent' && user.credits < POSTING_COST) {
-      setError(`Insufficient credits. You need ${POSTING_COST} credits to post a property. Current balance: ${user.credits} credits.`);
-      setLoading(false);
-      return;
-    }
-
     try {
-      // Simulate property submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const propertyData = {
+        title: formData.title,
+        description: formData.description,
+        property_type: formData.property_type as any,
+        listing_type: formData.listing_type as any,
+        price: parseFloat(formData.price),
+        bedrooms: parseInt(formData.bedrooms) || 0,
+        bathrooms: parseInt(formData.bathrooms) || 0,
+        sqft: parseInt(formData.sqft),
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        amenities: formData.amenities,
+        furnished: formData.furnished as any,
+        availability_date: formData.availability_date || null,
+        deposit_info: formData.deposit_info || null,
+        agent_id: user.id,
+        status: 'active' as any
+      };
+
+      const validImages = images.filter(img => img.trim() !== '');
+      const result = await propertyService.createProperty(propertyData, validImages);
       
-      // Deduct credits for agents
-      if (user.userType === 'agent') {
-        const deductResult = authService.deductCredits(
-          user.id, 
-          POSTING_COST, 
-          `Property listing: ${formData.title}`,
-          `prop_${Date.now()}`
-        );
-        
-        if (!deductResult.success) {
-          setError(deductResult.message);
-          setLoading(false);
-          return;
-        }
-        
+      if (result.success) {
         // Update user credits in parent component
-        const updatedUser = authService.getCurrentUser(user.id);
-        if (updatedUser) {
+        const { data: updatedProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (updatedProfile) {
           onUserUpdate({
-            id: updatedUser.id,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            userType: updatedUser.userType,
-            credits: updatedUser.credits
+            id: updatedProfile.id,
+            name: updatedProfile.full_name,
+            email: updatedProfile.email,
+            userType: updatedProfile.user_type,
+            credits: updatedProfile.credits
           });
         }
+        
+        alert('Property listed successfully!');
+        onClose();
+      } else {
+        setError(result.error || 'Failed to create property');
       }
-      
-      alert('Property submitted successfully!');
-      onClose();
-    } catch (err) {
-      setError('Failed to submit property. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to submit property. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const addImageField = () => {
+    setImages([...images, '']);
+  };
+
+  const removeImageField = (index: number) => {
+    setImages(images.filter((_, i) => i !== index));
+  };
+
+  const updateImage = (index: number, value: string) => {
+    const newImages = [...images];
+    newImages[index] = value;
+    setImages(newImages);
+  };
+
+  const addAmenity = () => {
+    if (newAmenity.trim() && !formData.amenities.includes(newAmenity.trim())) {
+      setFormData({
+        ...formData,
+        amenities: [...formData.amenities, newAmenity.trim()]
+      });
+      setNewAmenity('');
+    }
+  };
+
+  const removeAmenity = (amenity: string) => {
+    setFormData({
+      ...formData,
+      amenities: formData.amenities.filter(a => a !== amenity)
+    });
   };
 
   if (!user) {
@@ -124,83 +178,243 @@ const SubmitProperty: React.FC<SubmitPropertyProps> = ({ onClose, user, onUserUp
           </div>
         )}
 
-        {user.userType === 'agent' && user.credits < POSTING_COST && (
-          <div className="mx-6 mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-start">
-              <AlertCircle className="h-5 w-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-yellow-800 text-sm font-medium">Insufficient Credits</p>
-                <p className="text-yellow-700 text-sm mt-1">
-                  You need {POSTING_COST} credits to post a property. Please contact admin to purchase more credits.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <input
-            type="text"
-            placeholder="Property Title"
-            value={formData.title}
-            onChange={(e) => setFormData({...formData, title: e.target.value})}
-            className="w-full px-4 py-3 border rounded-lg"
-            required
-          />
-          
-          <div className="relative">
-            <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Basic Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+            
             <input
               type="text"
-              placeholder="Location"
-              value={formData.location}
-              onChange={(e) => setFormData({...formData, location: e.target.value})}
-              className="w-full pl-10 pr-4 py-3 border rounded-lg"
+              placeholder="Property Title"
+              value={formData.title}
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <select
+                value={formData.listing_type}
+                onChange={(e) => setFormData({...formData, listing_type: e.target.value})}
+                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="sale">For Sale</option>
+                <option value="rent">For Rent</option>
+              </select>
+              
+              <select
+                value={formData.property_type}
+                onChange={(e) => setFormData({...formData, property_type: e.target.value})}
+                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="house">House</option>
+                <option value="apartment">Apartment</option>
+                <option value="condo">Condo</option>
+                <option value="villa">Villa</option>
+                <option value="studio">Studio</option>
+                <option value="shophouse">Shophouse</option>
+              </select>
+            </div>
+
+            <textarea
+              placeholder="Property Description"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-24"
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Location */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Location</h3>
+            
             <input
-              type="number"
-              placeholder="Price (RM)"
-              value={formData.price}
-              onChange={(e) => setFormData({...formData, price: e.target.value})}
-              className="px-4 py-3 border rounded-lg"
+              type="text"
+              placeholder="Full Address"
+              value={formData.address}
+              onChange={(e) => setFormData({...formData, address: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               required
             />
-            <select
-              value={formData.type}
-              onChange={(e) => setFormData({...formData, type: e.target.value})}
-              className="px-4 py-3 border rounded-lg"
+
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="City"
+                value={formData.city}
+                onChange={(e) => setFormData({...formData, city: e.target.value})}
+                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <input
+                type="text"
+                placeholder="State"
+                value={formData.state}
+                onChange={(e) => setFormData({...formData, state: e.target.value})}
+                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Property Details */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Property Details</h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                type="number"
+                placeholder={formData.listing_type === 'rent' ? 'Monthly Rent (RM)' : 'Price (RM)'}
+                value={formData.price}
+                onChange={(e) => setFormData({...formData, price: e.target.value})}
+                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <input
+                type="number"
+                placeholder="Square Feet"
+                value={formData.sqft}
+                onChange={(e) => setFormData({...formData, sqft: e.target.value})}
+                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                type="number"
+                placeholder="Bedrooms"
+                value={formData.bedrooms}
+                onChange={(e) => setFormData({...formData, bedrooms: e.target.value})}
+                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <input
+                type="number"
+                placeholder="Bathrooms"
+                value={formData.bathrooms}
+                onChange={(e) => setFormData({...formData, bathrooms: e.target.value})}
+                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            {formData.listing_type === 'rent' && (
+              <div className="grid grid-cols-2 gap-4">
+                <select
+                  value={formData.furnished}
+                  onChange={(e) => setFormData({...formData, furnished: e.target.value})}
+                  className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="unfurnished">Unfurnished</option>
+                  <option value="partially_furnished">Partially Furnished</option>
+                  <option value="fully_furnished">Fully Furnished</option>
+                </select>
+                
+                <input
+                  type="date"
+                  placeholder="Available From"
+                  value={formData.availability_date}
+                  onChange={(e) => setFormData({...formData, availability_date: e.target.value})}
+                  className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
+
+            {formData.listing_type === 'rent' && (
+              <input
+                type="text"
+                placeholder="Deposit Information (e.g., 2 months + 1 month advance)"
+                value={formData.deposit_info}
+                onChange={(e) => setFormData({...formData, deposit_info: e.target.value})}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            )}
+          </div>
+
+          {/* Images */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Property Images</h3>
+            
+            {images.map((image, index) => (
+              <div key={index} className="flex space-x-2">
+                <input
+                  type="url"
+                  placeholder={`Image URL ${index + 1}${index === 0 ? ' (Primary)' : ''}`}
+                  value={image}
+                  onChange={(e) => updateImage(index, e.target.value)}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required={index === 0}
+                />
+                {index > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => removeImageField(index)}
+                    className="p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+            ))}
+            
+            <button
+              type="button"
+              onClick={addImageField}
+              className="flex items-center px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200"
             >
-              <option value="house">House</option>
-              <option value="apartment">Apartment</option>
-              <option value="condo">Condo</option>
-              <option value="villa">Villa</option>
-            </select>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Another Image
+            </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            <input type="number" placeholder="Bedrooms" value={formData.bedrooms} onChange={(e) => setFormData({...formData, bedrooms: e.target.value})} className="px-4 py-3 border rounded-lg" required />
-            <input type="number" placeholder="Bathrooms" value={formData.bathrooms} onChange={(e) => setFormData({...formData, bathrooms: e.target.value})} className="px-4 py-3 border rounded-lg" required />
-            <input type="number" placeholder="Sq Ft" value={formData.sqft} onChange={(e) => setFormData({...formData, sqft: e.target.value})} className="px-4 py-3 border rounded-lg" required />
-          </div>
+          {/* Amenities */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Amenities</h3>
+            
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                placeholder="Add amenity (e.g., Swimming Pool, Gym, Parking)"
+                value={newAmenity}
+                onChange={(e) => setNewAmenity(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAmenity())}
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={addAmenity}
+                className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              >
+                Add
+              </button>
+            </div>
 
-          <textarea
-            placeholder="Description"
-            value={formData.description}
-            onChange={(e) => setFormData({...formData, description: e.target.value})}
-            className="w-full px-4 py-3 border rounded-lg h-24"
-            required
-          />
+            {formData.amenities.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formData.amenities.map((amenity) => (
+                  <div key={amenity} className="flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
+                    <span className="text-sm">{amenity}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeAmenity(amenity)}
+                      className="ml-2 text-blue-600 hover:text-blue-800"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           <button 
             type="submit" 
-            disabled={loading || (user.userType === 'agent' && user.credits < POSTING_COST)}
-            className="w-full bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading}
+            className="w-full bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors duration-200 disabled:opacity-50"
           >
-            {loading ? 'Submitting...' : `Submit Property${user.userType === 'agent' ? ` (-${POSTING_COST} credits)` : ''}`}
+            {loading ? 'Creating Listing...' : `Create Listing${user.userType === 'agent' ? ` (-${POSTING_COST} credits)` : ''}`}
           </button>
         </form>
       </div>

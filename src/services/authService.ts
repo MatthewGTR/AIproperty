@@ -1,46 +1,121 @@
-import { User, PendingRegistration, CreditTransaction } from '../types/User';
+import { supabase } from '../lib/supabase';
+import { Database } from '../lib/database.types';
 
-// Mock database - in real app, this would be a proper database
-let users: User[] = [
-  {
-    id: 'admin1',
-    name: 'Admin User',
-    email: 'admin@aiproperty.com',
-    userType: 'admin',
-    status: 'approved',
-    credits: 0,
-    registrationDate: '2025-01-01'
-  }
-];
-
-let pendingRegistrations: PendingRegistration[] = [];
-let creditTransactions: CreditTransaction[] = [];
+type Profile = Database['public']['Tables']['profiles']['Row'];
+type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
+type CreditTransaction = Database['public']['Tables']['credit_transactions']['Row'];
 
 export const authService = {
-  // User Authentication
-  login: async (email: string, password: string): Promise<{ success: boolean; user?: User; message?: string }> => {
-    const user = users.find(u => u.email === email);
-    
-    if (!user) {
-      return { success: false, message: 'User not found' };
+  // Sign up with Supabase Auth
+  async signUp(userData: {
+    email: string;
+    password: string;
+    full_name: string;
+    phone?: string;
+    user_type: 'buyer' | 'seller' | 'agent';
+    company?: string;
+    license_number?: string;
+  }): Promise<{ success: boolean; message: string }> {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            full_name: userData.full_name,
+            phone: userData.phone,
+            user_type: userData.user_type,
+            company: userData.company,
+            license_number: userData.license_number
+          }
+        }
+      });
+
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      if (userData.user_type === 'buyer') {
+        return { success: true, message: 'Account created successfully!' };
+      } else {
+        return { 
+          success: true, 
+          message: 'Registration submitted! Your account will be reviewed by an admin within 24-48 hours.' 
+        };
+      }
+    } catch (error: any) {
+      return { success: false, message: error.message };
     }
-    
-    if (user.status === 'pending') {
-      return { success: false, message: 'Your account is pending admin approval' };
-    }
-    
-    if (user.status === 'rejected') {
-      return { success: false, message: 'Your account has been rejected' };
-    }
-    
-    if (user.status === 'suspended') {
-      return { success: false, message: 'Your account has been suspended' };
-    }
-    
-    return { success: true, user };
   },
 
-  // User Registration
+  // Sign in with Supabase Auth
+  async signIn(email: string, password: string): Promise<{ success: boolean; user?: Profile; message?: string }> {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profile) {
+          if (profile.status === 'pending') {
+            return { success: false, message: 'Your account is pending admin approval' };
+          }
+          if (profile.status === 'rejected') {
+            return { success: false, message: 'Your account has been rejected' };
+          }
+          if (profile.status === 'suspended') {
+            return { success: false, message: 'Your account has been suspended' };
+          }
+          
+          return { success: true, user: profile };
+        }
+      }
+
+      return { success: false, message: 'User profile not found' };
+    } catch (error: any) {
+      return { success: false, message: error.message };
+    }
+  },
+
+  // Sign out
+  async signOut(): Promise<void> {
+    await supabase.auth.signOut();
+  },
+
+  // Get current user session
+  async getCurrentUser(): Promise<Profile | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        return profile;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return null;
+    }
+  },
+
+  // Legacy register method for compatibility
   register: async (userData: {
     name: string;
     email: string;
@@ -50,192 +125,254 @@ export const authService = {
     company?: string;
     licenseNumber?: string;
   }): Promise<{ success: boolean; message: string }> => {
-    // Check if user already exists
-    if (users.find(u => u.email === userData.email)) {
-      return { success: false, message: 'Email already registered' };
-    }
-
-    if (userData.userType === 'buyer') {
-      // Buyers get immediate approval
-      const newUser: User = {
-        id: `user_${Date.now()}`,
-        name: userData.name,
-        email: userData.email,
-        userType: userData.userType,
-        status: 'approved',
-        credits: 0,
-        registrationDate: new Date().toISOString(),
-        phone: userData.phone
-      };
-      
-      users.push(newUser);
-      return { success: true, message: 'Account created successfully!' };
-    } else {
-      // Agents and sellers need admin approval
-      const pendingReg: PendingRegistration = {
-        id: `pending_${Date.now()}`,
-        name: userData.name,
-        email: userData.email,
-        phone: userData.phone || '',
-        userType: userData.userType as 'agent' | 'seller',
-        company: userData.company,
-        licenseNumber: userData.licenseNumber,
-        registrationDate: new Date().toISOString()
-      };
-      
-      pendingRegistrations.push(pendingReg);
-      return { 
-        success: true, 
-        message: 'Registration submitted! Your account will be reviewed by an admin within 24-48 hours.' 
-      };
-    }
+    return authService.signUp({
+      email: userData.email,
+      password: userData.password,
+      full_name: userData.name,
+      phone: userData.phone,
+      user_type: userData.userType,
+      company: userData.company,
+      license_number: userData.licenseNumber
+    });
   },
 
-  // Get current user
-  getCurrentUser: (userId: string): User | null => {
-    return users.find(u => u.id === userId) || null;
+  // Legacy login method for compatibility
+  login: async (email: string, password: string): Promise<{ success: boolean; user?: any; message?: string }> => {
+    const result = await authService.signIn(email, password);
+    if (result.success && result.user) {
+      return {
+        success: true,
+        user: {
+          id: result.user.id,
+          name: result.user.full_name,
+          email: result.user.email,
+          userType: result.user.user_type,
+          credits: result.user.credits
+        }
+      };
+    }
+    return { success: result.success, message: result.message };
   },
 
   // Admin Functions
-  getPendingRegistrations: (): PendingRegistration[] => {
-    return pendingRegistrations;
+  async getPendingRegistrations(): Promise<Profile[]> {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching pending registrations:', error);
+      return [];
+    }
+
+    return data || [];
   },
 
-  approveRegistration: (registrationId: string, adminId: string): { success: boolean; message: string } => {
-    const pendingIndex = pendingRegistrations.findIndex(p => p.id === registrationId);
-    
-    if (pendingIndex === -1) {
-      return { success: false, message: 'Registration not found' };
+  async approveRegistration(registrationId: string, adminId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const { data: profile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', registrationId)
+        .single();
+
+      if (fetchError || !profile) {
+        return { success: false, message: 'Registration not found' };
+      }
+
+      // Update profile status
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          status: 'approved',
+          approved_by: adminId,
+          approved_at: new Date().toISOString(),
+          credits: profile.user_type === 'agent' ? 10 : 0
+        })
+        .eq('id', registrationId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Add welcome credits for agents
+      if (profile.user_type === 'agent') {
+        await supabase
+          .from('credit_transactions')
+          .insert({
+            user_id: registrationId,
+            transaction_type: 'addition',
+            amount: 10,
+            reason: 'Welcome bonus for new agent',
+            admin_id: adminId
+          });
+      }
+
+      return { success: true, message: 'Registration approved successfully' };
+    } catch (error: any) {
+      return { success: false, message: error.message };
     }
-    
-    const pending = pendingRegistrations[pendingIndex];
-    
-    // Create approved user
-    const newUser: User = {
-      id: `user_${Date.now()}`,
-      name: pending.name,
-      email: pending.email,
-      userType: pending.userType,
-      status: 'approved',
-      credits: pending.userType === 'agent' ? 10 : 0, // Give agents 10 free credits
-      registrationDate: pending.registrationDate,
-      approvedBy: adminId,
-      approvedDate: new Date().toISOString(),
-      phone: pending.phone,
-      company: pending.company,
-      licenseNumber: pending.licenseNumber
-    };
-    
-    users.push(newUser);
-    pendingRegistrations.splice(pendingIndex, 1);
-    
-    // Record credit transaction if agent
-    if (pending.userType === 'agent') {
-      const transaction: CreditTransaction = {
-        id: `tx_${Date.now()}`,
-        userId: newUser.id,
-        type: 'addition',
-        amount: 10,
-        reason: 'Welcome bonus for new agent',
-        timestamp: new Date().toISOString(),
-        adminId
-      };
-      creditTransactions.push(transaction);
-    }
-    
-    return { success: true, message: 'Registration approved successfully' };
   },
 
-  rejectRegistration: (registrationId: string, adminId: string): { success: boolean; message: string } => {
-    const pendingIndex = pendingRegistrations.findIndex(p => p.id === registrationId);
-    
-    if (pendingIndex === -1) {
-      return { success: false, message: 'Registration not found' };
+  async rejectRegistration(registrationId: string, adminId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          status: 'rejected',
+          approved_by: adminId,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', registrationId);
+
+      if (error) throw error;
+      return { success: true, message: 'Registration rejected' };
+    } catch (error: any) {
+      return { success: false, message: error.message };
     }
-    
-    pendingRegistrations.splice(pendingIndex, 1);
-    return { success: true, message: 'Registration rejected' };
   },
 
   // Credit Management
-  addCredits: (userId: string, amount: number, reason: string, adminId: string): { success: boolean; message: string } => {
-    const user = users.find(u => u.id === userId);
-    
-    if (!user) {
-      return { success: false, message: 'User not found' };
+  async addCredits(userId: string, amount: number, reason: string, adminId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const { data: profile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError || !profile) {
+        return { success: false, message: 'User not found' };
+      }
+
+      // Update credits
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ credits: profile.credits + amount })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      // Record transaction
+      await supabase
+        .from('credit_transactions')
+        .insert({
+          user_id: userId,
+          transaction_type: 'addition',
+          amount,
+          reason,
+          admin_id: adminId
+        });
+
+      return { success: true, message: `${amount} credits added successfully` };
+    } catch (error: any) {
+      return { success: false, message: error.message };
     }
-    
-    user.credits += amount;
-    
-    const transaction: CreditTransaction = {
-      id: `tx_${Date.now()}`,
-      userId,
-      type: 'addition',
-      amount,
-      reason,
-      timestamp: new Date().toISOString(),
-      adminId
-    };
-    
-    creditTransactions.push(transaction);
-    
-    return { success: true, message: `${amount} credits added successfully` };
   },
 
-  deductCredits: (userId: string, amount: number, reason: string, propertyId?: string): { success: boolean; message: string } => {
-    const user = users.find(u => u.id === userId);
-    
-    if (!user) {
-      return { success: false, message: 'User not found' };
+  async deductCredits(userId: string, amount: number, reason: string, propertyId?: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const { data: profile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError || !profile) {
+        return { success: false, message: 'User not found' };
+      }
+
+      if (profile.credits < amount) {
+        return { success: false, message: 'Insufficient credits' };
+      }
+
+      // Update credits
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ credits: profile.credits - amount })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      // Record transaction
+      await supabase
+        .from('credit_transactions')
+        .insert({
+          user_id: userId,
+          transaction_type: 'deduction',
+          amount,
+          reason,
+          property_id: propertyId
+        });
+
+      return { success: true, message: `${amount} credits deducted` };
+    } catch (error: any) {
+      return { success: false, message: error.message };
     }
-    
-    if (user.credits < amount) {
-      return { success: false, message: 'Insufficient credits' };
-    }
-    
-    user.credits -= amount;
-    
-    const transaction: CreditTransaction = {
-      id: `tx_${Date.now()}`,
-      userId,
-      type: 'deduction',
-      amount,
-      reason,
-      timestamp: new Date().toISOString(),
-      propertyId
-    };
-    
-    creditTransactions.push(transaction);
-    
-    return { success: true, message: `${amount} credits deducted` };
   },
 
-  getUserCredits: (userId: string): number => {
-    const user = users.find(u => u.id === userId);
-    return user?.credits || 0;
+  async getUserCredits(userId: string): Promise<number> {
+    const { data } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('id', userId)
+      .single();
+    
+    return data?.credits || 0;
   },
 
-  getCreditTransactions: (userId?: string): CreditTransaction[] => {
+  async getCreditTransactions(userId?: string): Promise<CreditTransaction[]> {
+    let query = supabase
+      .from('credit_transactions')
+      .select('*')
+      .order('created_at', { ascending: false });
+
     if (userId) {
-      return creditTransactions.filter(t => t.userId === userId);
+      query = query.eq('user_id', userId);
     }
-    return creditTransactions;
+
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error('Error fetching transactions:', error);
+      return [];
+    }
+
+    return data || [];
   },
 
   // Admin user management
-  getAllUsers: (): User[] => {
-    return users;
+  async getAllUsers(): Promise<Profile[]> {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching users:', error);
+      return [];
+    }
+
+    return data || [];
   },
 
-  updateUserStatus: (userId: string, status: User['status'], adminId: string): { success: boolean; message: string } => {
-    const user = users.find(u => u.id === userId);
-    
-    if (!user) {
-      return { success: false, message: 'User not found' };
+  async updateUserStatus(userId: string, status: Profile['status'], adminId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          status,
+          approved_by: adminId,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+      return { success: true, message: `User status updated to ${status}` };
+    } catch (error: any) {
+      return { success: false, message: error.message };
     }
-    
-    user.status = status;
-    
-    return { success: true, message: `User status updated to ${status}` };
   }
 };

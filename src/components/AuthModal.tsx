@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, Eye, EyeOff, Phone, Building, FileText } from 'lucide-react';
 import { authService } from '../services/authService';
+import { supabase } from '../lib/supabase';
 
 interface AuthModalProps {
   onClose: () => void;
@@ -31,14 +32,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
 
     try {
       if (isLogin) {
-        const result = await authService.login(formData.email, formData.password);
+        const result = await authService.signIn(formData.email, formData.password);
         
         if (result.success && result.user) {
           onLogin({
             id: result.user.id,
-            name: result.user.name,
+            name: result.user.full_name,
             email: result.user.email,
-            userType: result.user.userType,
+            userType: result.user.user_type,
             credits: result.user.credits
           });
           onClose();
@@ -46,21 +47,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLogin }) => {
           setError(result.message || 'Login failed');
         }
       } else {
-        const result = await authService.register(formData);
+        const result = await authService.signUp({
+          email: formData.email,
+          password: formData.password,
+          full_name: formData.name,
+          phone: formData.phone,
+          user_type: formData.userType as any,
+          company: formData.company,
+          license_number: formData.licenseNumber
+        });
         
         if (result.success) {
           setSuccess(result.message);
           if (formData.userType === 'buyer') {
             // Auto-login buyers
             setTimeout(() => {
-              const loginResult = authService.login(formData.email, formData.password);
+              const loginResult = authService.signIn(formData.email, formData.password);
               loginResult.then(res => {
                 if (res.success && res.user) {
                   onLogin({
                     id: res.user.id,
-                    name: res.user.name,
+                    name: res.user.full_name,
                     email: res.user.email,
-                    userType: res.user.userType,
+                    userType: res.user.user_type,
                     credits: res.user.credits
                   });
                   onClose();
