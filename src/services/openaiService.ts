@@ -228,6 +228,7 @@ const findPropertiesWithContext = (query: string, properties: PropertyWithImages
   }
   
   return filtered.slice(0, 6);
+}
 
 const generateIntelligentResponse = (query: string, properties: PropertyWithImages[], context: ConversationContext): string => {
   if (properties.length > 0) {
