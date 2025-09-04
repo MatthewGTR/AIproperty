@@ -35,25 +35,169 @@ function initAI() {
 
 initAI();
 
-interface ConversationContext {
-  intent?: 'buy' | 'rent';
-  location?: string;
-  priceRange?: { min?: number; max?: number };
-  propertyType?: string;
-  bedrooms?: number;
-  amenities?: string[];
-  askedQuestions: string[];
-}
+const parseUserQuery = (query: string, currentProfile: UserProfile): UserProfile => {
+  const updatedProfile = { ...currentProfile };
+  const queryLower = query.toLowerCase();
+  
+  // Extract intent
+  const buyKeywords = ['buy', 'buying', 'purchase', 'purchasing', 'own', 'ownership', 'invest', 'investment'];
+  const rentKeywords = ['rent', 'rental', 'renting', 'lease', 'leasing', 'tenant', 'monthly'];
+  
+  if (buyKeywords.some(keyword => queryLower.includes(keyword)) && !updatedProfile.intent) {
+    updatedProfile.intent = 'buy';
+  } else if (rentKeywords.some(keyword => queryLower.includes(keyword)) && !updatedProfile.intent) {
+    updatedProfile.intent = 'rent';
+  }
+  
+  // Extract budget
+  const budgetPatterns = [
+    /(?:under|below|less than|max|maximum|budget)\s*rm?\s*(\d+(?:,\d{3})*(?:k|000)?)/gi,
+    /(?:above|over|more than|min|minimum)\s*rm?\s*(\d+(?:,\d{3})*(?:k|000)?)/gi,
+    /rm?\s*(\d+(?:,\d{3})*(?:k|000)?)\s*(?:to|-)\s*rm?\s*(\d+(?:,\d{3})*(?:k|000)?)/gi
+  ];
+  
+  budgetPatterns.forEach(pattern => {
+    const matches = Array.from(queryLower.matchAll(pattern));
+    matches.forEach(match => {
+      if (match[0].includes('under') || match[0].includes('below') || match[0].includes('max') || match[0].includes('budget')) {
+        let maxPrice = parseInt(match[1].replace(/,/g, ''));
+        if (match[1].includes('k') || maxPrice < 10000) maxPrice *= 1000;
+        updatedProfile.budget.max = maxPrice;
+      } else if (match[0].includes('above') || match[0].includes('over') || match[0].includes('min')) {
+        let minPrice = parseInt(match[1].replace(/,/g, ''));
+        if (match[1].includes('k') || minPrice < 10000) minPrice *= 1000;
+        updatedProfile.budget.min = minPrice;
+      } else if (match[0].includes('to') || match[0].includes('-')) {
+        let minPrice = parseInt(match[1].replace(/,/g, ''));
+        let maxPrice = parseInt(match[2].replace(/,/g, ''));
+        if (match[1].includes('k') || minPrice < 10000) minPrice *= 1000;
+        if (match[2].includes('k') || maxPrice < 10000) maxPrice *= 1000;
+        updatedProfile.budget.min = minPrice;
+        updatedProfile.budget.max = maxPrice;
+      }
+    });
+  });
+  
+  // Extract property type
+  const propertyTypes = {
+    'condo': ['condo', 'condominium'],
+    'apartment': ['apartment', 'flat', 'unit'],
+    'house': ['house', 'home', 'landed', 'terrace', 'semi-d', 'bungalow', 'townhouse'],
+    'villa': ['villa'],
+    'studio': ['studio'],
+    'shophouse': ['shophouse', 'shop house'],
+    'office': ['office'],
+    'shop': ['shop', 'retail'],
+    'industrial': ['industrial', 'warehouse', 'factory']
+  };
+  
+  Object.entries(propertyTypes).forEach(([type, keywords]) => {
+    if (keywords.some(keyword => queryLower.includes(keyword)) && !updatedProfile.property_type.includes(type)) {
+      updatedProfile.property_type.push(type);
+    }
+  });
+  
+  // Extract bedrooms/bathrooms
+  const bedroomMatch = queryLower.match(/(\d+)\s*(?:bed|bedroom|br)/);
+  if (bedroomMatch && !updatedProfile.bedrooms) {
+    updatedProfile.bedrooms = parseInt(bedroomMatch[1]);
+  }
+  
+  const bathroomMatch = queryLower.match(/(\d+)\s*(?:bath|bathroom)/);
+  if (bathroomMatch && !updatedProfile.bathrooms) {
+    updatedProfile.bathrooms = parseInt(bathroomMatch[1]);
+  }
+  
+  // Extract locations
+  const malaysianStates = [
+    'johor', 'kedah', 'kelantan', 'malacca', 'melaka', 'negeri sembilan', 
+    'pahang', 'penang', 'perak', 'perlis', 'sabah', 'sarawak', 'selangor', 
+    'terengganu', 'kuala lumpur', 'kl', 'putrajaya', 'labuan'
+  ];
+  
+  const areas = [
+    'johor bahru', 'jb', 'georgetown', 'petaling jaya', 'pj', 'subang jaya',
+    'cyberjaya', 'shah alam', 'klcc', 'mont kiara', 'bangsar', 'damansara',
+    'taman daya', 'taman molek', 'sutera utama', 'mount austin', 'horizon hills',
+    'medini', 'iskandar', 'city square', 'paradigm', 'bukit bintang', 'cheras',
+    'ampang', 'kajang', 'setia alam', 'sunway', 'puchong'
+  ];
+  
+  malaysianStates.forEach(state => {
+    if (queryLower.includes(state) && !updatedProfile.states.includes(state)) {
+      updatedProfile.states.push(state);
+    }
+  });
+  
+  areas.forEach(area => {
+    if (queryLower.includes(area) && !updatedProfile.areas.includes(area)) {
+      updatedProfile.areas.push(area);
+    }
+  });
+  
+  // Extract amenities
+  const amenityKeywords = [
+    'pool', 'swimming', 'gym', 'fitness', 'parking', 'security', 'garden',
+    'furnished', 'wifi', 'internet', 'playground', 'clubhouse', 'tennis',
+    'school', 'mall', 'university', 'mrt', 'lrt', 'train', 'hospital'
+  ];
+  
+  amenityKeywords.forEach(amenity => {
+    if (queryLower.includes(amenity) && !updatedProfile.amenities.includes(amenity)) {
+      updatedProfile.amenities.push(amenity);
+    }
+  });
+  
+  // Extract purpose
+  if ((queryLower.includes('own stay') || queryLower.includes('live') || queryLower.includes('family')) && !updatedProfile.purpose) {
+    updatedProfile.purpose = 'own_stay';
+  } else if ((queryLower.includes('invest') || queryLower.includes('rental') || queryLower.includes('roi')) && !updatedProfile.purpose) {
+    updatedProfile.purpose = 'investment';
+  }
+  
+  // Extract tenure
+  if (queryLower.includes('freehold') && !updatedProfile.tenure) {
+    updatedProfile.tenure = 'freehold';
+  } else if (queryLower.includes('leasehold') && !updatedProfile.tenure) {
+    updatedProfile.tenure = 'leasehold';
+  }
+  
+  // Extract new launch preference
+  if ((queryLower.includes('new launch') || queryLower.includes('new development')) && updatedProfile.new_launch === null) {
+    updatedProfile.new_launch = true;
+  } else if ((queryLower.includes('resale') || queryLower.includes('existing')) && updatedProfile.new_launch === null) {
+    updatedProfile.new_launch = false;
+  }
+  
+  // Count known fields
+  let count = 0;
+  if (updatedProfile.intent) count++;
+  if (updatedProfile.budget.min || updatedProfile.budget.max) count++;
+  if (updatedProfile.property_type.length > 0) count++;
+  if (updatedProfile.states.length > 0 || updatedProfile.areas.length > 0) count++;
+  if (updatedProfile.bedrooms) count++;
+  if (updatedProfile.purpose) count++;
+  if (updatedProfile.tenure) count++;
+  if (updatedProfile.new_launch !== null) count++;
+  
+  updatedProfile.known_fields_count = count;
+  
+  return updatedProfile;
+};
 
 export const searchPropertiesWithAI = async (
   userQuery: string, 
   properties: PropertyWithImages[],
   locationInfo?: any,
-  conversationHistory?: string[]
-): Promise<{ response: string; matchedProperties: PropertyWithImages[] }> => {
+  conversationHistory?: string[],
+  currentUserProfile?: UserProfile
+): Promise<{ response: string; matchedProperties: PropertyWithImages[]; userProfile: UserProfile }> => {
   
-  // Build conversation context from history
-  const context = buildConversationContext(conversationHistory || [], userQuery);
+  // Use provided profile or create default
+  const userProfile = currentUserProfile || createDefaultUserProfile();
+  
+  // Parse user query and update profile
+  const updatedProfile = parseUserQuery(userQuery, userProfile);
   
   // Check if this is a property-related query
   const isPropertyQuery = isPropertyRelated(userQuery);
@@ -63,215 +207,168 @@ export const searchPropertiesWithAI = async (
     const chatResponse = await handleGeneralChat(userQuery);
     return {
       response: chatResponse,
-      matchedProperties: []
+      matchedProperties: [],
+      userProfile: updatedProfile
     };
   }
 
-  // Find matching properties using context
-  const matchedProperties = findPropertiesWithContext(userQuery, properties, context);
-  
-  // Generate intelligent response with reasoning
-  const response = generateIntelligentResponse(userQuery, matchedProperties, context);
-  
-  return {
-    response,
-    matchedProperties
-  };
-};
-
-const buildConversationContext = (history: string[], currentQuery: string): ConversationContext => {
-  const context: ConversationContext = {
-    askedQuestions: []
-  };
-  
-  const allMessages = [...history, currentQuery];
-  const fullConversation = allMessages.join(' ').toLowerCase();
-  
-  // Extract intent (buy/rent) - once mentioned, remember it
-  if (fullConversation.includes('buy') || fullConversation.includes('purchase') || fullConversation.includes('buying')) {
-    context.intent = 'buy';
-  } else if (fullConversation.includes('rent') || fullConversation.includes('rental') || fullConversation.includes('renting')) {
-    context.intent = 'rent';
-  }
-  
-  // Extract location - remember any mentioned location
-  const locations = [
-    'johor bahru', 'jb', 'johor', 'kuala lumpur', 'kl', 'penang', 'georgetown',
-    'selangor', 'klcc', 'mont kiara', 'bangsar', 'petaling jaya', 'pj',
-    'cyberjaya', 'putrajaya', 'shah alam', 'subang', 'damansara', 'cheras',
-    'ampang', 'kajang', 'taman daya', 'taman molek', 'sutera', 'mount austin',
-    'horizon hills', 'medini', 'iskandar', 'city square', 'paradigm'
-  ];
-  
-  for (const location of locations) {
-    if (fullConversation.includes(location)) {
-      context.location = location;
-      break;
+  // Check if we have enough information to search
+  if (updatedProfile.known_fields_count >= 3) {
+    // Search for properties
+    const searchFilters: any = {};
+    
+    if (updatedProfile.intent) {
+      searchFilters.listing_type = updatedProfile.intent === 'buy' ? 'sale' : 'rent';
     }
-  }
-  
-  // Extract price range
-  const pricePatterns = [
-    /(?:under|below|less than|max|maximum|budget)\s*rm?\s*(\d+)k?/g,
-    /(?:above|over|more than|min|minimum)\s*rm?\s*(\d+)k?/g,
-    /rm?\s*(\d+)k?\s*to\s*rm?\s*(\d+)k?/g
-  ];
-  
-  for (const pattern of pricePatterns) {
-    const matches = Array.from(fullConversation.matchAll(pattern));
-    for (const match of matches) {
-      if (match[0].includes('under') || match[0].includes('below') || match[0].includes('max') || match[0].includes('budget')) {
-        let maxPrice = parseInt(match[1]);
-        if (match[1].includes('k') || maxPrice < 1000) maxPrice *= 1000;
-        context.priceRange = { ...context.priceRange, max: maxPrice };
-      } else if (match[0].includes('above') || match[0].includes('over') || match[0].includes('min')) {
-        let minPrice = parseInt(match[1]);
-        if (match[1].includes('k') || minPrice < 1000) minPrice *= 1000;
-        context.priceRange = { ...context.priceRange, min: minPrice };
-      } else if (match[0].includes('to')) {
-        let minPrice = parseInt(match[1]);
-        let maxPrice = parseInt(match[2]);
-        if (match[1].includes('k') || minPrice < 1000) minPrice *= 1000;
-        if (match[2].includes('k') || maxPrice < 1000) maxPrice *= 1000;
-        context.priceRange = { min: minPrice, max: maxPrice };
+    
+    if (updatedProfile.budget.min) {
+      searchFilters.min_price = updatedProfile.budget.min;
+    }
+    
+    if (updatedProfile.budget.max) {
+      searchFilters.max_price = updatedProfile.budget.max;
+    }
+    
+    if (updatedProfile.property_type.length > 0) {
+      searchFilters.property_type = updatedProfile.property_type[0];
+    }
+    
+    if (updatedProfile.bedrooms) {
+      searchFilters.bedrooms = updatedProfile.bedrooms;
+    }
+    
+    if (updatedProfile.states.length > 0) {
+      searchFilters.city = updatedProfile.states[0];
+    } else if (updatedProfile.areas.length > 0) {
+      searchFilters.city = updatedProfile.areas[0];
+    }
+    
+    searchFilters.limit = 6;
+    
+    try {
+      const matchedProperties = await propertyService.getProperties(searchFilters);
+      
+      if (matchedProperties.length > 0) {
+        let response = "Here are some matches:\n\n";
+        
+        matchedProperties.forEach(property => {
+          const price = property.listing_type === 'rent' 
+            ? `RM${property.price.toLocaleString()}/month`
+            : `RM${property.price.toLocaleString()}`;
+          
+          const reason = generateMatchReason(property, updatedProfile);
+          
+          response += `${property.title}, ${property.city}. ${price}. ${property.sqft.toLocaleString()} sqft. ${reason} [View details]\n\n`;
+        });
+        
+        return {
+          response: response.trim(),
+          matchedProperties,
+          userProfile: updatedProfile
+        };
+      } else {
+        return {
+          response: "No properties match your criteria. Try adjusting your budget or location preferences?",
+          matchedProperties: [],
+          userProfile: updatedProfile
+        };
       }
+    } catch (error) {
+      console.error('Error searching properties:', error);
+      return {
+        response: "Sorry, I'm having trouble searching right now. Please try again.",
+        matchedProperties: [],
+        userProfile: updatedProfile
+      };
     }
+  } else {
+    // Ask clarifying question
+    const question = generateClarifyingQuestion(updatedProfile);
+    updatedProfile.last_question = question;
+    
+    return {
+      response: question,
+      matchedProperties: [],
+      userProfile: updatedProfile
+    };
   }
-  
-  // Extract property type
-  const typeKeywords = {
-    'house': ['house', 'home', 'landed', 'terrace', 'semi-d', 'bungalow', 'townhouse'],
-    'apartment': ['apartment', 'flat', 'unit'],
-    'condo': ['condo', 'condominium'],
-    'villa': ['villa'],
-    'studio': ['studio'],
-    'shophouse': ['shophouse', 'shop house']
-  };
-  
-  for (const [type, keywords] of Object.entries(typeKeywords)) {
-    if (keywords.some(keyword => fullConversation.includes(keyword))) {
-      context.propertyType = type;
-      break;
-    }
-  }
-  
-  // Extract bedrooms
-  const bedroomMatch = fullConversation.match(/(\d+)\s*(?:bed|bedroom|br|room)/);
-  if (bedroomMatch) {
-    context.bedrooms = parseInt(bedroomMatch[1]);
-  }
-  
-  // Extract amenities
-  const amenityKeywords = [
-    'pool', 'swimming', 'gym', 'fitness', 'parking', 'security', 'garden',
-    'furnished', 'wifi', 'internet', 'playground', 'clubhouse', 'tennis',
-    'near school', 'near mall', 'near university', 'city view', 'sea view'
-  ];
-  
-  context.amenities = amenityKeywords.filter(amenity => fullConversation.includes(amenity));
-  
-  return context;
 };
 
-const findPropertiesWithContext = (query: string, properties: PropertyWithImages[], context: ConversationContext): PropertyWithImages[] => {
-  let filtered = [...properties];
+const generateMatchReason = (property: PropertyWithImages, profile: UserProfile): string => {
+  const reasons = [];
   
-  // Apply intent filter
-  if (context.intent) {
-    filtered = filtered.filter(p => p.listing_type === context.intent);
+  if (profile.intent === 'buy' && property.listing_type === 'sale') {
+    reasons.push('for sale');
+  } else if (profile.intent === 'rent' && property.listing_type === 'rent') {
+    reasons.push('for rent');
   }
   
-  // Apply location filter
-  if (context.location) {
-    filtered = filtered.filter(p => 
-      p.city?.toLowerCase().includes(context.location!) ||
-      p.state?.toLowerCase().includes(context.location!) ||
-      p.address?.toLowerCase().includes(context.location!)
-    );
+  if (profile.bedrooms && property.bedrooms === profile.bedrooms) {
+    reasons.push(`${property.bedrooms} bedrooms as requested`);
   }
   
-  // Apply price filter
-  if (context.priceRange) {
-    if (context.priceRange.max) {
-      filtered = filtered.filter(p => p.price <= context.priceRange!.max!);
-    }
-    if (context.priceRange.min) {
-      filtered = filtered.filter(p => p.price >= context.priceRange!.min!);
-    }
+  if (profile.budget.max && property.price <= profile.budget.max) {
+    reasons.push('within budget');
   }
   
-  // Apply property type filter
-  if (context.propertyType) {
-    filtered = filtered.filter(p => p.property_type === context.propertyType);
+  if (profile.property_type.includes(property.property_type)) {
+    reasons.push(`${property.property_type} type`);
   }
   
-  // Apply bedroom filter
-  if (context.bedrooms) {
-    filtered = filtered.filter(p => p.bedrooms === context.bedrooms);
+  if (profile.amenities.some(amenity => 
+    property.amenities.some(propAmenity => 
+      propAmenity.toLowerCase().includes(amenity.toLowerCase())
+    )
+  )) {
+    reasons.push('has desired amenities');
   }
   
-  // Apply amenity filter
-  if (context.amenities && context.amenities.length > 0) {
-    filtered = filtered.filter(p => 
-      context.amenities!.some(amenity => 
-        p.amenities.some(propAmenity => 
-          propAmenity.toLowerCase().includes(amenity)
-        )
-      )
-    );
-  }
-  
-  return filtered.slice(0, 6);
-  // If user has clear intent but no specific filters, show some properties anyway
-  if (context.intent && filtered.length === 0 && !context.location && !context.priceRange && !context.propertyType) {
-    return properties.filter(p => p.listing_type === context.intent).slice(0, 6);
-  }
-  
-  return filtered.slice(0, 6);
-}
+  return reasons.length > 0 ? `Matches: ${reasons.join(', ')}` : 'Good match for your criteria';
+};
 
-const generateIntelligentResponse = (query: string, properties: PropertyWithImages[], context: ConversationContext): string => {
-  if (properties.length > 0) {
-    // Generate response with reasoning
-    let response = `Based on our conversation, I found ${properties.length} properties that match your criteria:`;
-    
-    const reasons = [];
-    if (context.intent) reasons.push(`${context.intent === 'buy' ? 'for sale' : 'for rent'}`);
-    if (context.location) reasons.push(`in ${context.location}`);
-    if (context.priceRange?.max) reasons.push(`under RM${context.priceRange.max.toLocaleString()}`);
-    if (context.priceRange?.min) reasons.push(`above RM${context.priceRange.min.toLocaleString()}`);
-    if (context.propertyType) reasons.push(`${context.propertyType} type`);
-    if (context.bedrooms) reasons.push(`${context.bedrooms} bedrooms`);
-    
-    if (reasons.length > 0) {
-      response += ` These are ${reasons.join(', ')}.`;
-    }
-    
-    return response;
+const generateClarifyingQuestion = (profile: UserProfile): string => {
+  if (!profile.intent) {
+    return "Are you looking to buy or rent a property?";
   }
   
-  // No matches found - provide helpful guidance
-  const missing = [];
-  if (!context.intent) missing.push('buy or rent');
-  if (!context.location) missing.push('location');
-  if (!context.priceRange) missing.push('budget');
-  
-  if (missing.length > 0) {
-    return `I need more details: ${missing.join(', ')}?`;
+  if (profile.states.length === 0 && profile.areas.length === 0) {
+    return "Which area or state are you interested in?";
   }
   
-  return "No properties match your exact criteria. Try adjusting your budget or location?";
+  if (!profile.budget.min && !profile.budget.max) {
+    return "What's your budget range?";
+  }
+  
+  if (profile.property_type.length === 0) {
+    return "What type of property are you looking for? (condo, house, apartment, etc.)";
+  }
+  
+  if (!profile.bedrooms) {
+    return "How many bedrooms do you need?";
+  }
+  
+  if (!profile.purpose) {
+    return "Is this for your own stay or investment?";
+  }
+  
+  return "Tell me more about your preferences to help find the perfect property.";
+};
+
+// Export the default profile creator for use in other components
+export const getDefaultUserProfile = (): UserProfile => {
+  return createDefaultUserProfile();
 };
 
 const isPropertyRelated = (query: string): boolean => {
   const propertyKeywords = [
     'buy', 'rent', 'house', 'apartment', 'condo', 'villa', 'studio', 'property',
     'bedroom', 'bathroom', 'sqft', 'rm', 'price', 'budget', 'johor', 'kl',
-    'penang', 'selangor', 'furnished', 'pool', 'gym', 'parking', 'agent'
+    'penang', 'selangor', 'furnished', 'pool', 'gym', 'parking', 'agent',
+    'freehold', 'leasehold', 'new launch', 'resale', 'investment', 'own stay'
   ];
   
-  const query_lower = query.toLowerCase();
-  return propertyKeywords.some(keyword => query_lower.includes(keyword));
+  const queryLower = query.toLowerCase();
+  return propertyKeywords.some(keyword => queryLower.includes(keyword));
 };
 
 const handleGeneralChat = async (query: string): Promise<string> => {
@@ -282,28 +379,28 @@ const handleGeneralChat = async (query: string): Promise<string> => {
         messages: [
           {
             role: "system",
-            content: "You are a helpful assistant. Keep responses brief (1-2 sentences). Always end by asking if they're looking for properties."
+            content: "You are a helpful assistant. Keep responses brief and friendly. Always end by asking if they're looking for properties."
           },
           {
             role: "user",
             content: query
           }
         ],
-        max_tokens: 80,
+        max_tokens: 100,
         temperature: 0.7
       });
       
       const response = completion.choices[0]?.message?.content || "I'm here to help!";
-      return response + " Are you looking for any properties?";
+      return response + " Do you look for property?";
     } else if (genAI) {
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      const result = await model.generateContent(`Keep response brief (1-2 sentences). Always end asking about properties. Query: ${query}`);
+      const result = await model.generateContent(`Keep response brief and friendly. Always end asking about properties. Query: ${query}`);
       const response = await result.response;
-      return response.text() || "I'm here to help! Looking for properties?";
+      return response.text() || "I'm here to help! Do you look for property?";
     }
   } catch (error) {
     console.error('Error with AI chat:', error);
   }
   
-  return "That's interesting! Are you looking for any properties today?";
+  return "That's interesting! Do you look for property?";
 };

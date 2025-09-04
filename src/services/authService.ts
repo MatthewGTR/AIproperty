@@ -374,5 +374,43 @@ export const authService = {
     } catch (error: any) {
       return { success: false, message: error.message };
     }
+  },
+
+  // AI Context Management
+  async saveUserAIContext(userId: string, context: UserProfile): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ ai_context: context as any })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error saving AI context:', error);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error saving AI context:', error);
+      return false;
+    }
+  },
+
+  async getUserAIContext(userId: string): Promise<UserProfile | null> {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('ai_context')
+        .eq('id', userId)
+        .single();
+
+      if (error || !data?.ai_context) {
+        return null;
+      }
+
+      return data.ai_context as UserProfile;
+    } catch (error) {
+      console.error('Error getting AI context:', error);
+      return null;
+    }
   }
 };

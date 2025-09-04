@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Send, Bot, User, Sparkles, MapPin } from 'lucide-react';
 import { PropertyWithImages, propertyService } from '../services/propertyService';
-import { searchPropertiesWithAI } from '../services/openaiService';
+import { searchPropertiesWithAI, UserProfile, getDefaultUserProfile } from '../services/openaiService';
+import { authService } from '../services/authService';
 
 interface HeroProps {
+  user: { id: string; name: string; email: string; userType: string; credits: number } | null;
   onPropertiesRecommended: (properties: PropertyWithImages[]) => void;
 }
 
@@ -15,7 +17,7 @@ interface ChatMessage {
   properties?: PropertyWithImages[];
 }
 
-const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended }) => {
+const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -26,6 +28,22 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended }) => {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [aiContext, setAiContext] = useState<UserProfile>(getDefaultUserProfile());
+
+  // Load user's AI context when user changes
+  useEffect(() => {
+    const loadUserContext = async () => {
+      if (user?.id) {
+        const savedContext = await authService.getUserAIContext(user.id);
+        if (savedContext) {
+          setAiContext(savedContext);
+        }
+      } else {
+        setAiContext(getDefaultUserProfile());
+      }
+    };
+    loadUserContext();
+  }, [user]);
 
   const handleSendMessage = async () => {
     if (inputMessage.trim()) {
@@ -38,9 +56,6 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended }) => {
 
       setMessages(prev => [...prev, userMessage]);
       
-      // Get conversation history for context
-      const conversationHistory = messages.map(m => m.text);
-      
       setInputMessage('');
       setIsTyping(true);
 
@@ -48,11 +63,10 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended }) => {
         // Get all properties for AI to analyze
         const allProperties = await propertyService.getProperties({ limit: 50 });
         
-        // Get AI response with conversation context
+        // Get AI response with user context
         const conversationHistory = messages.map(m => m.text);
-        const { response, matchedProperties } = await searchPropertiesWithAI(
+        const { response, matchedProperties, userProfile } = await searchPropertiesWithAI(
           inputMessage, 
-          allProperties, 
           undefined, 
           conversationHistory
         );
@@ -66,6 +80,14 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended }) => {
         };
 
         setMessages(prev => [...prev, aiMessage]);
+        
+        // Update AI context
+        setAiContext(userProfile);
+        
+        // Save context for logged-in users
+        if (user?.id) {
+          await authService.saveUserAIContext(user.id, userProfile);
+        }
         
         // Show recommended properties
         onPropertiesRecommended(matchedProperties);
@@ -94,10 +116,10 @@ const Hero: React.FC<HeroProps> = ({ onPropertiesRecommended }) => {
   };
 
   const quickPrompts = [
-    "Buy house Johor Bahru under RM500k",
-    "Rent apartment KL under RM2500",
-    "Condo for sale KLCC with pool",
-    "Studio rent under RM1200"
+    "I want to buy a house in Johor Bahru under RM500k",
+    "Looking to rent an apartment in KL under RM2500",
+    "Need a condo for sale in KLCC with pool",
+    "Want to rent a studio under RM1200"
   ];
 
   return (

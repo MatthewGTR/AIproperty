@@ -1,3 +1,11 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
 export interface Database {
   public: {
     Tables: {
@@ -18,6 +26,7 @@ export interface Database {
           updated_at: string;
           approved_by: string | null;
           approved_at: string | null;
+          ai_context: Json | null;
         };
         Insert: {
           id: string;
@@ -33,6 +42,7 @@ export interface Database {
           bio?: string | null;
           approved_by?: string | null;
           approved_at?: string | null;
+          ai_context?: Json | null;
         };
         Update: {
           email?: string;
@@ -48,6 +58,7 @@ export interface Database {
           updated_at?: string;
           approved_by?: string | null;
           approved_at?: string | null;
+          ai_context?: Json | null;
         };
       };
       properties: {
