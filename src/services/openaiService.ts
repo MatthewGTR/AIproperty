@@ -170,99 +170,88 @@ const findRelevantPropertiesEnhanced = (query: string, properties: PropertyWithI
     return [];
   }
 
-  // Enhanced intent detection with more keywords
-  const buyKeywords = ['buy', 'buying', 'purchase', 'purchasing', 'own', 'ownership', 'invest', 'investment', 'mortgage', 'loan', 'down payment', 'for sale', 'acquire', 'get', 'want to own'];
-  const rentKeywords = ['rent', 'rental', 'renting', 'lease', 'leasing', 'tenant', 'monthly', 'deposit', 'furnished', 'for rent', 'stay', 'live', 'temporary'];
+  // Start with all properties
+  let filteredProperties = [...properties];
+  
+  // Enhanced intent detection
+  const buyKeywords = ['buy', 'buying', 'purchase', 'purchasing', 'own', 'ownership', 'invest', 'investment', 'for sale'];
+  const rentKeywords = ['rent', 'rental', 'renting', 'lease', 'leasing', 'tenant', 'monthly', 'for rent'];
   
   const isBuyIntent = buyKeywords.some(keyword => q.includes(keyword));
   const isRentIntent = rentKeywords.some(keyword => q.includes(keyword));
   
-  // Filter by intent first
-  let filteredProperties = properties;
+  // Apply intent filter
   if (isBuyIntent && !isRentIntent) {
-    filteredProperties = properties.filter(p => p.listing_type === 'sale');
+    filteredProperties = filteredProperties.filter(p => p.listing_type === 'sale');
   } else if (isRentIntent && !isBuyIntent) {
-    filteredProperties = properties.filter(p => p.listing_type === 'rent');
+    filteredProperties = filteredProperties.filter(p => p.listing_type === 'rent');
   }
 
-  // If still no properties after intent filtering, return all
-  if (filteredProperties.length === 0) {
-    filteredProperties = properties;
-  }
-  
-  // Enhanced location matching with more variations
+  // Apply location filter
   const locationMatches = findLocationMatches(q, filteredProperties);
   if (locationMatches.length > 0) {
     filteredProperties = locationMatches;
   }
   
-  // Enhanced price matching
+  // Apply price filter
   const priceMatches = findPriceMatches(q, filteredProperties);
   if (priceMatches.length > 0) {
     filteredProperties = priceMatches;
   }
   
-  // Enhanced property type matching
+  // Apply property type filter
   const typeMatches = findTypeMatches(q, filteredProperties);
   if (typeMatches.length > 0) {
     filteredProperties = typeMatches;
   }
   
-  // Enhanced bedroom matching
+  // Apply bedroom filter
   const bedroomMatches = findBedroomMatches(q, filteredProperties);
   if (bedroomMatches.length > 0) {
     filteredProperties = bedroomMatches;
   }
   
-  // Enhanced amenity matching
+  // Apply amenity filter
   const amenityMatches = findAmenityMatches(q, filteredProperties);
   if (amenityMatches.length > 0) {
     filteredProperties = amenityMatches;
   }
   
-  // Sort by relevance and return top matches
-  return filteredProperties.slice(0, 4);
+  // Return filtered results (limit to 6 for better display)
+  return filteredProperties.slice(0, 6);
 };
 
 const findLocationMatches = (query: string, properties: PropertyWithImages[]): PropertyWithImages[] => {
-  const locationKeywords = [
-    // Major cities
-    { keywords: ['johor bahru', 'jb', 'johor'], match: ['johor', 'jb'] },
-    { keywords: ['kuala lumpur', 'kl'], match: ['kuala lumpur', 'kl'] },
-    { keywords: ['penang', 'georgetown'], match: ['penang'] },
-    { keywords: ['selangor'], match: ['selangor'] },
-    
-    // Specific areas
-    { keywords: ['klcc', 'city centre', 'city center'], match: ['klcc', 'city centre', 'city center'] },
-    { keywords: ['mont kiara'], match: ['mont kiara'] },
-    { keywords: ['bangsar'], match: ['bangsar'] },
-    { keywords: ['petaling jaya', 'pj'], match: ['petaling jaya', 'pj'] },
-    { keywords: ['cyberjaya'], match: ['cyberjaya'] },
-    { keywords: ['shah alam'], match: ['shah alam'] },
-    { keywords: ['subang'], match: ['subang'] },
-    { keywords: ['damansara'], match: ['damansara'] },
-    { keywords: ['cheras'], match: ['cheras'] },
-    { keywords: ['ampang'], match: ['ampang'] },
-    { keywords: ['kajang'], match: ['kajang'] },
-    { keywords: ['putrajaya'], match: ['putrajaya'] },
-    
-    // Johor specific
-    { keywords: ['taman daya'], match: ['taman daya'] },
-    { keywords: ['taman molek'], match: ['taman molek'] },
-    { keywords: ['sutera'], match: ['sutera'] },
-    { keywords: ['mount austin'], match: ['mount austin'] },
-    { keywords: ['iskandar'], match: ['iskandar'] },
-    { keywords: ['medini'], match: ['medini'] }
-  ];
+  const query_lower = query.toLowerCase();
   
-  for (const location of locationKeywords) {
-    if (location.keywords.some(keyword => query.includes(keyword))) {
+  // Check for Johor Bahru variations
+  if (query_lower.includes('johor bahru') || query_lower.includes('jb') || query_lower.includes('johor')) {
+    const matches = properties.filter(p => 
+      p.city?.toLowerCase().includes('johor') || 
+      p.state?.toLowerCase().includes('johor') ||
+      p.address?.toLowerCase().includes('johor')
+    );
+    if (matches.length > 0) return matches;
+  }
+  
+  // Check for KL variations
+  if (query_lower.includes('kuala lumpur') || query_lower.includes('kl')) {
+    const matches = properties.filter(p => 
+      p.city?.toLowerCase().includes('kuala lumpur') || 
+      p.city?.toLowerCase().includes('kl') ||
+      p.state?.toLowerCase().includes('kuala lumpur')
+    );
+    if (matches.length > 0) return matches;
+  }
+  
+  // Check for other major locations
+  const locations = ['penang', 'selangor', 'klcc', 'mont kiara', 'bangsar', 'petaling jaya', 'pj', 'cyberjaya'];
+  for (const location of locations) {
+    if (query_lower.includes(location)) {
       const matches = properties.filter(p => 
-        location.match.some(match => 
-          p.city?.toLowerCase().includes(match) || 
-          p.address?.toLowerCase().includes(match) ||
-          p.state?.toLowerCase().includes(match)
-        )
+        p.city?.toLowerCase().includes(location) || 
+        p.address?.toLowerCase().includes(location) ||
+        p.state?.toLowerCase().includes(location)
       );
       if (matches.length > 0) return matches;
     }
