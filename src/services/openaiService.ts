@@ -199,3 +199,4 @@ const findRelevantProperties = (query: string, properties: Property[], locationI
   
   // If no specific matches, return empty array
   return [];
+}
