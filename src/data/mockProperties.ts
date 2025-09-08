@@ -501,7 +501,6 @@ export const mockProperties: Property[] = [
     featured: false,
     listedDate: '2024-12-28'
   },
-  // New Agent Profiles with Properties
   {
     id: '21',
     title: 'Executive Condo in Bangsar',
@@ -683,6 +682,7 @@ export const mockProperties: Property[] = [
     location: 'Skudai, Johor Bahru',
     price: 2800,
     type: 'condo',
+    bedrooms: 2,
     bathrooms: 2,
     sqft: 1000,
     images: [
