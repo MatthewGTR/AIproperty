@@ -43,7 +43,8 @@ const BuyPage: React.FC<BuyPageProps> = ({ onClose, user }) => {
       sqft: 1800,
       images: [
         'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
+        'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
       description: 'Well-maintained double storey terrace house in established residential area. Features spacious living areas, modern kitchen, and private garden. Close to schools and amenities.',
       amenities: ['Garden', 'Parking', 'Near School', 'Shopping Mall Nearby', 'Gated Community'],
@@ -67,7 +68,8 @@ const BuyPage: React.FC<BuyPageProps> = ({ onClose, user }) => {
       sqft: 1200,
       images: [
         'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+        'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
       description: 'Contemporary condominium with city views and premium facilities. Located in prime Sutera area with easy access to Singapore. Perfect for investment or own stay.',
       amenities: ['Swimming Pool', 'Gym', 'Security', 'Parking', 'Near CIQ', 'Shopping Mall'],
@@ -91,7 +93,8 @@ const BuyPage: React.FC<BuyPageProps> = ({ onClose, user }) => {
       sqft: 2400,
       images: [
         'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
+        'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
       description: 'Spacious semi-detached house in prestigious Taman Molek. Features large living spaces, modern renovations, and beautiful landscaping. Ideal for growing families.',
       amenities: ['Large Garden', 'Renovated', 'Double Garage', 'Near International School', 'Established Area'],
@@ -115,7 +118,8 @@ const BuyPage: React.FC<BuyPageProps> = ({ onClose, user }) => {
       sqft: 1000,
       images: [
         'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+        'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
       description: 'Affordable apartment in mature residential area. Well-maintained building with basic amenities. Great for first-time buyers or investment purposes.',
       amenities: ['Parking', 'Near Market', 'Public Transport', 'Schools Nearby', 'Affordable'],
@@ -139,7 +143,8 @@ const BuyPage: React.FC<BuyPageProps> = ({ onClose, user }) => {
       sqft: 1400,
       images: [
         'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
+        'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
       description: 'Premium condominium near Paradigm Mall with modern facilities and strategic location. Close to universities and shopping centers. Excellent connectivity to major highways.',
       amenities: ['Near Mall', 'Swimming Pool', 'Gym', 'Security', 'Near University', 'Highway Access'],
@@ -163,7 +168,8 @@ const BuyPage: React.FC<BuyPageProps> = ({ onClose, user }) => {
       sqft: 1600,
       images: [
         'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
+        'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
       description: 'Single storey terrace house in university area. Popular with students and young families. Good rental potential and capital appreciation prospects.',
       amenities: ['Near University', 'Student Area', 'Good Rental Yield', 'Public Transport', 'Food Courts'],
@@ -187,7 +193,8 @@ const BuyPage: React.FC<BuyPageProps> = ({ onClose, user }) => {
       sqft: 900,
       images: [
         'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+        'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
       description: 'Modern high-rise condominium in JB city center. Walking distance to City Square Mall and transportation hubs. Perfect for urban lifestyle enthusiasts.',
       amenities: ['City Center', 'Near Mall', 'Public Transport', 'Restaurants', 'Entertainment', 'Security'],
@@ -211,7 +218,8 @@ const BuyPage: React.FC<BuyPageProps> = ({ onClose, user }) => {
       sqft: 3200,
       images: [
         'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
+        'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
       description: 'Exclusive villa in prestigious Mount Austin area. Features private pool, landscaped garden, and panoramic city views. Premium location with excellent security.',
       amenities: ['Private Pool', 'City View', 'Garden', 'Security', 'Prestigious Area', 'Double Garage'],
@@ -235,7 +243,8 @@ const BuyPage: React.FC<BuyPageProps> = ({ onClose, user }) => {
       sqft: 1800,
       images: [
         'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
+        'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
       description: 'Heritage shophouse in prime commercial area. Ground floor suitable for business, upper floors for residence. Excellent investment opportunity in historic JB.',
       amenities: ['Commercial Use', 'Heritage Building', 'Prime Location', 'High Traffic', 'Investment Potential'],
@@ -259,7 +268,8 @@ const BuyPage: React.FC<BuyPageProps> = ({ onClose, user }) => {
       sqft: 1100,
       images: [
         'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+        'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
       description: 'Brand new condominium in Medini Iskandar development. Modern design with smart home features. Close to Legoland and premium outlets. Great for investment.',
       amenities: ['New Launch', 'Smart Home', 'Near Legoland', 'Premium Outlets', 'Modern Design', 'Investment'],
