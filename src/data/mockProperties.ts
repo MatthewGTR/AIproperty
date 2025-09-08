@@ -11,7 +11,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1400,
     images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Luxurious condominium in the heart of KL with stunning city views and premium facilities.',
     amenities: ['Swimming Pool', 'Gym', 'Security', 'Parking', 'Concierge'],
@@ -34,7 +36,9 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     sqft: 1800,
     images: [
-      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Spacious double-storey terrace house in established residential area with easy access to amenities.',
     amenities: ['Garden', 'Parking', 'Near School', 'Shopping Mall Nearby'],
@@ -57,7 +61,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1100,
     images: [
-      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Heritage area apartment with stunning hill views and walking distance to UNESCO World Heritage sites.',
     amenities: ['Hill View', 'Heritage Location', 'Near UNESCO Sites', 'Parking'],
@@ -80,7 +86,9 @@ export const mockProperties: Property[] = [
     bathrooms: 4,
     sqft: 4200,
     images: [
-      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Exclusive villa in prestigious Mont Kiara with private pool and landscaped garden.',
     amenities: ['Private Pool', 'Garden', 'Security', 'Maid Room', 'Double Garage'],
@@ -128,7 +136,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1200,
     images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Stunning beachfront condominium with panoramic sea views and resort-style facilities.',
     amenities: ['Sea View', 'Beach Access', 'Swimming Pool', 'Gym', 'BBQ Area'],
@@ -151,7 +161,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 2000,
     images: [
-      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Strategic shop office in busy commercial area, perfect for business and investment.',
     amenities: ['Commercial Area', 'High Traffic', 'Parking', 'Near LRT'],
@@ -174,7 +186,9 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     sqft: 2400,
     images: [
-      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Spacious semi-detached house in mature neighborhood with excellent facilities.',
     amenities: ['Garden', 'Covered Car Porch', 'Near School', 'Playground'],
@@ -197,7 +211,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1000,
     images: [
-      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Modern condominium in Malaysia\'s tech hub with smart home features and green environment.',
     amenities: ['Smart Home', 'Green Building', 'Gym', 'Study Room', 'Parking'],
@@ -220,7 +236,9 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     sqft: 1600,
     images: [
-      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Modern townhouse near Sunway Pyramid and Sunway University with excellent connectivity.',
     amenities: ['Near University', 'Shopping Mall', 'Theme Park', 'Medical Centre'],
@@ -243,7 +261,9 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     sqft: 2200,
     images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Premium condominium in exclusive Damansara Heights with panoramic city views.',
     amenities: ['City View', 'Infinity Pool', 'Sky Lounge', 'Concierge', 'Wine Cellar'],
@@ -266,7 +286,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 950,
     images: [
-      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Affordable apartment in established area with good public transport connectivity.',
     amenities: ['Near MRT', 'Wet Market', 'Food Court', 'Parking'],
@@ -289,7 +311,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1300,
     images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Serene waterfront condominium in Malaysia\'s administrative capital with lake views.',
     amenities: ['Lake View', 'Jogging Track', 'Playground', 'Mosque Nearby', 'Government Area'],
@@ -312,7 +336,9 @@ export const mockProperties: Property[] = [
     bathrooms: 5,
     sqft: 5000,
     images: [
-      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Magnificent bungalow in prime PJ location with swimming pool and landscaped garden.',
     amenities: ['Swimming Pool', 'Garden', 'Maid Room', 'Study Room', 'Wine Cellar', 'Security'],
@@ -335,7 +361,9 @@ export const mockProperties: Property[] = [
     bathrooms: 1,
     sqft: 600,
     images: [
-      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Compact studio in the heart of KL\'s entertainment district, perfect for young professionals.',
     amenities: ['City Center', 'Near Monorail', 'Shopping Malls', 'Restaurants', 'Nightlife'],
@@ -358,7 +386,9 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     sqft: 2800,
     images: [
-      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Renovated terrace house in prestigious TTDI with modern fittings and mature neighborhood.',
     amenities: ['Renovated', 'Near International School', 'Park Nearby', 'Established Area'],
@@ -381,7 +411,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1050,
     images: [
-      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Fully furnished serviced apartment connected to Mid Valley Megamall with hotel-like amenities.',
     amenities: ['Fully Furnished', 'Mall Connected', 'Housekeeping', 'Concierge', 'Pool'],
@@ -404,7 +436,9 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     sqft: 2200,
     images: [
-      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Double-storey terrace in Ampang with hill views and easy access to city center.',
     amenities: ['Hill View', 'Near LRT', 'Shopping Complex', 'Schools Nearby'],
@@ -427,7 +461,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1150,
     images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Brand new condominium in integrated township with comprehensive facilities and green environment.',
     amenities: ['New Launch', 'Green Township', 'Club House', 'Jogging Track', 'Retail Shops'],
@@ -450,7 +486,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1400,
     images: [
-      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Affordable single-storey terrace house in Kajang with good potential for renovation.',
     amenities: ['Affordable', 'Near Town', 'Public Transport', 'Market Nearby'],
@@ -474,7 +512,9 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     sqft: 1800,
     images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Premium executive condominium in trendy Bangsar with city skyline views and upscale amenities.',
     amenities: ['City View', 'Premium Gym', 'Infinity Pool', 'Concierge', 'Wine Storage'],
@@ -497,7 +537,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1400,
     images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Stunning 3-bedroom condominium with city views in premium Sutera development. Close to Singapore CIQ checkpoint.',
     amenities: ['City View', 'Infinity Pool', 'Gym', 'Security', 'Near CIQ', 'Shopping Mall'],
@@ -520,7 +562,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1100,
     images: [
-      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Contemporary 2-bedroom apartment in established Taman Molek. Walking distance to international schools.',
     amenities: ['Swimming Pool', 'Playground', 'Security', 'Near International School', 'Shopping Nearby'],
@@ -543,7 +587,9 @@ export const mockProperties: Property[] = [
     bathrooms: 1,
     sqft: 550,
     images: [
-      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Stylish studio apartment in the heart of JB city center. Perfect for young professionals.',
     amenities: ['City Center', 'Near Mall', 'Public Transport', 'Restaurants', 'Business District'],
@@ -566,7 +612,9 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     sqft: 2000,
     images: [
-      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Spacious double-storey terrace house in established Taman Daya neighborhood. Perfect for families with children.',
     amenities: ['Garden', 'Parking', 'Near Schools', 'Playground'],
@@ -589,7 +637,9 @@ export const mockProperties: Property[] = [
     bathrooms: 1,
     sqft: 300,
     images: [
-      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Affordable single room perfect for students and young professionals. Located in university area.',
     amenities: ['Near University', 'Student Area', 'Food Courts', 'Public Transport', 'WiFi'],
@@ -612,7 +662,9 @@ export const mockProperties: Property[] = [
     bathrooms: 4,
     sqft: 3800,
     images: [
-      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Magnificent villa with private pool and landscaped garden in exclusive Tropicana area.',
     amenities: ['Private Pool', 'Garden', 'Security', 'Maid Room', 'Double Garage'],
@@ -634,7 +686,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1000,
     images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Modern serviced apartment near Paradigm Mall and universities. Ideal for professionals and students.',
     amenities: ['Near Mall', 'Housekeeping', 'High Speed Internet', 'Near University', 'Gym'],
@@ -657,7 +711,9 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     sqft: 2200,
     images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Exclusive penthouse in prestigious Mount Austin with panoramic city views.',
     amenities: ['City View', 'Private Balcony', 'Club House', 'Security', 'Prestigious Area'],
@@ -680,7 +736,9 @@ export const mockProperties: Property[] = [
     bathrooms: 1,
     sqft: 800,
     images: [
-      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Heritage shophouse upper floor in historic Jalan Wong Ah Fook. Perfect for those who appreciate old-world charm.',
     amenities: ['Heritage Building', 'City Center', 'Historic Area', 'Near Attractions', 'Character Property'],
@@ -703,7 +761,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1600,
     images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Premium executive condominium in exclusive Horizon Hills golf resort community.',
     amenities: ['Golf Course View', 'Resort Facilities', 'Swimming Pool', 'Tennis Court', '24hr Security'],
@@ -726,7 +786,9 @@ export const mockProperties: Property[] = [
     bathrooms: 1,
     sqft: 600,
     images: [
-      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Compact studio in the heart of KL entertainment district, perfect for young professionals.',
     amenities: ['City Center', 'Near Monorail', 'Shopping Malls', 'Restaurants', 'Nightlife'],
@@ -749,7 +811,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1050,
     images: [
-      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Fully furnished serviced apartment connected to Mid Valley Megamall with hotel-like amenities.',
     amenities: ['Fully Furnished', 'Mall Connected', 'Housekeeping', 'Concierge', 'Pool'],
@@ -772,7 +836,9 @@ export const mockProperties: Property[] = [
     bathrooms: 1,
     sqft: 400,
     images: [
-      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Room in shared house with common areas. Perfect for students and young professionals.',
     amenities: ['Shared Kitchen', 'WiFi', 'Parking', 'Near LRT'],
@@ -795,7 +861,9 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     sqft: 1100,
     images: [
-      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
     ],
     description: 'Stunning beachfront condominium with direct beach access and resort facilities.',
     amenities: ['Beach Access', 'Sea View', 'Swimming Pool', 'Restaurant', 'Spa'],
