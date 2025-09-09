@@ -33,6 +33,9 @@ const Header: React.FC<HeaderProps> = ({
             <Search className="h-8 w-8 text-blue-600 mr-2" />
             <div className="flex flex-col">
               <span className="text-2xl font-bold text-gray-900">AI Property</span>
+              <span className="text-xs text-blue-600 font-medium -mt-1">Smart AI, Smart Home</span>
+            </div>
+              <span className="text-2xl font-bold text-gray-900">AI Property</span>
              <span className="text-xs text-blue-600 font-medium -mt-1">Smart AI, Smart Home</span>
             </div>
           </div>
