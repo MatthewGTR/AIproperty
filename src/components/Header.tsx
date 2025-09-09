@@ -35,9 +35,6 @@ const Header: React.FC<HeaderProps> = ({
               <span className="text-2xl font-bold text-gray-900">AI Property</span>
               <span className="text-xs text-blue-600 font-medium -mt-1">Smart AI, Smart Home</span>
             </div>
-              <span className="text-2xl font-bold text-gray-900">AI Property</span>
-             <span className="text-xs text-blue-600 font-medium -mt-1">Smart AI, Smart Home</span>
-            </div>
           </div>
 
           {/* Navigation */}
