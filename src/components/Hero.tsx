@@ -21,7 +21,7 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      text: 'Hi! I can help you find properties or just chat. What are you looking for?',
+      text: 'Hi! I\'m your Smart Property AI. I can help you find houses, condos, apartments, or even answer silly questions! What are you looking for today?',
       sender: 'ai',
       timestamp: new Date()
     }
@@ -60,15 +60,13 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
       setIsTyping(true);
 
       try {
-        // Get all properties for AI to analyze
-        const allProperties = await propertyService.getProperties({ limit: 50 });
-        
         // Get AI response with user context
         const conversationHistory = messages.map(m => m.text);
         const { response, matchedProperties, userProfile } = await searchPropertiesWithAI(
-          inputMessage, 
-          undefined, 
-          conversationHistory
+          inputMessage,
+          [],
+          conversationHistory,
+          aiContext
         );
         
         const aiMessage: ChatMessage = {
@@ -119,7 +117,9 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
     "I want to buy a house in Johor Bahru under RM500k",
     "Looking to rent an apartment in KL under RM2500",
     "Need a condo for sale in KLCC with pool",
-    "Want to rent a studio under RM1200"
+    "Want to rent a studio under RM1200",
+    "Show me new developments in Iskandar",
+    "Looking for luxury villas above RM2 million"
   ];
 
   return (

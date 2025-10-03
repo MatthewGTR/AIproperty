@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { PropertyWithImages, propertyService } from './propertyService';
+import { detectIntent, generateSmartResponse, scorePropertyMatch, generatePropertyDescription } from './aiEnhancedService';
 
 export interface UserProfile {
   intent: 'buy' | 'rent' | null;
@@ -239,9 +240,21 @@ export const searchPropertiesWithAI = async (
   // Parse user query and update profile
   const updatedProfile = parseUserQuery(userQuery, userProfile);
   
+  // Detect user intent (jokes, silly questions, greetings, etc.)
+  const intent = detectIntent(userQuery);
+  const smartResponse = generateSmartResponse(userQuery, intent);
+
+  if (smartResponse) {
+    return {
+      response: smartResponse,
+      matchedProperties: [],
+      userProfile: updatedProfile
+    };
+  }
+
   // Check if this is a property-related query
   const isPropertyQuery = isPropertyRelated(userQuery);
-  
+
   if (!isPropertyQuery) {
     // Handle non-property questions with ChatGPT
     const chatResponse = await handleGeneralChat(userQuery);
@@ -286,29 +299,61 @@ export const searchPropertiesWithAI = async (
     searchFilters.limit = 6;
     
     try {
-      const matchedProperties = await propertyService.getProperties(searchFilters);
-      
+      let allProperties = await propertyService.getProperties({ limit: 50 });
+
+      // Score and rank properties
+      const scoredProperties = allProperties
+        .map(property => ({
+          property,
+          score: scorePropertyMatch(property, {
+            intent: updatedProfile.intent,
+            budget: updatedProfile.budget,
+            property_type: updatedProfile.property_type,
+            states: updatedProfile.states,
+            areas: updatedProfile.areas,
+            bedrooms: updatedProfile.bedrooms,
+            amenities: updatedProfile.amenities
+          })
+        }))
+        .filter(item => item.score > 20)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 6);
+
+      const matchedProperties = scoredProperties.map(item => item.property);
+
       if (matchedProperties.length > 0) {
-        let response = "Here are some matches:\n\n";
-        
-        matchedProperties.forEach(property => {
-          const price = property.listing_type === 'rent' 
-            ? `RM${property.price.toLocaleString()}/month`
-            : `RM${property.price.toLocaleString()}`;
-          
-          const reason = generateMatchReason(property, updatedProfile);
-          
-          response += `${property.title}, ${property.city}. ${price}. ${property.sqft.toLocaleString()} sqft. ${reason} [View details]\n\n`;
+        let response = `Great! I found ${matchedProperties.length} properties that match your needs:\n\n`;
+
+        matchedProperties.forEach((property, index) => {
+          const matchReasons = getMatchReasons(property, updatedProfile);
+          const description = generatePropertyDescription(property, matchReasons);
+          response += `${index + 1}. ${description}\n\n`;
         });
-        
+
+        response += "Click on any property below to see full details!";
+
         return {
           response: response.trim(),
           matchedProperties,
           userProfile: updatedProfile
         };
       } else {
+        // Try with relaxed filters
+        const relaxedProperties = await propertyService.getProperties({
+          listing_type: searchFilters.listing_type,
+          limit: 6
+        });
+
+        if (relaxedProperties.length > 0) {
+          return {
+            response: "I couldn't find exact matches, but here are some similar properties you might like. Try adjusting your budget or location?",
+            matchedProperties: relaxedProperties,
+            userProfile: updatedProfile
+          };
+        }
+
         return {
-          response: "No properties match your criteria. Try adjusting your budget or location preferences?",
+          response: "No properties match your criteria right now. Try adjusting your budget or location preferences, or tell me more about what you're looking for!",
           matchedProperties: [],
           userProfile: updatedProfile
         };
@@ -334,36 +379,51 @@ export const searchPropertiesWithAI = async (
   }
 };
 
-const generateMatchReason = (property: PropertyWithImages, profile: UserProfile): string => {
-  const reasons = [];
-  
+const getMatchReasons = (property: PropertyWithImages, profile: UserProfile): string[] => {
+  const reasons: string[] = [];
+
   if (profile.intent === 'buy' && property.listing_type === 'sale') {
-    reasons.push('for sale');
+    reasons.push('for sale as requested');
   } else if (profile.intent === 'rent' && property.listing_type === 'rent') {
-    reasons.push('for rent');
+    reasons.push('for rent as requested');
   }
-  
+
   if (profile.bedrooms && property.bedrooms === profile.bedrooms) {
-    reasons.push(`${property.bedrooms} bedrooms as requested`);
+    reasons.push(`${property.bedrooms} bedrooms`);
   }
-  
+
   if (profile.budget.max && property.price <= profile.budget.max) {
-    reasons.push('within budget');
+    reasons.push('within your budget');
   }
-  
-  if (profile.property_type.includes(property.property_type)) {
-    reasons.push(`${property.property_type} type`);
+
+  if (profile.property_type.length > 0 && profile.property_type.includes(property.property_type)) {
+    reasons.push(`${property.property_type} as you wanted`);
   }
-  
-  if (profile.amenities.some(amenity => 
-    property.amenities.some(propAmenity => 
-      propAmenity.toLowerCase().includes(amenity.toLowerCase())
-    )
+
+  if (profile.areas.length > 0 && profile.areas.some(area =>
+    property.city.toLowerCase().includes(area.toLowerCase())
   )) {
-    reasons.push('has desired amenities');
+    reasons.push('in your preferred area');
   }
-  
-  return reasons.length > 0 ? `Matches: ${reasons.join(', ')}` : 'Good match for your criteria';
+
+  if (profile.states.length > 0 && profile.states.some(state =>
+    property.state.toLowerCase().includes(state.toLowerCase())
+  )) {
+    reasons.push('in your preferred state');
+  }
+
+  if (profile.amenities.length > 0) {
+    const matchedAmenities = profile.amenities.filter(amenity =>
+      property.amenities.some(propAmenity =>
+        propAmenity.toLowerCase().includes(amenity.toLowerCase())
+      )
+    );
+    if (matchedAmenities.length > 0) {
+      reasons.push(`has ${matchedAmenities.slice(0, 2).join(', ')}`);
+    }
+  }
+
+  return reasons;
 };
 
 const generateClarifyingQuestion = (profile: UserProfile): string => {
