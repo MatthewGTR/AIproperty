@@ -17,7 +17,7 @@ export interface PropertyWithImages extends Property {
     email: string;
     avatar_url: string | null;
     company: string | null;
-  };
+  } | null;
 }
 
 export const propertyService = {

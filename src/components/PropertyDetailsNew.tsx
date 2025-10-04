@@ -253,15 +253,15 @@ const PropertyDetailsNew: React.FC<PropertyDetailsNewProps> = ({ property, onClo
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Agent</h3>
               <div className="flex items-center mb-4">
                 <img
-                  src={property.profiles.avatar_url || 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'}
-                  alt={property.profiles.full_name}
+                  src={property.profiles?.avatar_url || 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'}
+                  alt={property.profiles?.full_name || 'Agent'}
                   className="w-16 h-16 rounded-full mr-4"
                 />
                 <div>
-                  <h4 className="font-semibold text-gray-900">{property.profiles.full_name}</h4>
+                  <h4 className="font-semibold text-gray-900">{property.profiles?.full_name || 'Property Agent'}</h4>
                   <p className="text-sm text-gray-600">Licensed Real Estate Agent</p>
-                  {property.profiles.company && (
-                    <p className="text-sm text-blue-600">{property.profiles.company}</p>
+                  {property.profiles?.company && (
+                    <p className="text-sm text-blue-600">{property.profiles?.company}</p>
                   )}
                 </div>
               </div>
@@ -269,7 +269,7 @@ const PropertyDetailsNew: React.FC<PropertyDetailsNewProps> = ({ property, onClo
               <div className="space-y-3">
                 <button className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
                   <Phone className="h-4 w-4 mr-2" />
-                  Call {property.profiles.phone || 'Agent'}
+                  Call {property.profiles?.phone || 'Agent'}
                 </button>
                 <button
                   onClick={() => setShowContactForm(!showContactForm)}

@@ -128,12 +128,12 @@ const PropertyCardNew: React.FC<PropertyCardNewProps> = ({ property, onClick }) 
 
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <img 
-              src={property.profiles.avatar_url || 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'} 
-              alt={property.profiles.full_name} 
-              className="w-8 h-8 rounded-full mr-2" 
+            <img
+              src={property.profiles?.avatar_url || 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'}
+              alt={property.profiles?.full_name || 'Agent'}
+              className="w-8 h-8 rounded-full mr-2"
             />
-            <span className="text-sm font-medium text-gray-700">{property.profiles.full_name}</span>
+            <span className="text-sm font-medium text-gray-700">{property.profiles?.full_name || 'Property Agent'}</span>
           </div>
           <button className="flex items-center text-blue-600 hover:text-blue-700 transition-colors duration-200">
             <MessageCircle className="h-4 w-4 mr-1" />
