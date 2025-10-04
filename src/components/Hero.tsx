@@ -213,24 +213,6 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
             )}
           </div>
 
-          {/* Quick Prompts */}
-          {messages.length === 1 && (
-            <div className="px-6 py-4 border-t border-gray-200 bg-white">
-              <p className="text-sm text-gray-600 mb-3">Try these examples:</p>
-              <div className="grid grid-cols-1 gap-2">
-                {quickPrompts.map((prompt, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setInputMessage(prompt)}
-                    className="text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-700 transition-colors duration-200 border border-gray-200"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Chat Input */}
           <div className="p-6 bg-white border-t border-gray-200">
             <div className="flex space-x-3">
