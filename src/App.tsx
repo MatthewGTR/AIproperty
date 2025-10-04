@@ -53,7 +53,9 @@ function App() {
 
   const loadInitialProperties = async () => {
     try {
+      console.log('Loading initial properties...');
       const properties = await propertyService.getProperties({ limit: 12 });
+      console.log('Properties loaded:', properties.length);
       setRecommendedProperties(properties);
     } catch (error) {
       console.error('Error loading properties:', error);
@@ -68,6 +70,8 @@ function App() {
     await authService.signOut();
     setUser(null);
   };
+
+  console.log('App render - loading:', loading, 'properties:', recommendedProperties.length);
 
   if (loading) {
     return (
