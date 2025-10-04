@@ -256,8 +256,11 @@ export const searchPropertiesWithAI = async (
   const isPropertyQuery = isPropertyRelated(userQuery);
 
   if (!isPropertyQuery) {
-    // Handle non-property questions with ChatGPT
-    const chatResponse = await handleGeneralChat(userQuery);
+    // Handle non-property questions with ChatGPT, passing context
+    const chatResponse = await handleGeneralChat(userQuery, {
+      conversationHistory: conversationHistory || [],
+      userProfile: updatedProfile
+    });
     return {
       response: chatResponse,
       matchedProperties: [],
@@ -471,36 +474,79 @@ const isPropertyRelated = (query: string): boolean => {
   return propertyKeywords.some(keyword => queryLower.includes(keyword));
 };
 
-const handleGeneralChat = async (query: string): Promise<string> => {
+const handleGeneralChat = async (query: string, conversationContext?: any): Promise<string> => {
+  const queryLower = query.toLowerCase();
+
   try {
     if (openai) {
+      // Build context-aware system prompt
+      let systemPrompt = `You are a friendly, conversational property assistant in Malaysia.
+
+Your personality:
+- Warm, helpful, and natural (like talking to a friend)
+- Can discuss any topic briefly
+- Smoothly transition conversations back to property search
+- Remember the conversation context
+
+Guidelines:
+- Keep responses conversational but concise (2-3 sentences max)
+- Show genuine interest in their question
+- Don't force property talk - be natural
+- If they ask about weather/food/movies: answer briefly, then suggest how it relates to property needs
+- Use friendly language: "That's cool!", "I hear you", "Makes sense"
+
+Current context: ${conversationContext ? JSON.stringify(conversationContext) : 'New conversation'}`;
+
       const completion = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
           {
             role: "system",
-            content: "You are a helpful assistant. Keep responses brief and friendly. Always end by asking if they're looking for properties."
+            content: systemPrompt
           },
           {
             role: "user",
             content: query
           }
         ],
-        max_tokens: 100,
-        temperature: 0.7
+        max_tokens: 150,
+        temperature: 0.8
       });
-      
+
       const response = completion.choices[0]?.message?.content || "I'm here to help!";
-      return response + " Do you look for property?";
+      return response;
+
     } else if (genAI) {
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      const result = await model.generateContent(`Keep response brief and friendly. Always end asking about properties. Query: ${query}`);
+
+      const prompt = `You are a friendly property assistant in Malaysia having a natural conversation.
+
+Context: ${conversationContext ? JSON.stringify(conversationContext) : 'New conversation'}
+
+User asks: "${query}"
+
+Respond naturally and conversationally (2-3 sentences). If appropriate, gently relate it to property needs. Be warm and genuine.`;
+
+      const result = await model.generateContent(prompt);
       const response = await result.response;
-      return response.text() || "I'm here to help! Do you look for property?";
+      return response.text() || "I'm here to help!";
     }
   } catch (error) {
     console.error('Error with AI chat:', error);
   }
-  
-  return "That's interesting! Do you look for property?";
+
+  // Enhanced fallback responses based on query type
+  if (queryLower.includes('weather')) {
+    return "Weather's been pretty typical for Malaysia! By the way, if you're property hunting, I can help you find places with great outdoor spaces or covered parking for rainy days. What kind of property interests you?";
+  } else if (queryLower.includes('food') || queryLower.includes('restaurant')) {
+    return "Love good food! If you're particular about dining options, I can help you find properties near great food areas or those with spacious kitchens. What are you looking for in a property?";
+  } else if (queryLower.includes('movie') || queryLower.includes('tv')) {
+    return "Movies are great! Speaking of entertainment, some properties come with home theater setups or are near cinemas. Want to explore some options?";
+  } else if (queryLower.includes('sport') || queryLower.includes('game')) {
+    return "Sports fan? I can find you properties with gyms, courts, or near sports facilities. What's your budget and preferred area?";
+  } else if (queryLower.includes('work') || queryLower.includes('job')) {
+    return "Work-life balance is important! Let me help you find a property with good commute or work-from-home friendly spaces. Where do you work?";
+  } else {
+    return "That's interesting! While I'd love to chat more, I'm best at helping you find amazing properties. What kind of place are you looking for?";
+  }
 };
