@@ -254,16 +254,11 @@ export class SmartPropertyAI {
   private async extractInformation(message: string): Promise<void> {
     const lowerMessage = message.toLowerCase();
 
-    // Extract intent
+    // Extract intent with smart inference
     if (!this.context.intent) {
-      if (this.matchesIntent(lowerMessage, 'buy')) {
-        this.context.intent = 'buy';
-        this.removeMissingInfo('intent');
-      } else if (this.matchesIntent(lowerMessage, 'rent')) {
-        this.context.intent = 'rent';
-        this.removeMissingInfo('intent');
-      } else if (this.matchesIntent(lowerMessage, 'new_development')) {
-        this.context.intent = 'new_development';
+      const inferredIntent = this.inferIntentFromContext(lowerMessage);
+      if (inferredIntent) {
+        this.context.intent = inferredIntent;
         this.removeMissingInfo('intent');
       }
     }
@@ -295,20 +290,178 @@ export class SmartPropertyAI {
 
   private matchesIntent(message: string, intent: 'buy' | 'rent' | 'new_development'): boolean {
     const patterns = {
-      buy: ['buy', 'buying', 'purchase', 'purchasing', 'own', 'ownership', 'invest in', 'acquire', 'for sale'],
-      rent: ['rent', 'rental', 'renting', 'lease', 'leasing', 'tenant', 'monthly', 'for rent'],
+      buy: ['buy', 'buying', 'purchase', 'purchasing', 'own', 'ownership', 'invest in', 'acquire', 'for sale', 'looking for'],
+      rent: ['rent', 'rental', 'renting', 'lease', 'leasing', 'tenant', 'monthly', 'for rent', 'per month', '/month'],
       new_development: ['new launch', 'new development', 'new project', 'launching', 'pre-launch', 'under construction']
     };
     return patterns[intent].some(keyword => message.includes(keyword));
   }
 
+  private inferIntentFromContext(message: string): 'buy' | 'rent' | 'new_development' | null {
+    const lowerMessage = message.toLowerCase();
+
+    // Check for new development indicators first
+    if (this.matchesIntent(lowerMessage, 'new_development')) {
+      return 'new_development';
+    }
+
+    // Check for explicit rent indicators
+    if (this.matchesIntent(lowerMessage, 'rent')) {
+      return 'rent';
+    }
+
+    // Check for explicit buy indicators
+    if (this.matchesIntent(lowerMessage, 'buy')) {
+      return 'buy';
+    }
+
+    // Contextual inference from price
+    const priceInference = this.inferIntentFromPrice(lowerMessage);
+    if (priceInference) {
+      return priceInference;
+    }
+
+    // Contextual inference from property type and modifiers
+    const propertyInference = this.inferIntentFromPropertyType(lowerMessage);
+    if (propertyInference) {
+      return propertyInference;
+    }
+
+    return null;
+  }
+
+  private inferIntentFromPrice(message: string): 'buy' | 'rent' | null {
+    // Extract any price mentioned
+    const pricePatterns = [
+      /(?:above|over|more than|at least)\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?(?:\s*million)?/gi,
+      /(?:under|below|less than|max|maximum)\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?(?:\s*million)?/gi,
+      /(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?(?:\s*million)?/gi
+    ];
+
+    let maxPrice = 0;
+    let hasMonthlyContext = false;
+
+    // Check for monthly/rental context
+    if (message.includes('monthly') || message.includes('per month') ||
+        message.includes('/month') || message.includes('month')) {
+      hasMonthlyContext = true;
+    }
+
+    pricePatterns.forEach(pattern => {
+      const matches = Array.from(message.matchAll(pattern));
+      matches.forEach(match => {
+        let price = parseFloat(match[1].replace(/,/g, ''));
+
+        // Handle 'million' keyword
+        if (message.includes('million')) {
+          price *= 1000000;
+        }
+        // Handle suffixes
+        else if (match[2] === 'k') {
+          price *= 1000;
+        } else if (match[2] === 'm') {
+          price *= 1000000;
+        }
+        // If it's a small number without context, infer from size
+        else if (price < 10000 && !hasMonthlyContext) {
+          // Numbers like 500, 600, 2 without context
+          if (price < 100) {
+            // Could be 500k, 2m, etc.
+            price *= 1000;
+          } else {
+            // 5000, 8000 likely means RM5000, RM8000
+            // Keep as is for now
+          }
+        }
+
+        if (price > maxPrice) {
+          maxPrice = price;
+        }
+      });
+    });
+
+    if (maxPrice === 0) {
+      return null;
+    }
+
+    // If monthly context is present, it's rent regardless of price
+    if (hasMonthlyContext) {
+      return 'rent';
+    }
+
+    // Price-based inference for buying
+    // If price is above RM50,000, it's very likely buying
+    if (maxPrice >= 50000) {
+      return 'buy';
+    }
+
+    // If price is under RM10,000 without monthly context, still likely rent
+    if (maxPrice < 10000) {
+      return 'rent';
+    }
+
+    // Middle range (10k-50k) - ambiguous, need more context
+    return null;
+  }
+
+  private inferIntentFromPropertyType(message: string): 'buy' | 'rent' | null {
+    const lowerMessage = message.toLowerCase();
+
+    // Luxury indicators strongly suggest buying
+    const luxuryIndicators = [
+      'luxury', 'premium', 'exclusive', 'prestigious', 'high-end', 'upscale',
+      'villa', 'bungalow', 'mansion', 'penthouse',
+      'private pool', 'private garden', 'private lift', 'wine cellar',
+      'gated community', 'golf course'
+    ];
+
+    const hasLuxuryIndicator = luxuryIndicators.some(indicator => lowerMessage.includes(indicator));
+
+    // Investment indicators suggest buying
+    const investmentIndicators = [
+      'investment', 'roi', 'rental income', 'capital appreciation',
+      'property investment', 'invest', 'portfolio'
+    ];
+
+    const hasInvestmentIndicator = investmentIndicators.some(indicator => lowerMessage.includes(indicator));
+
+    // Ownership indicators
+    const ownershipIndicators = [
+      'own home', 'first home', 'dream home', 'family home',
+      'settle down', 'permanent'
+    ];
+
+    const hasOwnershipIndicator = ownershipIndicators.some(indicator => lowerMessage.includes(indicator));
+
+    // If luxury, investment, or ownership indicators with no explicit rent mention
+    if ((hasLuxuryIndicator || hasInvestmentIndicator || hasOwnershipIndicator) &&
+        !this.matchesIntent(lowerMessage, 'rent')) {
+      return 'buy';
+    }
+
+    // Temporary/short-term indicators suggest renting
+    const temporaryIndicators = [
+      'temporary', 'short term', 'short-term', 'few months',
+      'temporary stay', 'relocating', 'just moved', 'transfer',
+      'student', 'intern', 'contract work'
+    ];
+
+    const hasTemporaryIndicator = temporaryIndicators.some(indicator => lowerMessage.includes(indicator));
+
+    if (hasTemporaryIndicator && !this.matchesIntent(lowerMessage, 'buy')) {
+      return 'rent';
+    }
+
+    return null;
+  }
+
   private extractBudget(message: string): void {
-    // Pattern: RM 500,000 or RM 500k or 500000 or 500k
+    // Pattern: RM 500,000 or RM 500k or 500000 or 500k or 2 million
     const budgetPatterns = [
-      /(?:under|below|less than|max|maximum|budget|up to)\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?/gi,
-      /(?:above|over|more than|min|minimum|at least)\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?/gi,
-      /(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?\s*(?:to|-)\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?/gi,
-      /budget\s*(?:is|of|:)?\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?/gi
+      /(?:under|below|less than|max|maximum|budget|up to)\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?(?:\s*million)?/gi,
+      /(?:above|over|more than|min|minimum|at least)\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?(?:\s*million)?/gi,
+      /(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?\s*(?:to|-)\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?(?:\s*million)?/gi,
+      /budget\s*(?:is|of|:)?\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?(?:\s*million)?/gi
     ];
 
     budgetPatterns.forEach(pattern => {
@@ -317,36 +470,63 @@ export class SmartPropertyAI {
         if (match[0].includes('under') || match[0].includes('below') || match[0].includes('less than') ||
             match[0].includes('max') || match[0].includes('up to')) {
           let maxPrice = parseFloat(match[1].replace(/,/g, ''));
-          if (match[2] === 'k') maxPrice *= 1000;
-          if (match[2] === 'm') maxPrice *= 1000000;
-          if (maxPrice < 10000) maxPrice *= 1000;
+          // Check for 'million' in the matched text
+          if (match[0].toLowerCase().includes('million')) {
+            maxPrice *= 1000000;
+          } else if (match[2] === 'k') {
+            maxPrice *= 1000;
+          } else if (match[2] === 'm') {
+            maxPrice *= 1000000;
+          } else if (maxPrice < 10000) {
+            maxPrice *= 1000;
+          }
           this.context.budget.max = maxPrice;
           this.removeMissingInfo('budget');
         } else if (match[0].includes('above') || match[0].includes('over') || match[0].includes('more than') ||
                    match[0].includes('min') || match[0].includes('at least')) {
           let minPrice = parseFloat(match[1].replace(/,/g, ''));
-          if (match[2] === 'k') minPrice *= 1000;
-          if (match[2] === 'm') minPrice *= 1000000;
-          if (minPrice < 10000) minPrice *= 1000;
+          // Check for 'million' in the matched text
+          if (match[0].toLowerCase().includes('million')) {
+            minPrice *= 1000000;
+          } else if (match[2] === 'k') {
+            minPrice *= 1000;
+          } else if (match[2] === 'm') {
+            minPrice *= 1000000;
+          } else if (minPrice < 10000) {
+            minPrice *= 1000;
+          }
           this.context.budget.min = minPrice;
           this.removeMissingInfo('budget');
         } else if (match[0].includes('to') || match[0].includes('-')) {
           let minPrice = parseFloat(match[1].replace(/,/g, ''));
           let maxPrice = parseFloat(match[3].replace(/,/g, ''));
-          if (match[2] === 'k') minPrice *= 1000;
-          if (match[2] === 'm') minPrice *= 1000000;
-          if (match[4] === 'k') maxPrice *= 1000;
-          if (match[4] === 'm') maxPrice *= 1000000;
-          if (minPrice < 10000) minPrice *= 1000;
-          if (maxPrice < 10000) maxPrice *= 1000;
+          // Check for 'million' in the matched text
+          if (match[0].toLowerCase().includes('million')) {
+            minPrice *= 1000000;
+            maxPrice *= 1000000;
+          } else {
+            if (match[2] === 'k') minPrice *= 1000;
+            if (match[2] === 'm') minPrice *= 1000000;
+            if (match[4] === 'k') maxPrice *= 1000;
+            if (match[4] === 'm') maxPrice *= 1000000;
+            if (minPrice < 10000) minPrice *= 1000;
+            if (maxPrice < 10000) maxPrice *= 1000;
+          }
           this.context.budget.min = minPrice;
           this.context.budget.max = maxPrice;
           this.removeMissingInfo('budget');
         } else {
           let price = parseFloat(match[1].replace(/,/g, ''));
-          if (match[2] === 'k') price *= 1000;
-          if (match[2] === 'm') price *= 1000000;
-          if (price < 10000) price *= 1000;
+          // Check for 'million' in the matched text
+          if (match[0].toLowerCase().includes('million')) {
+            price *= 1000000;
+          } else if (match[2] === 'k') {
+            price *= 1000;
+          } else if (match[2] === 'm') {
+            price *= 1000000;
+          } else if (price < 10000) {
+            price *= 1000;
+          }
           this.context.budget.max = price;
           this.removeMissingInfo('budget');
         }
