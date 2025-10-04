@@ -1,0 +1,741 @@
+import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { PropertyWithImages } from './propertyService';
+
+export interface ConversationContext {
+  intent: 'buy' | 'rent' | 'new_development' | 'general' | null;
+  budget: { min: number | null; max: number | null };
+  location: { states: string[]; cities: string[]; areas: string[] };
+  propertyType: string[];
+  bedrooms: number | null;
+  bathrooms: number | null;
+  amenities: string[];
+  preferences: {
+    purpose: 'own_stay' | 'investment' | null;
+    tenure: 'freehold' | 'leasehold' | null;
+    furnished: 'fully_furnished' | 'partially_furnished' | 'unfurnished' | null;
+  };
+  conversationStage: 'greeting' | 'gathering' | 'refining' | 'showing' | 'closing';
+  missingInfo: string[];
+  lastQuery: string;
+  conversationHistory: Array<{ role: 'user' | 'ai'; content: string; timestamp: Date }>;
+}
+
+export const createDefaultContext = (): ConversationContext => ({
+  intent: null,
+  budget: { min: null, max: null },
+  location: { states: [], cities: [], areas: [] },
+  propertyType: [],
+  bedrooms: null,
+  bathrooms: null,
+  amenities: [],
+  preferences: { purpose: null, tenure: null, furnished: null },
+  conversationStage: 'greeting',
+  missingInfo: ['intent', 'location', 'budget'],
+  lastQuery: '',
+  conversationHistory: []
+});
+
+let openai: OpenAI | null = null;
+let genAI: GoogleGenerativeAI | null = null;
+
+function initializeAI() {
+  const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+  if (openaiKey && openaiKey !== 'your_openai_api_key_here' && openaiKey.trim()) {
+    try {
+      openai = new OpenAI({ apiKey: openaiKey, dangerouslyAllowBrowser: true });
+    } catch (error) {
+      console.error('OpenAI initialization failed:', error);
+    }
+  }
+
+  if (geminiKey && geminiKey !== 'your_gemini_api_key_here' && geminiKey.trim()) {
+    try {
+      genAI = new GoogleGenerativeAI(geminiKey);
+    } catch (error) {
+      console.error('Gemini initialization failed:', error);
+    }
+  }
+}
+
+initializeAI();
+
+const MALAYSIAN_LOCATIONS = {
+  states: [
+    'johor', 'kedah', 'kelantan', 'malacca', 'melaka', 'negeri sembilan',
+    'pahang', 'penang', 'perak', 'perlis', 'sabah', 'sarawak', 'selangor',
+    'terengganu', 'kuala lumpur', 'kl', 'putrajaya', 'labuan'
+  ],
+  cities: [
+    'johor bahru', 'jb', 'georgetown', 'petaling jaya', 'pj', 'subang jaya',
+    'cyberjaya', 'shah alam', 'klcc', 'mont kiara', 'bangsar', 'damansara',
+    'kajang', 'setia alam', 'sunway', 'puchong', 'ampang', 'cheras'
+  ],
+  areas: [
+    'taman daya', 'taman molek', 'sutera utama', 'sutera', 'mount austin',
+    'horizon hills', 'medini', 'iskandar', 'city square', 'paradigm',
+    'bukit bintang', 'batu ferringhi', 'setia eco gardens', 'forest city',
+    'nusajaya', 'gelang patah', 'skudai', 'taman universiti'
+  ]
+};
+
+const PROPERTY_TYPES = {
+  residential: ['condo', 'condominium', 'apartment', 'flat', 'house', 'terrace',
+                'semi-d', 'semi-detached', 'bungalow', 'villa', 'townhouse',
+                'studio', 'penthouse', 'duplex'],
+  commercial: ['shop', 'shophouse', 'office', 'retail', 'commercial'],
+  industrial: ['warehouse', 'factory', 'industrial']
+};
+
+const AMENITIES = [
+  'pool', 'swimming pool', 'gym', 'fitness', 'parking', 'security', 'garden',
+  'furnished', 'wifi', 'internet', 'playground', 'clubhouse', 'tennis',
+  'school', 'mall', 'university', 'mrt', 'lrt', 'train', 'hospital',
+  'beach', 'sea view', 'city view', 'balcony', 'spa', 'sauna', 'bbq',
+  'concierge', 'lift', 'elevator', 'jogging track', 'sky lounge'
+];
+
+const JOKE_PATTERNS = [
+  /\b(free|rm\s*0|rm\s*1|zero\s+ringgit|no\s+money)\b/i,
+  /\b(castle|palace|island|spaceship|moon|mars)\b/i,
+  /\b(tree\s*house|treehouse|cave|tent|igloo)\b/i,
+  /\b(can\s+i\s+(live\s+in|stay\s+in|rent)\s+(your|the)\s+(office|brain|car))\b/i,
+  /\b(sell\s+(your|my)\s+(soul|kidney|car\s+for\s+house))\b/i,
+  /\b(magic|unicorn|dragon|fairy)\b/i
+];
+
+const JOKE_RESPONSES = [
+  "Haha! I love your sense of humor! While I can't make properties appear by magic, I can definitely help you find amazing deals within a real budget. What's your actual price range?",
+  "That's hilarious! You're testing me, aren't you? Let's be serious for a moment - I'm here to help you find genuine properties. Tell me what you're really looking for!",
+  "You've got jokes! I appreciate that. But seriously, I have some fantastic properties that might actually fit your needs. Want to explore some realistic options?",
+  "Nice try! If properties were that easy to get, we'd all be living in mansions! Let me help you find something within reach. What's your budget looking like?",
+  "Ha! I wish the property market worked that way! Since we're in the real world, let's find you a place you can actually afford. What's your budget?"
+];
+
+export class SmartPropertyAI {
+  private context: ConversationContext;
+
+  constructor(initialContext?: ConversationContext) {
+    this.context = initialContext || createDefaultContext();
+  }
+
+  async processMessage(userMessage: string): Promise<{
+    response: string;
+    context: ConversationContext;
+    shouldShowProperties: boolean;
+    confidence: number;
+  }> {
+    this.context.lastQuery = userMessage;
+    this.context.conversationHistory.push({
+      role: 'user',
+      content: userMessage,
+      timestamp: new Date()
+    });
+
+    const lowerMessage = userMessage.toLowerCase().trim();
+
+    // Check for jokes and silly questions first
+    if (this.isJoke(lowerMessage)) {
+      const response = this.getRandomJokeResponse();
+      this.addAIResponse(response);
+      return {
+        response,
+        context: this.context,
+        shouldShowProperties: false,
+        confidence: 1.0
+      };
+    }
+
+    // Handle greetings
+    if (this.isGreeting(lowerMessage)) {
+      const response = this.getGreetingResponse();
+      this.addAIResponse(response);
+      return {
+        response,
+        context: this.context,
+        shouldShowProperties: false,
+        confidence: 1.0
+      };
+    }
+
+    // Handle farewells
+    if (this.isFarewell(lowerMessage)) {
+      const response = this.getFarewellResponse();
+      this.addAIResponse(response);
+      return {
+        response,
+        context: this.context,
+        shouldShowProperties: false,
+        confidence: 1.0
+      };
+    }
+
+    // Handle thank you
+    if (this.isThankYou(lowerMessage)) {
+      const response = "You're very welcome! Is there anything else you'd like to know about properties or would you like me to refine the search?";
+      this.addAIResponse(response);
+      return {
+        response,
+        context: this.context,
+        shouldShowProperties: false,
+        confidence: 1.0
+      };
+    }
+
+    // Handle joke requests
+    if (this.isJokeRequest(lowerMessage)) {
+      const response = "Here's one: Why did the property agent bring a ladder to work? Because they wanted to reach the HIGH-RISE apartments! 😄 Now, let's find you a real property that'll make you smile!";
+      this.addAIResponse(response);
+      return {
+        response,
+        context: this.context,
+        shouldShowProperties: false,
+        confidence: 1.0
+      };
+    }
+
+    // Extract information from message
+    await this.extractInformation(userMessage);
+
+    // Determine response based on context
+    const response = await this.generateSmartResponse();
+    this.addAIResponse(response.text);
+
+    return {
+      response: response.text,
+      context: this.context,
+      shouldShowProperties: response.showProperties,
+      confidence: response.confidence
+    };
+  }
+
+  private isJoke(message: string): boolean {
+    return JOKE_PATTERNS.some(pattern => pattern.test(message));
+  }
+
+  private getRandomJokeResponse(): string {
+    return JOKE_RESPONSES[Math.floor(Math.random() * JOKE_RESPONSES.length)];
+  }
+
+  private isGreeting(message: string): boolean {
+    const greetings = ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening', 'greetings', 'howdy', 'sup', 'yo'];
+    return greetings.some(g => message === g || message.startsWith(g + ' ') || message.startsWith(g + ','));
+  }
+
+  private getGreetingResponse(): string {
+    const greetings = [
+      "Hi there! I'm your smart property assistant. I can help you find your dream home or investment property in Malaysia. Are you looking to buy, rent, or explore new developments?",
+      "Hello! Great to meet you! I specialize in finding the perfect properties across Malaysia. Tell me, what brings you here today - buying, renting, or just browsing?",
+      "Hey! Welcome! I'm here to make your property search super easy. Whether you're buying your first home or looking for an investment, I've got you covered. What are you interested in?"
+    ];
+    this.context.conversationStage = 'gathering';
+    return greetings[Math.floor(Math.random() * greetings.length)];
+  }
+
+  private isFarewell(message: string): boolean {
+    const farewells = ['bye', 'goodbye', 'see you', 'later', 'farewell', 'take care', 'gotta go', 'have to go'];
+    return farewells.some(f => message.includes(f));
+  }
+
+  private getFarewellResponse(): string {
+    return "Thanks for chatting with me! Feel free to come back anytime you need help finding properties. Have a wonderful day!";
+  }
+
+  private isThankYou(message: string): boolean {
+    return ['thank', 'thanks', 'appreciate', 'thx', 'ty'].some(t => message.includes(t));
+  }
+
+  private isJokeRequest(message: string): boolean {
+    return message.includes('joke') || message.includes('funny') || message.includes('make me laugh');
+  }
+
+  private async extractInformation(message: string): Promise<void> {
+    const lowerMessage = message.toLowerCase();
+
+    // Extract intent
+    if (!this.context.intent) {
+      if (this.matchesIntent(lowerMessage, 'buy')) {
+        this.context.intent = 'buy';
+        this.removeMissingInfo('intent');
+      } else if (this.matchesIntent(lowerMessage, 'rent')) {
+        this.context.intent = 'rent';
+        this.removeMissingInfo('intent');
+      } else if (this.matchesIntent(lowerMessage, 'new_development')) {
+        this.context.intent = 'new_development';
+        this.removeMissingInfo('intent');
+      }
+    }
+
+    // Extract budget
+    this.extractBudget(lowerMessage);
+
+    // Extract location
+    this.extractLocation(lowerMessage);
+
+    // Extract property type
+    this.extractPropertyType(lowerMessage);
+
+    // Extract bedrooms
+    this.extractBedrooms(lowerMessage);
+
+    // Extract bathrooms
+    this.extractBathrooms(lowerMessage);
+
+    // Extract amenities
+    this.extractAmenities(lowerMessage);
+
+    // Extract preferences
+    this.extractPreferences(lowerMessage);
+
+    // Update conversation stage
+    this.updateConversationStage();
+  }
+
+  private matchesIntent(message: string, intent: 'buy' | 'rent' | 'new_development'): boolean {
+    const patterns = {
+      buy: ['buy', 'buying', 'purchase', 'purchasing', 'own', 'ownership', 'invest in', 'acquire', 'for sale'],
+      rent: ['rent', 'rental', 'renting', 'lease', 'leasing', 'tenant', 'monthly', 'for rent'],
+      new_development: ['new launch', 'new development', 'new project', 'launching', 'pre-launch', 'under construction']
+    };
+    return patterns[intent].some(keyword => message.includes(keyword));
+  }
+
+  private extractBudget(message: string): void {
+    // Pattern: RM 500,000 or RM 500k or 500000 or 500k
+    const budgetPatterns = [
+      /(?:under|below|less than|max|maximum|budget|up to)\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?/gi,
+      /(?:above|over|more than|min|minimum|at least)\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?/gi,
+      /(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?\s*(?:to|-)\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?/gi,
+      /budget\s*(?:is|of|:)?\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?/gi
+    ];
+
+    budgetPatterns.forEach(pattern => {
+      const matches = Array.from(message.matchAll(pattern));
+      matches.forEach(match => {
+        if (match[0].includes('under') || match[0].includes('below') || match[0].includes('less than') ||
+            match[0].includes('max') || match[0].includes('up to')) {
+          let maxPrice = parseFloat(match[1].replace(/,/g, ''));
+          if (match[2] === 'k') maxPrice *= 1000;
+          if (match[2] === 'm') maxPrice *= 1000000;
+          if (maxPrice < 10000) maxPrice *= 1000;
+          this.context.budget.max = maxPrice;
+          this.removeMissingInfo('budget');
+        } else if (match[0].includes('above') || match[0].includes('over') || match[0].includes('more than') ||
+                   match[0].includes('min') || match[0].includes('at least')) {
+          let minPrice = parseFloat(match[1].replace(/,/g, ''));
+          if (match[2] === 'k') minPrice *= 1000;
+          if (match[2] === 'm') minPrice *= 1000000;
+          if (minPrice < 10000) minPrice *= 1000;
+          this.context.budget.min = minPrice;
+          this.removeMissingInfo('budget');
+        } else if (match[0].includes('to') || match[0].includes('-')) {
+          let minPrice = parseFloat(match[1].replace(/,/g, ''));
+          let maxPrice = parseFloat(match[3].replace(/,/g, ''));
+          if (match[2] === 'k') minPrice *= 1000;
+          if (match[2] === 'm') minPrice *= 1000000;
+          if (match[4] === 'k') maxPrice *= 1000;
+          if (match[4] === 'm') maxPrice *= 1000000;
+          if (minPrice < 10000) minPrice *= 1000;
+          if (maxPrice < 10000) maxPrice *= 1000;
+          this.context.budget.min = minPrice;
+          this.context.budget.max = maxPrice;
+          this.removeMissingInfo('budget');
+        } else {
+          let price = parseFloat(match[1].replace(/,/g, ''));
+          if (match[2] === 'k') price *= 1000;
+          if (match[2] === 'm') price *= 1000000;
+          if (price < 10000) price *= 1000;
+          this.context.budget.max = price;
+          this.removeMissingInfo('budget');
+        }
+      });
+    });
+  }
+
+  private extractLocation(message: string): void {
+    MALAYSIAN_LOCATIONS.states.forEach(state => {
+      if (message.includes(state) && !this.context.location.states.includes(state)) {
+        this.context.location.states.push(state);
+        this.removeMissingInfo('location');
+      }
+    });
+
+    MALAYSIAN_LOCATIONS.cities.forEach(city => {
+      if (message.includes(city) && !this.context.location.cities.includes(city)) {
+        this.context.location.cities.push(city);
+        this.removeMissingInfo('location');
+      }
+    });
+
+    MALAYSIAN_LOCATIONS.areas.forEach(area => {
+      if (message.includes(area) && !this.context.location.areas.includes(area)) {
+        this.context.location.areas.push(area);
+        this.removeMissingInfo('location');
+      }
+    });
+  }
+
+  private extractPropertyType(message: string): void {
+    Object.values(PROPERTY_TYPES).flat().forEach(type => {
+      if (message.includes(type) && !this.context.propertyType.includes(type)) {
+        this.context.propertyType.push(type);
+      }
+    });
+  }
+
+  private extractBedrooms(message: string): void {
+    const bedroomPatterns = [
+      /(\d+)\s*(?:bed|bedroom|br)(?:room)?s?/i,
+      /(?:bed|bedroom|br)(?:room)?s?\s*[:=]?\s*(\d+)/i
+    ];
+
+    bedroomPatterns.forEach(pattern => {
+      const match = message.match(pattern);
+      if (match && !this.context.bedrooms) {
+        this.context.bedrooms = parseInt(match[1]);
+      }
+    });
+  }
+
+  private extractBathrooms(message: string): void {
+    const bathroomPatterns = [
+      /(\d+)\s*(?:bath|bathroom)(?:room)?s?/i,
+      /(?:bath|bathroom)(?:room)?s?\s*[:=]?\s*(\d+)/i
+    ];
+
+    bathroomPatterns.forEach(pattern => {
+      const match = message.match(pattern);
+      if (match && !this.context.bathrooms) {
+        this.context.bathrooms = parseInt(match[1]);
+      }
+    });
+  }
+
+  private extractAmenities(message: string): void {
+    AMENITIES.forEach(amenity => {
+      if (message.includes(amenity) && !this.context.amenities.includes(amenity)) {
+        this.context.amenities.push(amenity);
+      }
+    });
+  }
+
+  private extractPreferences(message: string): void {
+    if (message.includes('own stay') || message.includes('live in') || message.includes('family')) {
+      this.context.preferences.purpose = 'own_stay';
+    } else if (message.includes('invest') || message.includes('rental income') || message.includes('roi')) {
+      this.context.preferences.purpose = 'investment';
+    }
+
+    if (message.includes('freehold')) {
+      this.context.preferences.tenure = 'freehold';
+    } else if (message.includes('leasehold')) {
+      this.context.preferences.tenure = 'leasehold';
+    }
+
+    if (message.includes('fully furnished') || message.includes('fully-furnished')) {
+      this.context.preferences.furnished = 'fully_furnished';
+    } else if (message.includes('partially furnished') || message.includes('partially-furnished')) {
+      this.context.preferences.furnished = 'partially_furnished';
+    } else if (message.includes('unfurnished')) {
+      this.context.preferences.furnished = 'unfurnished';
+    }
+  }
+
+  private removeMissingInfo(info: string): void {
+    this.context.missingInfo = this.context.missingInfo.filter(i => i !== info);
+  }
+
+  private updateConversationStage(): void {
+    if (this.context.missingInfo.length === 0 ||
+        (this.context.intent && this.context.location.cities.length > 0 &&
+         (this.context.budget.max || this.context.budget.min))) {
+      this.context.conversationStage = 'showing';
+    } else if (this.context.conversationHistory.length > 2) {
+      this.context.conversationStage = 'refining';
+    } else {
+      this.context.conversationStage = 'gathering';
+    }
+  }
+
+  private async generateSmartResponse(): Promise<{
+    text: string;
+    showProperties: boolean;
+    confidence: number;
+  }> {
+    // If we have enough information, show properties
+    if (this.context.conversationStage === 'showing') {
+      return {
+        text: this.generatePropertySearchSummary(),
+        showProperties: true,
+        confidence: 0.9
+      };
+    }
+
+    // Ask for missing critical information
+    if (this.context.missingInfo.length > 0) {
+      const question = this.generateSmartQuestion();
+      return {
+        text: question,
+        showProperties: false,
+        confidence: 0.8
+      };
+    }
+
+    // Refine the search
+    return {
+      text: "Let me search for properties based on what you've told me...",
+      showProperties: true,
+      confidence: 0.7
+    };
+  }
+
+  private generatePropertySearchSummary(): string {
+    const parts: string[] = [];
+
+    if (this.context.intent === 'buy') {
+      parts.push("Great! I'm searching for properties FOR SALE");
+    } else if (this.context.intent === 'rent') {
+      parts.push("Perfect! I'm searching for properties FOR RENT");
+    } else if (this.context.intent === 'new_development') {
+      parts.push("Excellent! I'm searching for NEW DEVELOPMENTS");
+    }
+
+    if (this.context.location.cities.length > 0) {
+      parts.push(`in ${this.context.location.cities.join(', ')}`);
+    } else if (this.context.location.areas.length > 0) {
+      parts.push(`in ${this.context.location.areas.join(', ')}`);
+    } else if (this.context.location.states.length > 0) {
+      parts.push(`in ${this.context.location.states.join(', ')}`);
+    }
+
+    if (this.context.budget.max && this.context.budget.min) {
+      parts.push(`within RM${this.context.budget.min.toLocaleString()} to RM${this.context.budget.max.toLocaleString()}`);
+    } else if (this.context.budget.max) {
+      parts.push(`under RM${this.context.budget.max.toLocaleString()}`);
+    } else if (this.context.budget.min) {
+      parts.push(`above RM${this.context.budget.min.toLocaleString()}`);
+    }
+
+    if (this.context.propertyType.length > 0) {
+      parts.push(`(${this.context.propertyType.join(' or ')})`);
+    }
+
+    if (this.context.bedrooms) {
+      parts.push(`with ${this.context.bedrooms} bedrooms`);
+    }
+
+    let summary = parts.join(' ') + '.';
+
+    if (this.context.amenities.length > 0) {
+      summary += ` I'll prioritize properties with ${this.context.amenities.slice(0, 3).join(', ')}.`;
+    }
+
+    summary += '\n\nHere are the best matches I found for you:';
+
+    return summary;
+  }
+
+  private generateSmartQuestion(): string {
+    const missing = this.context.missingInfo[0];
+
+    switch (missing) {
+      case 'intent':
+        if (this.context.conversationHistory.length <= 2) {
+          return "I'd love to help you find the perfect property! Are you looking to BUY a property, RENT, or explore NEW DEVELOPMENTS?";
+        }
+        return "Just to clarify - are you interested in buying or renting?";
+
+      case 'location':
+        if (this.context.intent === 'buy') {
+          return "Great choice to buy! Which area are you interested in? For example: Johor Bahru, KL, Penang, or any specific neighborhood?";
+        } else if (this.context.intent === 'rent') {
+          return "Perfect! Where would you like to rent? Tell me the city or area you prefer.";
+        }
+        return "Which location interests you? I cover all major cities in Malaysia!";
+
+      case 'budget':
+        if (this.context.intent === 'buy') {
+          return "What's your budget for purchasing? You can say something like 'under RM500k' or 'RM300k to RM600k'.";
+        } else if (this.context.intent === 'rent') {
+          return "What's your monthly rental budget? For example: 'under RM2000' or 'RM1500 to RM3000'.";
+        }
+        return "What budget range are you comfortable with?";
+
+      default:
+        return "Tell me more about what you're looking for, and I'll find the perfect matches!";
+    }
+  }
+
+  private addAIResponse(response: string): void {
+    this.context.conversationHistory.push({
+      role: 'ai',
+      content: response,
+      timestamp: new Date()
+    });
+  }
+
+  getContext(): ConversationContext {
+    return this.context;
+  }
+
+  updateContext(context: ConversationContext): void {
+    this.context = context;
+  }
+}
+
+export const scoreProperty = (
+  property: PropertyWithImages,
+  context: ConversationContext
+): { score: number; reasons: string[] } => {
+  let score = 0;
+  const reasons: string[] = [];
+
+  // Intent match (30 points)
+  if (context.intent === 'buy' && property.listing_type === 'sale') {
+    score += 30;
+    reasons.push('for sale as you want');
+  } else if (context.intent === 'rent' && property.listing_type === 'rent') {
+    score += 30;
+    reasons.push('for rent as you want');
+  } else if (context.intent === 'new_development' && property.availability_date &&
+             new Date(property.availability_date) > new Date()) {
+    score += 30;
+    reasons.push('new development project');
+  }
+
+  // Budget match (25 points)
+  if (context.budget.max && property.price <= context.budget.max) {
+    score += 20;
+    reasons.push('within your budget');
+    if (context.budget.min && property.price >= context.budget.min) {
+      score += 5;
+    }
+  } else if (context.budget.max && property.price > context.budget.max) {
+    score -= 15;
+  }
+
+  // Location match (20 points)
+  const locationScore = calculateLocationScore(property, context);
+  score += locationScore.score;
+  if (locationScore.reason) reasons.push(locationScore.reason);
+
+  // Property type (15 points)
+  if (context.propertyType.length > 0) {
+    if (context.propertyType.includes(property.property_type)) {
+      score += 15;
+      reasons.push(`${property.property_type} as requested`);
+    }
+  }
+
+  // Bedrooms (10 points)
+  if (context.bedrooms) {
+    if (property.bedrooms === context.bedrooms) {
+      score += 10;
+      reasons.push(`exactly ${context.bedrooms} bedrooms`);
+    } else if (Math.abs(property.bedrooms - context.bedrooms) === 1) {
+      score += 5;
+    }
+  }
+
+  // Amenities (15 points max)
+  const amenityScore = calculateAmenityScore(property, context);
+  score += amenityScore.score;
+  if (amenityScore.reasons.length > 0) {
+    reasons.push(...amenityScore.reasons);
+  }
+
+  // Preferences (10 points)
+  if (context.preferences.furnished && property.furnished === context.preferences.furnished) {
+    score += 5;
+    reasons.push(context.preferences.furnished.replace('_', ' '));
+  }
+
+  // Featured boost (5 points)
+  if (property.featured) {
+    score += 5;
+  }
+
+  return { score, reasons };
+};
+
+function calculateLocationScore(
+  property: PropertyWithImages,
+  context: ConversationContext
+): { score: number; reason: string | null } {
+  let score = 0;
+  let reason: string | null = null;
+
+  const propCity = property.city.toLowerCase();
+  const propState = property.state.toLowerCase();
+  const propAddress = property.address.toLowerCase();
+
+  // City match (highest priority)
+  if (context.location.cities.length > 0) {
+    const cityMatch = context.location.cities.some(city =>
+      propCity.includes(city) || propAddress.includes(city)
+    );
+    if (cityMatch) {
+      score = 20;
+      reason = `in ${property.city}`;
+      return { score, reason };
+    }
+  }
+
+  // Area match
+  if (context.location.areas.length > 0) {
+    const areaMatch = context.location.areas.some(area =>
+      propCity.includes(area) || propAddress.includes(area)
+    );
+    if (areaMatch) {
+      score = 18;
+      reason = 'in your preferred area';
+      return { score, reason };
+    }
+  }
+
+  // State match (lower priority)
+  if (context.location.states.length > 0) {
+    const stateMatch = context.location.states.some(state =>
+      propState.includes(state)
+    );
+    if (stateMatch) {
+      score = 10;
+      reason = `in ${property.state}`;
+      return { score, reason };
+    }
+  }
+
+  return { score, reason };
+}
+
+function calculateAmenityScore(
+  property: PropertyWithImages,
+  context: ConversationContext
+): { score: number; reasons: string[] } {
+  if (context.amenities.length === 0) {
+    return { score: 0, reasons: [] };
+  }
+
+  let score = 0;
+  const matchedAmenities: string[] = [];
+
+  context.amenities.forEach(requestedAmenity => {
+    const match = property.amenities.some(propAmenity =>
+      propAmenity.toLowerCase().includes(requestedAmenity.toLowerCase()) ||
+      requestedAmenity.toLowerCase().includes(propAmenity.toLowerCase())
+    );
+    if (match) {
+      score += 5;
+      matchedAmenities.push(requestedAmenity);
+    }
+  });
+
+  const maxScore = Math.min(score, 15);
+  const reasons = matchedAmenities.length > 0
+    ? [`has ${matchedAmenities.slice(0, 2).join(' and ')}`]
+    : [];
+
+  return { score: maxScore, reasons };
+}

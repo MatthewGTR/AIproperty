@@ -377,7 +377,7 @@ export const authService = {
   },
 
   // AI Context Management
-  async saveUserAIContext(userId: string, context: UserProfile): Promise<boolean> {
+  async saveUserAIContext(userId: string, context: any): Promise<boolean> {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -395,7 +395,7 @@ export const authService = {
     }
   },
 
-  async getUserAIContext(userId: string): Promise<UserProfile | null> {
+  async getUserAIContext(userId: string): Promise<any | null> {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -407,7 +407,7 @@ export const authService = {
         return null;
       }
 
-      return data.ai_context as UserProfile;
+      return data.ai_context;
     } catch (error) {
       console.error('Error getting AI context:', error);
       return null;

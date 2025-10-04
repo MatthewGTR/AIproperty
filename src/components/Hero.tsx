@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, MapPin } from 'lucide-react';
-import { PropertyWithImages, propertyService } from '../services/propertyService';
-import { searchPropertiesWithAI, UserProfile, getDefaultUserProfile } from '../services/openaiService';
+import { PropertyWithImages } from '../services/propertyService';
+import { processUserMessage, ConversationContext, createDefaultContext, getAIContext } from '../services/enhancedOpenAI';
 import { authService } from '../services/authService';
 
 interface HeroProps {
@@ -28,7 +28,7 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [aiContext, setAiContext] = useState<UserProfile>(getDefaultUserProfile());
+  const [aiContext, setAiContext] = useState<ConversationContext>(createDefaultContext());
 
   // Load user's AI context when user changes
   useEffect(() => {
@@ -36,10 +36,15 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
       if (user?.id) {
         const savedContext = await authService.getUserAIContext(user.id);
         if (savedContext) {
-          setAiContext(savedContext);
+          // Convert old UserProfile to new ConversationContext if needed
+          try {
+            setAiContext(savedContext as any);
+          } catch (e) {
+            setAiContext(createDefaultContext());
+          }
         }
       } else {
-        setAiContext(getDefaultUserProfile());
+        setAiContext(createDefaultContext());
       }
     };
     loadUserContext();
@@ -60,15 +65,12 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
       setIsTyping(true);
 
       try {
-        // Get AI response with user context
-        const conversationHistory = messages.map(m => m.text);
-        const { response, matchedProperties, userProfile } = await searchPropertiesWithAI(
+        // Process message with smart AI
+        const { response, matchedProperties, context } = await processUserMessage(
           inputMessage,
-          [],
-          conversationHistory,
           aiContext
         );
-        
+
         const aiMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
           text: response,
@@ -78,21 +80,22 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
         };
 
         setMessages(prev => [...prev, aiMessage]);
-        
+
         // Update AI context
-        setAiContext(userProfile);
-        
+        setAiContext(context);
+
         // Save context for logged-in users
         if (user?.id) {
-          await authService.saveUserAIContext(user.id, userProfile);
+          await authService.saveUserAIContext(user.id, context as any);
         }
-        
+
         // Show recommended properties
         onPropertiesRecommended(matchedProperties);
       } catch (error) {
+        console.error('Chat error:', error);
         const errorMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
-          text: "Sorry, having technical issues. Try asking about properties differently!",
+          text: "Sorry, I encountered an issue. Could you please rephrase that?",
           sender: 'ai',
           timestamp: new Date(),
           properties: []
