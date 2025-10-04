@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User } from 'lucide-react';
 import PropertyCard from './PropertyCard';
 import { PropertyWithImages } from '../services/propertyService';
-import { processUserMessage, ConversationContext, createDefaultContext } from '../services/enhancedOpenAI';
+import { processUserMessage, createDefaultContext } from '../services/enhancedOpenAI';
+import type { ConversationContext } from '../services/enhancedOpenAI';
 
 interface Message {
   role: 'user' | 'ai';
@@ -25,6 +26,10 @@ export default function Hero() {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    console.log('✅ Hero component mounted with', messages.length, 'messages');
+  }, []);
 
   useEffect(() => {
     scrollToBottom();

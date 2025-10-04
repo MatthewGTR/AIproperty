@@ -77,4 +77,5 @@ export function getAIContext(): ConversationContext | null {
   return aiInstance?.getContext() || null;
 }
 
-export { ConversationContext, createDefaultContext };
+export { createDefaultContext };
+export type { ConversationContext };
