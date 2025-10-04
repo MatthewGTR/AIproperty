@@ -1,15 +1,58 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { LogIn, UserPlus } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { LogIn, UserPlus, AlertCircle } from 'lucide-react';
+import { authService } from '../services/authService';
 
 export default function Login() {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [userType, setUserType] = useState<'buyer' | 'seller' | 'agent'>('buyer');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Authentication will be connected to Supabase!');
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      if (isLogin) {
+        const { data, error: signInError } = await authService.signIn(email, password);
+        if (signInError) {
+          setError(signInError);
+        } else {
+          setSuccess('Login successful!');
+          setTimeout(() => navigate('/'), 1000);
+        }
+      } else {
+        if (!fullName.trim()) {
+          setError('Please enter your full name');
+          setLoading(false);
+          return;
+        }
+        const { data, error: signUpError } = await authService.signUp(email, password, fullName, userType);
+        if (signUpError) {
+          setError(signUpError);
+        } else {
+          setSuccess('Account created! Please check your email to verify.');
+          setTimeout(() => {
+            setIsLogin(true);
+            setEmail('');
+            setPassword('');
+            setFullName('');
+          }, 2000);
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -25,7 +68,53 @@ export default function Login() {
             </p>
           </div>
 
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+              {success}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
+            {!isLogin && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="John Doe"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    I am a...
+                  </label>
+                  <select
+                    value={userType}
+                    onChange={(e) => setUserType(e.target.value as 'buyer' | 'seller' | 'agent')}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="buyer">Property Buyer</option>
+                    <option value="seller">Property Seller</option>
+                    <option value="agent">Real Estate Agent</option>
+                  </select>
+                </div>
+              </>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Email Address
@@ -37,6 +126,7 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="you@example.com"
+                disabled={loading}
               />
             </div>
 
@@ -51,7 +141,12 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="••••••••"
+                disabled={loading}
+                minLength={6}
               />
+              {!isLogin && (
+                <p className="text-xs text-slate-500 mt-1">Minimum 6 characters</p>
+              )}
             </div>
 
             {isLogin && (
@@ -68,9 +163,15 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center gap-2"
+              disabled={loading}
+              className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLogin ? (
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Please wait...</span>
+                </div>
+              ) : isLogin ? (
                 <>
                   <LogIn className="w-5 h-5" />
                   <span>Sign In</span>
@@ -86,8 +187,13 @@ export default function Login() {
 
           <div className="mt-6 text-center">
             <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-slate-600"
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError('');
+                setSuccess('');
+              }}
+              disabled={loading}
+              className="text-sm text-slate-600 disabled:opacity-50"
             >
               {isLogin ? "Don't have an account? " : 'Already have an account? '}
               <span className="text-blue-600 hover:text-blue-700 font-semibold">

@@ -18,12 +18,15 @@ export interface PropertyWithImages {
   address: string;
   city: string;
   state: string;
-  postal_code: string;
+  postal_code?: string;
   latitude: number | null;
   longitude: number | null;
   amenities: string[];
   images: string[];
   featured: boolean;
+  views_count?: number;
+  status?: string;
+  agent_id?: string;
   created_at: string;
 }
 
@@ -75,5 +78,62 @@ export const propertyService = {
 
     if (error) throw error;
     return data || [];
+  },
+
+  async getPropertiesByAgent(agentId: string): Promise<PropertyWithImages[]> {
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('agent_id', agentId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async createProperty(propertyData: any): Promise<PropertyWithImages> {
+    const { data, error } = await supabase
+      .from('properties')
+      .insert(propertyData)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async updateProperty(id: string, updates: any): Promise<PropertyWithImages> {
+    const { data, error } = await supabase
+      .from('properties')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteProperty(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('properties')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  async getById(id: string): Promise<PropertyWithImages | null> {
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching property:', error);
+      return null;
+    }
+    return data;
   }
 };

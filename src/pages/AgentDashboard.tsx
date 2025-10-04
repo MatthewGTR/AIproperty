@@ -1,12 +1,24 @@
-import { useState } from 'react';
-import { Plus, Home, Eye, Heart, MessageSquare } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Home, Eye, Heart, MessageSquare, Trash2, Edit, CheckCircle } from 'lucide-react';
+import { authService } from '../services/authService';
+import { propertyService, PropertyWithImages } from '../services/propertyService';
+import PropertyCard from '../components/PropertyCard';
 
 export default function AgentDashboard() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [properties, setProperties] = useState<PropertyWithImages[]>([]);
+  const [stats, setStats] = useState({ total: 0, views: 0, favorites: 0, inquiries: 0 });
   const [showAddForm, setShowAddForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    property_type: 'Condominium',
+    property_type: 'condo',
     listing_type: 'sale',
     price: '',
     bedrooms: '3',
@@ -15,21 +27,114 @@ export default function AgentDashboard() {
     address: '',
     city: '',
     state: 'Johor',
-    postal_code: '',
-    amenities: [] as string[],
-    images: [] as string[]
+    amenities: ''
   });
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const currentUser = await authService.getCurrentUser();
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+    setUser(currentUser);
+    loadDashboardData(currentUser.id);
+  };
+
+  const loadDashboardData = async (userId: string) => {
+    try {
+      const userProperties = await propertyService.getPropertiesByAgent(userId);
+      setProperties(userProperties);
+      setStats({
+        total: userProperties.length,
+        views: userProperties.reduce((sum, p) => sum + (p.views_count || 0), 0),
+        favorites: 0,
+        inquiries: 0
+      });
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Property submission feature will be connected to database!');
-    console.log('Form data:', formData);
+    if (!user) return;
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const amenitiesArray = formData.amenities
+        .split(',')
+        .map(a => a.trim())
+        .filter(a => a.length > 0);
+
+      const propertyData = {
+        title: formData.title,
+        description: formData.description,
+        property_type: formData.property_type,
+        listing_type: formData.listing_type as 'sale' | 'rent',
+        price: parseFloat(formData.price),
+        bedrooms: parseInt(formData.bedrooms),
+        bathrooms: parseInt(formData.bathrooms),
+        sqft: parseInt(formData.sqft),
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        amenities: amenitiesArray,
+        agent_id: user.id,
+        status: 'active' as const,
+        featured: false
+      };
+
+      await propertyService.createProperty(propertyData);
+
+      setSuccess('Property added successfully!');
+      setFormData({
+        title: '',
+        description: '',
+        property_type: 'condo',
+        listing_type: 'sale',
+        price: '',
+        bedrooms: '3',
+        bathrooms: '2',
+        sqft: '',
+        address: '',
+        city: '',
+        state: 'Johor',
+        amenities: ''
+      });
+
+      setTimeout(() => {
+        setShowAddForm(false);
+        setSuccess('');
+        loadDashboardData(user.id);
+      }, 2000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to add property');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (propertyId: string) => {
+    if (!confirm('Are you sure you want to delete this property?')) return;
+
+    try {
+      await propertyService.deleteProperty(propertyId);
+      loadDashboardData(user!.id);
+    } catch (error) {
+      alert('Failed to delete property');
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <div className="flex justify-between items-center">
             <div>
@@ -41,18 +146,17 @@ export default function AgentDashboard() {
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
-              <span>Add Property</span>
+              <span>{showAddForm ? 'Cancel' : 'Add Property'}</span>
             </button>
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-6 rounded-xl shadow-md">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-600 text-sm">Total Listings</p>
-                <p className="text-3xl font-bold text-slate-900 mt-1">0</p>
+                <p className="text-3xl font-bold text-slate-900 mt-1">{stats.total}</p>
               </div>
               <Home className="w-12 h-12 text-blue-100" />
             </div>
@@ -62,7 +166,7 @@ export default function AgentDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-600 text-sm">Total Views</p>
-                <p className="text-3xl font-bold text-slate-900 mt-1">0</p>
+                <p className="text-3xl font-bold text-slate-900 mt-1">{stats.views}</p>
               </div>
               <Eye className="w-12 h-12 text-emerald-100" />
             </div>
@@ -72,7 +176,7 @@ export default function AgentDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-600 text-sm">Favorites</p>
-                <p className="text-3xl font-bold text-slate-900 mt-1">0</p>
+                <p className="text-3xl font-bold text-slate-900 mt-1">{stats.favorites}</p>
               </div>
               <Heart className="w-12 h-12 text-pink-100" />
             </div>
@@ -82,22 +186,35 @@ export default function AgentDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-600 text-sm">Inquiries</p>
-                <p className="text-3xl font-bold text-slate-900 mt-1">0</p>
+                <p className="text-3xl font-bold text-slate-900 mt-1">{stats.inquiries}</p>
               </div>
               <MessageSquare className="w-12 h-12 text-amber-100" />
             </div>
           </div>
         </div>
 
-        {/* Add Property Form */}
         {showAddForm && (
           <div className="bg-white rounded-xl shadow-md p-6 mb-8">
             <h2 className="text-2xl font-bold mb-6">Add New Property</h2>
+
+            {success && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+                <CheckCircle className="w-5 h-5" />
+                <span>{success}</span>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Property Title
+                    Property Title *
                   </label>
                   <input
                     type="text"
@@ -111,24 +228,25 @@ export default function AgentDashboard() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Property Type
+                    Property Type *
                   </label>
                   <select
                     value={formData.property_type}
                     onChange={(e) => setFormData({ ...formData, property_type: e.target.value })}
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="Condominium">Condominium</option>
-                    <option value="Apartment">Apartment</option>
-                    <option value="Terrace">Terrace House</option>
-                    <option value="Semi-D">Semi-Detached</option>
-                    <option value="Bungalow">Bungalow</option>
+                    <option value="condo">Condominium</option>
+                    <option value="apartment">Apartment</option>
+                    <option value="house">House</option>
+                    <option value="villa">Villa</option>
+                    <option value="studio">Studio</option>
+                    <option value="shophouse">Shophouse</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Listing Type
+                    Listing Type *
                   </label>
                   <select
                     value={formData.listing_type}
@@ -142,7 +260,7 @@ export default function AgentDashboard() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Price (RM)
+                    Price (RM) *
                   </label>
                   <input
                     type="number"
@@ -156,7 +274,7 @@ export default function AgentDashboard() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Bedrooms
+                    Bedrooms *
                   </label>
                   <input
                     type="number"
@@ -169,7 +287,7 @@ export default function AgentDashboard() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Bathrooms
+                    Bathrooms *
                   </label>
                   <input
                     type="number"
@@ -182,7 +300,7 @@ export default function AgentDashboard() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Square Feet
+                    Square Feet *
                   </label>
                   <input
                     type="number"
@@ -196,7 +314,7 @@ export default function AgentDashboard() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    State
+                    State *
                   </label>
                   <select
                     value={formData.state}
@@ -213,7 +331,7 @@ export default function AgentDashboard() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    City
+                    City *
                   </label>
                   <input
                     type="text"
@@ -227,7 +345,7 @@ export default function AgentDashboard() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Address
+                  Address *
                 </label>
                 <input
                   type="text"
@@ -240,7 +358,7 @@ export default function AgentDashboard() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Description
+                  Description *
                 </label>
                 <textarea
                   required
@@ -252,33 +370,66 @@ export default function AgentDashboard() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Amenities (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={formData.amenities}
+                  onChange={(e) => setFormData({ ...formData, amenities: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., Swimming Pool, Gym, Parking, Security"
+                />
+              </div>
+
               <div className="flex justify-end gap-4">
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
                   className="px-6 py-3 border border-slate-300 rounded-lg hover:bg-slate-50"
+                  disabled={loading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  disabled={loading}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Add Property
+                  {loading ? 'Adding...' : 'Add Property'}
                 </button>
               </div>
             </form>
           </div>
         )}
 
-        {/* My Listings */}
         <div className="bg-white rounded-xl shadow-md p-6">
           <h2 className="text-2xl font-bold mb-6">My Listings</h2>
-          <div className="text-center py-16">
-            <Home className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <p className="text-xl text-slate-600 mb-2">No listings yet</p>
-            <p className="text-slate-500">Add your first property to get started</p>
-          </div>
+          {properties.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {properties.map((property) => (
+                <div key={property.id} className="relative">
+                  <PropertyCard property={property} />
+                  <div className="absolute top-2 left-2 flex gap-2">
+                    <button
+                      onClick={() => handleDelete(property.id)}
+                      className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 shadow-lg"
+                      title="Delete property"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <Home className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+              <p className="text-xl text-slate-600 mb-2">No listings yet</p>
+              <p className="text-slate-500">Add your first property to get started</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
