@@ -1,16 +1,27 @@
-import { useState, useEffect } from 'react';
-import Hero from './components/Hero';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Home from './pages/Home';
+import Properties from './pages/Properties';
+import AIChat from './pages/AIChat';
+import Favorites from './pages/Favorites';
+import AgentDashboard from './pages/AgentDashboard';
+import Login from './pages/Login';
 
 function App() {
-  useEffect(() => {
-    console.log('✅ App component mounted');
-    console.log('📍 Supabase URL:', import.meta.env.VITE_SUPABASE_URL ? 'Configured' : 'Missing');
-  }, []);
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <Hero />
-    </div>
+    <BrowserRouter>
+      <div className="min-h-screen bg-slate-50">
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/properties" element={<Properties />} />
+          <Route path="/ai-chat" element={<AIChat />} />
+          <Route path="/favorites" element={<Favorites />} />
+          <Route path="/agent-dashboard" element={<AgentDashboard />} />
+          <Route path="/login" element={<Login />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 

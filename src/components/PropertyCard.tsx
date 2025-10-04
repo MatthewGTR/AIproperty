@@ -1,4 +1,5 @@
-import { MapPin, Bed, Bath, Maximize, Tag } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize, Tag, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { PropertyWithImages } from '../services/propertyService';
 
 interface PropertyCardProps {
@@ -11,7 +12,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+    <Link to={`/property/${property.id}`} className="block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
       {/* Image */}
       <div className="relative h-48 bg-slate-200">
         {property.images && property.images.length > 0 ? (
@@ -25,7 +26,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
             <MapPin className="w-12 h-12" />
           </div>
         )}
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 right-2 flex gap-2">
           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
             property.listing_type === 'sale'
               ? 'bg-blue-500 text-white'
@@ -33,6 +34,15 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           }`}>
             For {property.listing_type === 'sale' ? 'Sale' : 'Rent'}
           </span>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              alert('Add to favorites - will be connected!');
+            }}
+            className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:bg-pink-50 transition-colors"
+          >
+            <Heart className="w-4 h-4 text-pink-500" />
+          </button>
         </div>
       </div>
 
@@ -66,6 +76,6 @@ export default function PropertyCard({ property }: PropertyCardProps) {
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
