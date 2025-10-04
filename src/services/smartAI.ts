@@ -15,10 +15,32 @@ export interface ConversationContext {
     tenure: 'freehold' | 'leasehold' | null;
     furnished: 'fully_furnished' | 'partially_furnished' | 'unfurnished' | null;
   };
+  personalInfo: {
+    salary: number | null;
+    familySize: number | null;
+    occupation: string | null;
+    age: number | null;
+    maritalStatus: 'single' | 'married' | 'divorced' | null;
+    hasChildren: boolean;
+    workLocation: string | null;
+  };
+  constraints: {
+    mustBeNear: string[];
+    timeframe: string | null;
+    moveInDate: string | null;
+    maxCommute: string | null;
+  };
+  lifestyle: {
+    petOwner: boolean;
+    carOwner: boolean;
+    workFromHome: boolean;
+    hobbies: string[];
+  };
   conversationStage: 'greeting' | 'gathering' | 'refining' | 'showing' | 'closing';
   missingInfo: string[];
   lastQuery: string;
   conversationHistory: Array<{ role: 'user' | 'ai'; content: string; timestamp: Date }>;
+  autoInferredBudget: boolean;
 }
 
 export const createDefaultContext = (): ConversationContext => ({
@@ -30,10 +52,32 @@ export const createDefaultContext = (): ConversationContext => ({
   bathrooms: null,
   amenities: [],
   preferences: { purpose: null, tenure: null, furnished: null },
+  personalInfo: {
+    salary: null,
+    familySize: null,
+    occupation: null,
+    age: null,
+    maritalStatus: null,
+    hasChildren: false,
+    workLocation: null
+  },
+  constraints: {
+    mustBeNear: [],
+    timeframe: null,
+    moveInDate: null,
+    maxCommute: null
+  },
+  lifestyle: {
+    petOwner: false,
+    carOwner: false,
+    workFromHome: false,
+    hobbies: []
+  },
   conversationStage: 'greeting',
   missingInfo: ['intent', 'location', 'budget'],
   lastQuery: '',
-  conversationHistory: []
+  conversationHistory: [],
+  autoInferredBudget: false
 });
 
 let openai: OpenAI | null = null;
@@ -257,6 +301,18 @@ export class SmartPropertyAI {
   private async extractInformation(message: string): Promise<void> {
     const lowerMessage = message.toLowerCase();
 
+    // Extract personal information first (salary, family, etc.)
+    this.extractPersonalInfo(lowerMessage);
+
+    // Extract constraints and lifestyle
+    this.extractConstraints(lowerMessage);
+    this.extractLifestyle(lowerMessage);
+
+    // Calculate budget from salary if mentioned
+    if (this.context.personalInfo.salary && !this.context.budget.max) {
+      this.calculateAffordabilityFromSalary();
+    }
+
     // Extract intent with smart inference
     if (!this.context.intent) {
       const inferredIntent = this.inferIntentFromContext(lowerMessage);
@@ -266,7 +322,7 @@ export class SmartPropertyAI {
       }
     }
 
-    // Extract budget
+    // Extract budget (explicit mentions override salary calculation)
     this.extractBudget(lowerMessage);
 
     // Extract location
@@ -275,8 +331,11 @@ export class SmartPropertyAI {
     // Extract property type
     this.extractPropertyType(lowerMessage);
 
-    // Extract bedrooms
+    // Extract bedrooms (infer from family size if not explicit)
     this.extractBedrooms(lowerMessage);
+    if (!this.context.bedrooms && this.context.personalInfo.familySize) {
+      this.inferBedroomsFromFamily();
+    }
 
     // Extract bathrooms
     this.extractBathrooms(lowerMessage);
@@ -626,6 +685,224 @@ export class SmartPropertyAI {
     }
   }
 
+  private extractPersonalInfo(message: string): void {
+    // Extract salary
+    const salaryPatterns = [
+      /(?:salary|earn|earning|income|make|making)\s*(?:is|of|:)?\s*(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?/gi,
+      /(?:rm\s*)?(\d+(?:,?\d{3})*(?:\.\d+)?)\s*([km])?\s*(?:salary|income|per month|monthly)/gi
+    ];
+
+    salaryPatterns.forEach(pattern => {
+      const matches = Array.from(message.matchAll(pattern));
+      matches.forEach(match => {
+        let salary = parseFloat(match[1].replace(/,/g, ''));
+        if (match[2] === 'k') salary *= 1000;
+        if (match[2] === 'm') salary *= 1000000;
+        if (salary < 100 && !match[2]) salary *= 1000; // Assume thousands if small number
+        if (!this.context.personalInfo.salary) {
+          this.context.personalInfo.salary = salary;
+        }
+      });
+    });
+
+    // Extract family size
+    const familyPatterns = [
+      /family\s+of\s+(\d+)/gi,
+      /(\d+)\s+(?:people|person|members?|family members?)/gi,
+      /(?:me|my wife|my husband|my partner)\s+(?:and|&)\s+(\d+)\s+(?:kids?|children)/gi,
+      /(\d+)\s+(?:kids?|children)/gi
+    ];
+
+    familyPatterns.forEach(pattern => {
+      const match = message.match(pattern);
+      if (match) {
+        const num = parseInt(match[1]);
+        if (num > 0 && num < 20) {
+          if (message.includes('kids') || message.includes('children')) {
+            this.context.personalInfo.familySize = num + 2; // Kids + parents
+            this.context.personalInfo.hasChildren = true;
+          } else {
+            this.context.personalInfo.familySize = num;
+          }
+        }
+      }
+    });
+
+    // Marital status
+    if (message.includes('married') || message.includes('wife') || message.includes('husband') || message.includes('spouse')) {
+      this.context.personalInfo.maritalStatus = 'married';
+      if (!this.context.personalInfo.familySize) {
+        this.context.personalInfo.familySize = 2;
+      }
+    } else if (message.includes('single') || message.includes('bachelor')) {
+      this.context.personalInfo.maritalStatus = 'single';
+      if (!this.context.personalInfo.familySize) {
+        this.context.personalInfo.familySize = 1;
+      }
+    }
+
+    // Work location
+    MALAYSIAN_LOCATIONS.cities.forEach(city => {
+      if (message.includes(`work in ${city}`) || message.includes(`working in ${city}`) ||
+          message.includes(`office in ${city}`) || message.includes(`job in ${city}`)) {
+        this.context.personalInfo.workLocation = city;
+      }
+    });
+
+    // Occupation
+    const occupations = [
+      'engineer', 'doctor', 'lawyer', 'teacher', 'manager', 'developer',
+      'designer', 'accountant', 'banker', 'consultant', 'analyst', 'executive',
+      'sales', 'marketing', 'hr', 'finance', 'it', 'software', 'nurse'
+    ];
+
+    occupations.forEach(occupation => {
+      if (message.includes(occupation) && !this.context.personalInfo.occupation) {
+        this.context.personalInfo.occupation = occupation;
+      }
+    });
+  }
+
+  private extractConstraints(message: string): void {
+    // Near locations
+    const nearPatterns = [
+      /near\s+(?:to\s+)?(.+?)(?:\s+and|\s+or|,|$)/gi,
+      /close\s+to\s+(.+?)(?:\s+and|\s+or|,|$)/gi,
+      /within\s+(?:\d+\s*(?:km|minutes?))?\s+(?:of|from|to)\s+(.+?)(?:\s+and|\s+or|,|$)/gi
+    ];
+
+    nearPatterns.forEach(pattern => {
+      const matches = Array.from(message.matchAll(pattern));
+      matches.forEach(match => {
+        const location = match[1].trim();
+        if (location && location.length > 2 && location.length < 50) {
+          if (!this.context.constraints.mustBeNear.includes(location)) {
+            this.context.constraints.mustBeNear.push(location);
+          }
+        }
+      });
+    });
+
+    // Timeframe
+    if (message.includes('urgent') || message.includes('asap') || message.includes('immediately')) {
+      this.context.constraints.timeframe = 'urgent';
+    } else if (message.includes('within') && message.includes('month')) {
+      this.context.constraints.timeframe = 'within_month';
+    } else if (message.includes('few months') || message.includes('3 months')) {
+      this.context.constraints.timeframe = 'few_months';
+    } else if (message.includes('no rush') || message.includes('flexible')) {
+      this.context.constraints.timeframe = 'flexible';
+    }
+
+    // Commute time
+    const commutePattern = /(\d+)\s*(?:minutes?|mins?|min)\s+(?:commute|drive|travel)/gi;
+    const match = message.match(commutePattern);
+    if (match) {
+      this.context.constraints.maxCommute = match[0];
+    }
+  }
+
+  private extractLifestyle(message: string): void {
+    // Pet owner
+    if (message.includes('pet') || message.includes('dog') || message.includes('cat')) {
+      this.context.lifestyle.petOwner = true;
+      if (!this.context.amenities.includes('pet friendly')) {
+        this.context.amenities.push('pet friendly');
+      }
+    }
+
+    // Car owner
+    if (message.includes('car') || message.includes('parking') || message.includes('vehicle')) {
+      this.context.lifestyle.carOwner = true;
+      if (!this.context.amenities.includes('parking')) {
+        this.context.amenities.push('parking');
+      }
+    }
+
+    // Work from home
+    if (message.includes('work from home') || message.includes('wfh') || message.includes('remote work')) {
+      this.context.lifestyle.workFromHome = true;
+      if (!this.context.amenities.includes('wifi')) {
+        this.context.amenities.push('wifi');
+      }
+    }
+
+    // Hobbies that affect property choice
+    const hobbyKeywords = {
+      'gym': ['gym', 'fitness', 'workout'],
+      'swimming': ['swim', 'swimming'],
+      'cooking': ['cook', 'cooking', 'chef'],
+      'gaming': ['gam', 'gamer', 'gaming'],
+      'sports': ['sport', 'tennis', 'basketball']
+    };
+
+    Object.entries(hobbyKeywords).forEach(([hobby, keywords]) => {
+      if (keywords.some(kw => message.includes(kw))) {
+        if (!this.context.lifestyle.hobbies.includes(hobby)) {
+          this.context.lifestyle.hobbies.push(hobby);
+        }
+        // Auto-add amenity
+        if (hobby === 'gym' && !this.context.amenities.includes('gym')) {
+          this.context.amenities.push('gym');
+        }
+        if (hobby === 'swimming' && !this.context.amenities.includes('pool')) {
+          this.context.amenities.push('pool');
+        }
+      }
+    });
+  }
+
+  private calculateAffordabilityFromSalary(): void {
+    if (!this.context.personalInfo.salary) return;
+
+    const salary = this.context.personalInfo.salary;
+
+    // Calculate based on intent
+    if (this.context.intent === 'rent' || !this.context.intent) {
+      // For rent: 30% of salary rule
+      const affordableRent = Math.floor(salary * 0.3);
+      this.context.budget.max = affordableRent;
+      this.context.autoInferredBudget = true;
+      this.removeMissingInfo('budget');
+
+      // If salary suggests buying power, infer buy intent
+      if (salary >= 5000 && !this.context.intent) {
+        this.context.intent = 'buy';
+        this.removeMissingInfo('intent');
+        // Recalculate for buying
+        const affordableProperty = Math.floor(salary * 0.35 * 12 * 25); // 35% DSR, 25 years
+        this.context.budget.max = affordableProperty;
+      }
+    }
+
+    if (this.context.intent === 'buy') {
+      // For buying: 35% DSR rule, 25 year loan, assume 4% interest
+      // Monthly payment = salary * 0.35
+      // Property price ≈ monthly payment * 12 * 25 (simplified)
+      const monthlyPayment = salary * 0.35;
+      const affordableProperty = Math.floor(monthlyPayment * 12 * 25);
+      this.context.budget.max = affordableProperty;
+      this.context.autoInferredBudget = true;
+      this.removeMissingInfo('budget');
+    }
+  }
+
+  private inferBedroomsFromFamily(): void {
+    const familySize = this.context.personalInfo.familySize || 0;
+
+    if (familySize === 1) {
+      this.context.bedrooms = 1; // Studio or 1BR
+    } else if (familySize === 2) {
+      this.context.bedrooms = 2; // Couple
+    } else if (familySize <= 4) {
+      this.context.bedrooms = 3; // Small family
+    } else if (familySize <= 6) {
+      this.context.bedrooms = 4; // Larger family
+    } else {
+      this.context.bedrooms = 5; // Large family
+    }
+  }
+
   private removeMissingInfo(info: string): void {
     this.context.missingInfo = this.context.missingInfo.filter(i => i !== info);
   }
@@ -676,7 +953,9 @@ export class SmartPropertyAI {
 
   private generatePropertySearchSummary(): string {
     const parts: string[] = [];
+    const insights: string[] = [];
 
+    // Main search summary
     if (this.context.intent === 'buy') {
       parts.push("Great! I'm searching for properties FOR SALE");
     } else if (this.context.intent === 'rent') {
@@ -693,10 +972,16 @@ export class SmartPropertyAI {
       parts.push(`in ${this.context.location.states.join(', ')}`);
     }
 
+    // Budget with affordability insight
     if (this.context.budget.max && this.context.budget.min) {
       parts.push(`within RM${this.context.budget.min.toLocaleString()} to RM${this.context.budget.max.toLocaleString()}`);
     } else if (this.context.budget.max) {
-      parts.push(`under RM${this.context.budget.max.toLocaleString()}`);
+      if (this.context.autoInferredBudget && this.context.personalInfo.salary) {
+        parts.push(`under RM${this.context.budget.max.toLocaleString()}`);
+        insights.push(`Based on your RM${this.context.personalInfo.salary.toLocaleString()} salary, this budget keeps you within comfortable affordability guidelines`);
+      } else {
+        parts.push(`under RM${this.context.budget.max.toLocaleString()}`);
+      }
     } else if (this.context.budget.min) {
       parts.push(`above RM${this.context.budget.min.toLocaleString()}`);
     }
@@ -705,14 +990,45 @@ export class SmartPropertyAI {
       parts.push(`(${this.context.propertyType.join(' or ')})`);
     }
 
+    // Bedrooms with family context
     if (this.context.bedrooms) {
-      parts.push(`with ${this.context.bedrooms} bedrooms`);
+      if (this.context.personalInfo.familySize && this.context.personalInfo.familySize > 1) {
+        parts.push(`with ${this.context.bedrooms} bedrooms`);
+        if (this.context.personalInfo.hasChildren) {
+          insights.push(`${this.context.bedrooms} bedrooms should work well for your family`);
+        }
+      } else {
+        parts.push(`with ${this.context.bedrooms} bedrooms`);
+      }
     }
 
     let summary = parts.join(' ') + '.';
 
+    // Amenities with lifestyle context
     if (this.context.amenities.length > 0) {
       summary += ` I'll prioritize properties with ${this.context.amenities.slice(0, 3).join(', ')}.`;
+    }
+
+    // Add lifestyle insights
+    if (this.context.lifestyle.petOwner) {
+      insights.push("I'm focusing on pet-friendly properties for you");
+    }
+
+    if (this.context.constraints.mustBeNear.length > 0) {
+      insights.push(`Looking for locations near ${this.context.constraints.mustBeNear.slice(0, 2).join(' and ')}`);
+    }
+
+    if (this.context.personalInfo.workLocation) {
+      insights.push(`Considering proximity to your work in ${this.context.personalInfo.workLocation}`);
+    }
+
+    if (this.context.constraints.timeframe === 'urgent') {
+      insights.push("I'm prioritizing immediately available properties");
+    }
+
+    // Add insights if any
+    if (insights.length > 0) {
+      summary += '\n\n' + insights.join('. ') + '.';
     }
 
     summary += '\n\nHere are the best matches I found for you:';
