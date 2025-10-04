@@ -226,9 +226,12 @@ export class SmartPropertyAI {
 
   private getGreetingResponse(): string {
     const greetings = [
-      "Hi there! I'm your smart property assistant. I can help you find your dream home or investment property in Malaysia. Are you looking to buy, rent, or explore new developments?",
-      "Hello! Great to meet you! I specialize in finding the perfect properties across Malaysia. Tell me, what brings you here today - buying, renting, or just browsing?",
-      "Hey! Welcome! I'm here to make your property search super easy. Whether you're buying your first home or looking for an investment, I've got you covered. What are you interested in?"
+      "Hi there! I'm here to help you find the perfect property. What are you looking for today?",
+      "Hello! Welcome! I'd love to help you with your property search. What brings you here?",
+      "Hey! Great to see you! Let's find you an amazing property. What are you interested in?",
+      "Hi! I'm your property assistant. Tell me what you're looking for and I'll help you find it!",
+      "Hello! Ready to find your ideal property? Just tell me what you have in mind!",
+      "Hi there! Let's get started on finding your perfect place. What are you thinking?"
     ];
     this.context.conversationStage = 'gathering';
     return greetings[Math.floor(Math.random() * greetings.length)];
@@ -718,34 +721,114 @@ export class SmartPropertyAI {
   }
 
   private generateSmartQuestion(): string {
-    const missing = this.context.missingInfo[0];
+    const conversationLength = this.context.conversationHistory.filter(h => h.role === 'user').length;
+    const hasPartialInfo = this.context.missingInfo.length < 3;
 
-    switch (missing) {
-      case 'intent':
-        if (this.context.conversationHistory.length <= 2) {
-          return "I'd love to help you find the perfect property! Are you looking to BUY a property, RENT, or explore NEW DEVELOPMENTS?";
-        }
-        return "Just to clarify - are you interested in buying or renting?";
+    // What we know so far
+    const knowIntent = this.context.intent !== null;
+    const knowLocation = this.context.location.cities.length > 0 ||
+                         this.context.location.areas.length > 0 ||
+                         this.context.location.states.length > 0;
+    const knowBudget = this.context.budget.min !== null || this.context.budget.max !== null;
+    const knowPropertyType = this.context.propertyType.length > 0;
+    const knowBedrooms = this.context.bedrooms !== null;
 
-      case 'location':
-        if (this.context.intent === 'buy') {
-          return "Great choice to buy! Which area are you interested in? For example: Johor Bahru, KL, Penang, or any specific neighborhood?";
-        } else if (this.context.intent === 'rent') {
-          return "Perfect! Where would you like to rent? Tell me the city or area you prefer.";
-        }
-        return "Which location interests you? I cover all major cities in Malaysia!";
+    // Generate natural, context-aware questions
 
-      case 'budget':
-        if (this.context.intent === 'buy') {
-          return "What's your budget for purchasing? You can say something like 'under RM500k' or 'RM300k to RM600k'.";
-        } else if (this.context.intent === 'rent') {
-          return "What's your monthly rental budget? For example: 'under RM2000' or 'RM1500 to RM3000'.";
-        }
-        return "What budget range are you comfortable with?";
-
-      default:
-        return "Tell me more about what you're looking for, and I'll find the perfect matches!";
+    // Missing intent
+    if (!knowIntent) {
+      if (conversationLength <= 1) {
+        return "I'd love to help you find the perfect property! Are you looking to buy, rent, or explore new developments?";
+      }
+      return "Just to clarify - are you interested in buying or renting?";
     }
+
+    // Missing location
+    if (!knowLocation) {
+      const responses = [
+        "Which area are you interested in?",
+        "Where would you like this property to be?",
+        "What location works best for you?",
+        "Which city or neighborhood are you considering?"
+      ];
+
+      if (this.context.intent === 'buy') {
+        return this.getRandomResponse([
+          "Great! Which area are you looking to buy in?",
+          "Excellent choice! Where would you like to buy?",
+          "Perfect! Which city or area interests you?"
+        ]);
+      } else if (this.context.intent === 'rent') {
+        return this.getRandomResponse([
+          "Nice! Where would you like to rent?",
+          "Great! Which area are you looking to rent in?",
+          "Perfect! What location works for you?"
+        ]);
+      }
+      return this.getRandomResponse(responses);
+    }
+
+    // Missing budget
+    if (!knowBudget) {
+      if (this.context.intent === 'buy') {
+        return this.getRandomResponse([
+          "What's your budget looking like?",
+          "How much are you looking to spend?",
+          "What price range are you comfortable with?",
+          "Do you have a budget in mind?"
+        ]);
+      } else if (this.context.intent === 'rent') {
+        return this.getRandomResponse([
+          "What's your monthly budget?",
+          "How much are you looking to spend per month?",
+          "What rental budget works for you?",
+          "What's your comfortable monthly rental range?"
+        ]);
+      }
+      return "What budget range are you thinking of?";
+    }
+
+    // Ask about property type if we have core info
+    if (!knowPropertyType && hasPartialInfo) {
+      return this.getRandomResponse([
+        "What type of property are you interested in?",
+        "Are you looking for a condo, house, apartment, or something else?",
+        "What kind of property suits your needs?",
+        "Do you have a preference for the property type?"
+      ]);
+    }
+
+    // Ask about bedrooms if we have more info
+    if (!knowBedrooms && hasPartialInfo && knowPropertyType) {
+      return this.getRandomResponse([
+        "How many bedrooms do you need?",
+        "What's your preferred number of bedrooms?",
+        "How much space are you looking for?",
+        "Any specific bedroom requirements?"
+      ]);
+    }
+
+    // Ask about specific preferences
+    if (hasPartialInfo) {
+      return this.getRandomResponse([
+        "Any specific features or amenities you're looking for?",
+        "Is there anything else important to you?",
+        "What else matters to you in a property?",
+        "Tell me more about your ideal property!"
+      ]);
+    }
+
+    // Generic follow-up
+    return this.getRandomResponse([
+      "Tell me more about what you're looking for!",
+      "What else can you tell me about your ideal property?",
+      "Help me understand your preferences better!",
+      "Share more details so I can find the perfect match!"
+    ]);
+  }
+
+  private getRandomResponse(responses: string[]): string {
+    return responses[Math.floor(Math.random() * responses.length)];
   }
 
   private addAIResponse(response: string): void {

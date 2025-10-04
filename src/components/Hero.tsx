@@ -21,7 +21,7 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      text: 'Hi! I\'m your Smart Property AI. I can help you find houses, condos, apartments, or even answer silly questions! What are you looking for today?',
+      text: 'Hi there! I\'m here to help you find the perfect property in Malaysia. What are you looking for?',
       sender: 'ai',
       timestamp: new Date()
     }
