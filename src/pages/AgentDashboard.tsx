@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Home, Eye, Heart, MessageSquare, Trash2, Edit, CheckCircle } from 'lucide-react';
+import { Plus, Home, Eye, Heart, MessageSquare, Trash2, CreditCard as Edit, CheckCircle } from 'lucide-react';
 import { authService } from '../services/authService';
 import { propertyService, PropertyWithImages } from '../services/propertyService';
 import PropertyCard from '../components/PropertyCard';
