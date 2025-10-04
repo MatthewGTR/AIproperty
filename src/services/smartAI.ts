@@ -240,6 +240,18 @@ export class SmartPropertyAI {
       };
     }
 
+    // Handle non-property questions with ChatGPT/Gemini
+    if (!this.isPropertyRelated(lowerMessage)) {
+      const response = await this.handleGeneralChat(userMessage);
+      this.addAIResponse(response);
+      return {
+        response,
+        context: this.context,
+        shouldShowProperties: false,
+        confidence: 1.0
+      };
+    }
+
     // Check if this is a refinement query
     const isRefinement = this.isRefinementQuery(lowerMessage);
 
@@ -1264,6 +1276,102 @@ export class SmartPropertyAI {
 
   updateContext(context: ConversationContext): void {
     this.context = context;
+  }
+
+  private isPropertyRelated(message: string): boolean {
+    const propertyKeywords = [
+      'buy', 'rent', 'house', 'apartment', 'condo', 'villa', 'studio', 'property',
+      'bedroom', 'bathroom', 'sqft', 'rm', 'price', 'budget', 'show me', 'looking for',
+      'freehold', 'leasehold', 'new launch', 'resale', 'investment', 'own stay',
+      'near', 'area', 'location', 'furnish', 'amenities', 'facilities'
+    ];
+
+    const locationKeywords = MALAYSIAN_LOCATIONS.states.concat(
+      MALAYSIAN_LOCATIONS.cities,
+      MALAYSIAN_LOCATIONS.areas
+    );
+
+    const allKeywords = [...propertyKeywords, ...locationKeywords];
+    const lowerMessage = message.toLowerCase();
+
+    return allKeywords.some(keyword => lowerMessage.includes(keyword));
+  }
+
+  private async handleGeneralChat(query: string): Promise<string> {
+    const queryLower = query.toLowerCase();
+
+    try {
+      if (openai) {
+        const systemPrompt = `You are a friendly property assistant in Malaysia having a natural conversation.
+
+Your personality:
+- Warm, helpful, and conversational (like talking to a friend)
+- Can discuss any topic briefly
+- Smoothly relate topics to property needs when appropriate
+- Keep responses short and natural (2-3 sentences max)
+
+Context: User has talked about properties before. Their current interest: ${this.context.intent || 'exploring options'}
+${this.context.budget.max ? `Budget: RM${this.context.budget.max}` : ''}
+${this.context.location.cities.length > 0 ? `Location interest: ${this.context.location.cities.join(', ')}` : ''}
+
+Guidelines:
+- Answer their question naturally
+- If relevant, connect it to their property search
+- Don't force property talk - be genuine and friendly`;
+
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: query }
+          ],
+          max_tokens: 150,
+          temperature: 0.8
+        });
+
+        return completion.choices[0]?.message?.content || this.getDefaultOffTopicResponse(queryLower);
+
+      } else if (genAI) {
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+
+        const prompt = `You are a friendly property assistant in Malaysia.
+
+Context: User previously showed interest in ${this.context.intent || 'properties'}
+${this.context.budget.max ? `Budget: RM${this.context.budget.max}` : ''}
+
+User asks: "${query}"
+
+Respond naturally (2-3 sentences). If appropriate, relate it to their property search. Be warm and conversational.`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text() || this.getDefaultOffTopicResponse(queryLower);
+      }
+    } catch (error) {
+      console.error('Error with AI chat:', error);
+    }
+
+    return this.getDefaultOffTopicResponse(queryLower);
+  }
+
+  private getDefaultOffTopicResponse(queryLower: string): string {
+    if (queryLower.includes('weather')) {
+      return "Weather's been pretty typical for Malaysia - hot and humid! If you're property hunting, I can help you find places with great ventilation or air conditioning. Want to continue your search?";
+    } else if (queryLower.includes('food') || queryLower.includes('restaurant') || queryLower.includes('eat')) {
+      return "Love good food! Malaysia has amazing options everywhere. If food accessibility matters to you, I can find properties near food hubs or with spacious kitchens. Want to see some options?";
+    } else if (queryLower.includes('movie') || queryLower.includes('cinema') || queryLower.includes('tv')) {
+      return "Movies are great for unwinding! Some properties come with home theater setups or are near cinemas. Want to explore properties with entertainment in mind?";
+    } else if (queryLower.includes('sport') || queryLower.includes('gym') || queryLower.includes('exercise') || queryLower.includes('fitness')) {
+      return "Staying active is important! I can find you properties with gyms, swimming pools, or near sports facilities. What's your budget and preferred area?";
+    } else if (queryLower.includes('work') || queryLower.includes('job') || queryLower.includes('office') || queryLower.includes('career')) {
+      return "Work-life balance matters! Let me help you find properties with good commute times or work-from-home friendly spaces. Where's your workplace?";
+    } else if (queryLower.includes('school') || queryLower.includes('education') || queryLower.includes('university')) {
+      return "Education is a priority! I can find properties near good schools or universities. Are you looking for a family home?";
+    } else if (queryLower.includes('traffic') || queryLower.includes('transport') || queryLower.includes('mrt') || queryLower.includes('lrt')) {
+      return "Traffic can be challenging! I can help you find properties with easy access to public transport or in less congested areas. What's your preferred location?";
+    } else {
+      return "That's interesting! While I'd love to chat more about that, I'm best at helping you find amazing properties. Want to continue your property search?";
+    }
   }
 }
 
