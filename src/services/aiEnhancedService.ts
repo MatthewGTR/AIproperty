@@ -6,6 +6,12 @@ export interface AIResponse {
   isSilly: boolean;
 }
 
+export interface ConversationContext {
+  hasSeenProperties?: boolean;
+  lastIntent?: 'buy' | 'rent' | null;
+  conversationCount?: number;
+}
+
 const sillyQuestions = [
   'can i buy a house for free',
   'do you have a house for rm1',
@@ -19,13 +25,16 @@ const sillyQuestions = [
   'can my pet buy a house'
 ];
 
-const jokeResponses = [
-  "Haha! I wish properties were that cheap! In reality, I can help you find affordable options within your actual budget.",
-  "That's a good one! While I can't make properties free, I can definitely help you find great deals and investment opportunities.",
-  "You're funny! But seriously, let me help you find a realistic property that matches your budget and needs.",
-  "I love your creativity! Although that's not possible, I have some amazing properties I'd love to show you.",
-  "Nice try! While I can't work miracles, I can work my magic to find you the best property deals available."
-];
+const getRandomSillyResponse = (): string => {
+  const responses = [
+    "That's creative! While I can't help with that, I can find you amazing properties that actually exist.",
+    "Love the imagination! Let's focus on real properties that fit your needs.",
+    "That's a fun idea! But I've got something better - actual properties you can own or rent.",
+    "Nice one! How about we look at realistic options that might surprise you?",
+    "I appreciate the humor! Let me show you properties that are actually available."
+  ];
+  return responses[Math.floor(Math.random() * responses.length)];
+};
 
 const greetings = ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening', 'greetings', 'howdy', 'sup', 'yo'];
 const farewells = ['bye', 'goodbye', 'see you', 'later', 'farewell', 'take care', 'catch you later'];
@@ -56,32 +65,153 @@ export const detectIntent = (query: string): {
   return { isSilly, isJoke, isGreeting, isFarewell, isThankYou, isOffTopic };
 };
 
-export const generateSmartResponse = (query: string, intent: ReturnType<typeof detectIntent>): string | null => {
+const generateDynamicJoke = (): string => {
+  const jokes = [
+    {
+      joke: "Why don't properties ever get lonely? Because they always have great neighbors!",
+      followUp: "Speaking of great properties, what are you looking for?"
+    },
+    {
+      joke: "What's a property's favorite type of music? House music, of course!",
+      followUp: "Now, let's find you a place with good vibes!"
+    },
+    {
+      joke: "Why did the condo go to therapy? It had too many issues with commitment!",
+      followUp: "Don't worry, I'll help you find a property with no issues!"
+    },
+    {
+      joke: "How do properties communicate? Through their Windows!",
+      followUp: "Let me help you find a property that speaks to you!"
+    },
+    {
+      joke: "Why do apartments make terrible comedians? Their jokes always fall flat!",
+      followUp: "But seriously, what kind of place are you looking for?"
+    }
+  ];
+
+  const selected = jokes[Math.floor(Math.random() * jokes.length)];
+  return `${selected.joke}\n\n${selected.followUp}`;
+};
+
+const generateDynamicGreeting = (context?: ConversationContext): string => {
+  // Returning user
+  if (context?.conversationCount && context.conversationCount > 1) {
+    const returningGreetings = [
+      "Welcome back! Ready to continue your property search?",
+      "Good to see you again! What would you like to explore today?",
+      "Hello again! Let's find you that perfect property.",
+      "Hey! Back for more properties? Let's get started!",
+      "Welcome back! How can I help you today?"
+    ];
+    return returningGreetings[Math.floor(Math.random() * returningGreetings.length)];
+  }
+
+  // New user - varied greetings
+  const greetings = [
+    "Hey there! Ready to find your ideal property?",
+    "Hello! What kind of property are you looking for today?",
+    "Hi! I'm here to help you find the perfect place. What interests you?",
+    "Welcome! Let's find you an amazing property. What are you thinking?",
+    "Good to see you! Tell me what you're looking for and I'll help you find it.",
+    "Hi there! Whether it's buying or renting, I'm here to help. What's on your mind?"
+  ];
+  return greetings[Math.floor(Math.random() * greetings.length)];
+};
+
+const generateDynamicFarewell = (): string => {
+  const farewells = [
+    "Take care! Come back anytime you need property help.",
+    "See you later! Feel free to return when you're ready to search.",
+    "Goodbye! I'll be here whenever you need property assistance.",
+    "Have a great day! Come back soon if you want to continue searching.",
+    "Catch you later! Don't hesitate to return when you're ready.",
+    "Take it easy! I'm always here to help with your property search."
+  ];
+  return farewells[Math.floor(Math.random() * farewells.length)];
+};
+
+const generateDynamicThankYou = (context?: ConversationContext): string => {
+  // If they've seen properties, offer to refine
+  if (context?.hasSeenProperties) {
+    const withPropertiesResponses = [
+      "Happy to help! Want to see different properties or adjust your filters?",
+      "You're welcome! Need to refine the search or explore other areas?",
+      "Glad I could assist! Would you like to adjust your budget or location?",
+      "Anytime! Want to add more filters or change your preferences?",
+      "My pleasure! Feel free to narrow down or expand your search.",
+      "You're welcome! Ready to explore more options or focus on specific areas?"
+    ];
+    return withPropertiesResponses[Math.floor(Math.random() * withPropertiesResponses.length)];
+  }
+
+  // General thank you responses
+  const responses = [
+    "Happy to help! Anything else you'd like to know?",
+    "You're welcome! What else can I help you find?",
+    "Glad I could assist! Need help with anything else?",
+    "Anytime! What else are you curious about?",
+    "My pleasure! Feel free to ask me anything about properties.",
+    "You're welcome! Ready to start your property search?"
+  ];
+  return responses[Math.floor(Math.random() * responses.length)];
+};
+
+const generateOffTopicResponse = (query: string): string => {
+  const topic = query.toLowerCase();
+  let specificResponse = "";
+
+  if (topic.includes('weather')) {
+    specificResponse = "The weather's always better in a great property! ";
+  } else if (topic.includes('food') || topic.includes('restaurant')) {
+    specificResponse = "I love good food too! Maybe you need a property near great restaurants? ";
+  } else if (topic.includes('movie') || topic.includes('tv')) {
+    specificResponse = "Movies are great! You know what else is great? Finding the perfect property! ";
+  } else if (topic.includes('sport') || topic.includes('game')) {
+    specificResponse = "Sports fan? Maybe you need a place near stadiums or with good sports facilities? ";
+  } else {
+    specificResponse = "That's interesting! ";
+  }
+
+  const redirects = [
+    "But let's focus on finding you a perfect property.",
+    "How about we find you an amazing place to live?",
+    "Let me help you discover properties you'll love.",
+    "Shall we look at some properties that match your needs?",
+    "Ready to explore some great property options?"
+  ];
+
+  return specificResponse + redirects[Math.floor(Math.random() * redirects.length)];
+};
+
+export const generateSmartResponse = (
+  query: string,
+  intent: ReturnType<typeof detectIntent>,
+  context?: ConversationContext
+): string | null => {
   const { isSilly, isJoke, isGreeting, isFarewell, isThankYou, isOffTopic } = intent;
 
   if (isSilly) {
-    const randomJoke = jokeResponses[Math.floor(Math.random() * jokeResponses.length)];
-    return randomJoke;
+    return getRandomSillyResponse();
   }
 
   if (isJoke) {
-    return "Here's one: Why did the property agent cross the road? To show the house on the other side! Now, how about we find you a real property that'll make you smile?";
+    return generateDynamicJoke();
   }
 
   if (isGreeting) {
-    return "Hello! I'm your property assistant. I can help you find houses, condos, apartments, or any property you're looking for. What are you interested in?";
+    return generateDynamicGreeting(context);
   }
 
   if (isFarewell) {
-    return "Goodbye! Feel free to come back anytime you need property assistance. Have a great day!";
+    return generateDynamicFarewell();
   }
 
   if (isThankYou) {
-    return "You're welcome! Is there anything else I can help you with regarding properties?";
+    return generateDynamicThankYou(context);
   }
 
   if (isOffTopic) {
-    return "That's interesting! But I'm specialized in property searches. How about we find you a perfect home or investment property instead?";
+    return generateOffTopicResponse(query);
   }
 
   return null;
