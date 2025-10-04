@@ -1,159 +1,286 @@
-import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User } from 'lucide-react';
-import PropertyCard from './PropertyCard';
+import React, { useState, useEffect } from 'react';
+import { Send, Bot, User, Sparkles, MapPin } from 'lucide-react';
 import { PropertyWithImages } from '../services/propertyService';
-import { processUserMessage, createDefaultContext } from '../services/enhancedOpenAI';
-import type { ConversationContext } from '../services/enhancedOpenAI';
+import { processUserMessage, ConversationContext, createDefaultContext, getAIContext } from '../services/enhancedOpenAI';
+import { authService } from '../services/authService';
 
-interface Message {
-  role: 'user' | 'ai';
-  content: string;
+interface HeroProps {
+  user: { id: string; name: string; email: string; userType: string; credits: number } | null;
+  onPropertiesRecommended: (properties: PropertyWithImages[]) => void;
+}
+
+interface ChatMessage {
+  id: string;
+  text: string;
+  sender: 'user' | 'ai';
+  timestamp: Date;
   properties?: PropertyWithImages[];
 }
 
-export default function Hero() {
-  const [messages, setMessages] = useState<Message[]>([
+const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      role: 'ai',
-      content: "Hi! I'm your property assistant. Tell me what you're looking for - buying or renting, your budget, location preferences, or just tell me about yourself (salary, family size) and I'll help you find the perfect property!"
+      id: '1',
+      text: 'Hi there! I\'m here to help you find the perfect property in Malaysia. What are you looking for?',
+      sender: 'ai',
+      timestamp: new Date()
     }
   ]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [context, setContext] = useState<ConversationContext>(createDefaultContext());
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [aiContext, setAiContext] = useState<ConversationContext>(createDefaultContext());
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
+  // Load user's AI context when user changes
   useEffect(() => {
-    console.log('✅ Hero component mounted with', messages.length, 'messages');
-  }, []);
+    const loadUserContext = async () => {
+      if (user?.id) {
+        const savedContext = await authService.getUserAIContext(user.id);
+        if (savedContext) {
+          // Convert old UserProfile to new ConversationContext if needed
+          try {
+            setAiContext(savedContext as any);
+          } catch (e) {
+            setAiContext(createDefaultContext());
+          }
+        }
+      } else {
+        setAiContext(createDefaultContext());
+      }
+    };
+    loadUserContext();
+  }, [user]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const handleSendMessage = async () => {
+    if (inputMessage.trim()) {
+      const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        text: inputMessage,
+        sender: 'user',
+        timestamp: new Date()
+      };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+      setMessages(prev => [...prev, userMessage]);
+      
+      setInputMessage('');
+      setIsTyping(true);
 
-    const userMessage = input.trim();
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-    setIsLoading(true);
+      try {
+        // Process message with smart AI
+        const { response, matchedProperties, context } = await processUserMessage(
+          inputMessage,
+          aiContext
+        );
 
-    try {
-      const response = await processUserMessage(userMessage, context);
+        const aiMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          text: response,
+          sender: 'ai',
+          timestamp: new Date(),
+          properties: matchedProperties
+        };
 
-      setContext(response.context);
-      setMessages(prev => [...prev, {
-        role: 'ai',
-        content: response.response,
-        properties: response.matchedProperties
-      }]);
-    } catch (error) {
-      console.error('Error:', error);
-      setMessages(prev => [...prev, {
-        role: 'ai',
-        content: "I apologize, but I encountered an error. Please try again."
-      }]);
-    } finally {
-      setIsLoading(false);
+        setMessages(prev => [...prev, aiMessage]);
+
+        // Update AI context
+        setAiContext(context);
+
+        // Save context for logged-in users
+        if (user?.id) {
+          await authService.saveUserAIContext(user.id, context as any);
+        }
+
+        // Show recommended properties
+        onPropertiesRecommended(matchedProperties);
+      } catch (error) {
+        console.error('Chat error:', error);
+        const errorMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          text: "Sorry, I encountered an issue. Could you please rephrase that?",
+          sender: 'ai',
+          timestamp: new Date(),
+          properties: []
+        };
+
+        setMessages(prev => [...prev, errorMessage]);
+        onPropertiesRecommended([]);
+      } finally {
+        setIsTyping(false);
+      }
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const quickPrompts = [
+    "I want to buy a house in Johor Bahru under RM500k",
+    "Looking to rent an apartment in KL under RM2500",
+    "Need a condo for sale in KLCC with pool",
+    "Want to rent a studio under RM1200",
+    "Show me new developments in Iskandar",
+    "Looking for luxury villas above RM2 million"
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-2xl font-bold text-slate-900">PropertyAI</h1>
-          <p className="text-sm text-slate-600">Your intelligent property assistant</p>
+    <section className="relative bg-gradient-to-r from-blue-600 to-blue-800 py-12">
+      <div className="absolute inset-0 bg-black opacity-20"></div>
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
+            Find Your Perfect Home with Smart Property AI
+          </h1>
+          <p className="text-lg text-blue-100 mb-6 max-w-3xl mx-auto">
+            Chat with our Smart Property AI assistant about your dream home. Get personalized recommendations and neighborhood insights.
+          </p>
         </div>
-      </header>
 
-      {/* Chat Container */}
-      <div className="flex-1 max-w-5xl w-full mx-auto px-4 py-6">
-        <div className="bg-white rounded-xl shadow-lg h-[calc(100vh-200px)] flex flex-col">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {messages.map((message, index) => (
-              <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`flex gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    message.role === 'user' ? 'bg-blue-500' : 'bg-emerald-500'
-                  }`}>
-                    {message.role === 'user' ? (
-                      <User className="w-5 h-5 text-white" />
-                    ) : (
-                      <Bot className="w-5 h-5 text-white" />
-                    )}
-                  </div>
-                  <div>
-                    <div className={`rounded-2xl px-4 py-3 ${
-                      message.role === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-slate-100 text-slate-900'
-                    }`}>
-                      <p className="whitespace-pre-wrap">{message.content}</p>
+        {/* AI Chat Interface */}
+        <div className="bg-white rounded-2xl shadow-2xl max-w-4xl mx-auto overflow-hidden">
+          {/* Chat Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 flex items-center">
+            <div className="bg-white bg-opacity-20 rounded-full p-2 mr-3">
+              <Bot className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Smart Property AI</h3>
+              <p className="text-xs text-blue-100">Real estate expert</p>
+            </div>
+            <div className="ml-auto flex items-center">
+              <Sparkles className="h-5 w-5 text-yellow-300" />
+            </div>
+          </div>
+
+          {/* Chat Messages */}
+          <div className="h-80 overflow-y-auto p-6 space-y-4 bg-gray-50">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`flex items-start space-x-2 max-w-xs lg:max-w-md`}>
+                  {message.sender === 'ai' && (
+                    <div className="bg-blue-600 rounded-full p-1 mt-1">
+                      <Bot className="h-4 w-4 text-white" />
                     </div>
-
-                    {/* Property Cards */}
+                  )}
+                  <div
+                    className={`px-4 py-3 rounded-2xl ${
+                      message.sender === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-900 border border-gray-200'
+                    }`}
+                  >
+                    <p className="text-sm">{message.text}</p>
                     {message.properties && message.properties.length > 0 && (
-                      <div className="mt-4 grid gap-4">
-                        {message.properties.map((property) => (
-                          <PropertyCard key={property.id} property={property} />
-                        ))}
+                      <div className="mt-2 text-xs text-blue-600 font-medium">
+                        Found {message.properties.length} properties
                       </div>
                     )}
+                    <p className={`text-xs mt-1 ${
+                      message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
+                    }`}>
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
                   </div>
+                  {message.sender === 'user' && (
+                    <div className="bg-gray-600 rounded-full p-1 mt-1">
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
-
-            {isLoading && (
+            
+            {isTyping && (
               <div className="flex justify-start">
-                <div className="flex gap-3 max-w-[80%]">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
-                    <Bot className="w-5 h-5 text-white" />
+                <div className="flex items-start space-x-2">
+                  <div className="bg-blue-600 rounded-full p-1 mt-1">
+                    <Bot className="h-4 w-4 text-white" />
                   </div>
-                  <div className="bg-slate-100 rounded-2xl px-4 py-3">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  <div className="bg-white text-gray-900 border border-gray-200 px-4 py-3 rounded-2xl">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
                   </div>
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Form */}
-          <div className="border-t border-slate-200 p-4">
-            <form onSubmit={handleSubmit} className="flex gap-2">
+          {/* Quick Prompts */}
+          {messages.length === 1 && (
+            <div className="px-6 py-4 border-t border-gray-200 bg-white">
+              <p className="text-sm text-gray-600 mb-3">Try these examples:</p>
+              <div className="grid grid-cols-1 gap-2">
+                {quickPrompts.map((prompt, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setInputMessage(prompt)}
+                    className="text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-700 transition-colors duration-200 border border-gray-200"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Chat Input */}
+          <div className="p-6 bg-white border-t border-gray-200">
+            <div className="flex space-x-3">
               <input
                 type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Type your message... (e.g., 'I earn 5000 and have 2 kids')"
-                className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={isLoading}
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask me anything about properties or just chat..."
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isTyping}
               />
               <button
-                type="submit"
-                disabled={isLoading || !input.trim()}
-                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                onClick={handleSendMessage}
+                disabled={!inputMessage.trim() || isTyping}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
-                <Send className="w-5 h-5" />
+                <Send className="h-5 w-5" />
               </button>
-            </form>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Features */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
+          <div className="text-center">
+            <div className="bg-white bg-opacity-20 rounded-full p-3 w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+              <Bot className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-semibold mb-1">Smart AI Integration</h3>
+            <p className="text-blue-100 text-sm">Remembers your preferences across sessions</p>
+          </div>
+          <div className="text-center">
+            <div className="bg-white bg-opacity-20 rounded-full p-3 w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+              <MapPin className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-semibold mb-1">Smart Recommendations</h3>
+            <p className="text-blue-100 text-sm">Intelligent property matching with neighborhood expertise</p>
+          </div>
+          <div className="text-center">
+            <div className="bg-white bg-opacity-20 rounded-full p-3 w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+              <Sparkles className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-semibold mb-1">Expert Insights</h3>
+            <p className="text-blue-100 text-sm">Personalized recommendations based on your needs</p>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
-}
+};
+
+export default Hero;
