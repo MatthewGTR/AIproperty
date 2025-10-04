@@ -240,11 +240,14 @@ export class SmartPropertyAI {
       };
     }
 
+    // Check if this is a refinement query
+    const isRefinement = this.isRefinementQuery(lowerMessage);
+
     // Extract information from message
     await this.extractInformation(userMessage);
 
     // Determine response based on context
-    const response = await this.generateSmartResponse();
+    const response = await this.generateSmartResponse(isRefinement);
     this.addAIResponse(response.text);
 
     return {
@@ -253,6 +256,28 @@ export class SmartPropertyAI {
       shouldShowProperties: response.showProperties,
       confidence: response.confidence
     };
+  }
+
+  private isRefinementQuery(message: string): boolean {
+    // Detect if user is adding more filters/refinements to existing search
+    const refinementIndicators = [
+      'in johor', 'in kl', 'in penang', 'in selangor', // Adding location
+      'with pool', 'with gym', 'with parking', // Adding amenities
+      'near', 'close to', // Adding proximity
+      'cheaper', 'lower', 'reduce', // Budget adjustment
+      'bigger', 'larger', 'more bedrooms', // Size adjustment
+      'only', 'just', 'specifically', // Narrowing down
+      'actually', 'preferably', 'better if' // Preference adjustment
+    ];
+
+    // If user has already seen properties (conversation stage is showing/refining)
+    // and they provide new criteria, it's a refinement
+    if (this.context.conversationStage === 'showing' || this.context.conversationStage === 'refining') {
+      return refinementIndicators.some(indicator => message.includes(indicator)) ||
+             message.split(' ').length <= 5; // Short messages after showing are usually refinements
+    }
+
+    return false;
   }
 
   private isJoke(message: string): boolean {
@@ -908,9 +933,10 @@ export class SmartPropertyAI {
   }
 
   private updateConversationStage(): void {
-    if (this.context.missingInfo.length === 0 ||
-        (this.context.intent && this.context.location.cities.length > 0 &&
-         (this.context.budget.max || this.context.budget.min))) {
+    // Determine if we have enough actionable information to show properties
+    const hasActionableInfo = this.hasActionableSearchCriteria();
+
+    if (hasActionableInfo) {
       this.context.conversationStage = 'showing';
     } else if (this.context.conversationHistory.length > 2) {
       this.context.conversationStage = 'refining';
@@ -919,15 +945,67 @@ export class SmartPropertyAI {
     }
   }
 
-  private async generateSmartResponse(): Promise<{
+  private hasActionableSearchCriteria(): boolean {
+    // We can show properties if we have ANY of these meaningful combinations:
+
+    // 1. Intent + Budget (show all matching properties nationwide)
+    if (this.context.intent && (this.context.budget.max || this.context.budget.min)) {
+      return true;
+    }
+
+    // 2. Intent + Location (show all properties in that location)
+    if (this.context.intent &&
+        (this.context.location.cities.length > 0 ||
+         this.context.location.areas.length > 0 ||
+         this.context.location.states.length > 0)) {
+      return true;
+    }
+
+    // 3. Budget + Location (can infer intent from budget)
+    if ((this.context.budget.max || this.context.budget.min) &&
+        (this.context.location.cities.length > 0 ||
+         this.context.location.areas.length > 0 ||
+         this.context.location.states.length > 0)) {
+      return true;
+    }
+
+    // 4. Intent + Property Type (e.g., "luxury villas for sale")
+    if (this.context.intent && this.context.propertyType.length > 0) {
+      return true;
+    }
+
+    // 5. Strong luxury/high-value indicators with budget
+    if ((this.context.budget.min && this.context.budget.min >= 1000000) ||
+        (this.context.budget.max && this.context.budget.max >= 2000000)) {
+      // High-value search, show results even without location
+      return true;
+    }
+
+    // 6. Specific property type with budget
+    if (this.context.propertyType.length > 0 &&
+        (this.context.budget.max || this.context.budget.min)) {
+      return true;
+    }
+
+    // 7. Has been calculated from salary (we have complete profile)
+    if (this.context.autoInferredBudget &&
+        (this.context.location.cities.length > 0 || this.context.personalInfo.workLocation)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private async generateSmartResponse(isRefinement: boolean = false): Promise<{
     text: string;
     showProperties: boolean;
     confidence: number;
   }> {
     // If we have enough information, show properties
     if (this.context.conversationStage === 'showing') {
+      const summary = this.generatePropertySearchSummary(isRefinement);
       return {
-        text: this.generatePropertySearchSummary(),
+        text: summary,
         showProperties: true,
         confidence: 0.9
       };
@@ -951,18 +1029,35 @@ export class SmartPropertyAI {
     };
   }
 
-  private generatePropertySearchSummary(): string {
+  private generatePropertySearchSummary(isRefinement: boolean = false): string {
     const parts: string[] = [];
     const insights: string[] = [];
 
-    // Main search summary
-    if (this.context.intent === 'buy') {
-      parts.push("Great! I'm searching for properties FOR SALE");
-    } else if (this.context.intent === 'rent') {
-      parts.push("Perfect! I'm searching for properties FOR RENT");
-    } else if (this.context.intent === 'new_development') {
-      parts.push("Excellent! I'm searching for NEW DEVELOPMENTS");
+    // Main search summary - adjust language based on whether it's initial or refinement
+    if (isRefinement) {
+      if (this.context.intent === 'buy') {
+        parts.push("Got it! Filtering properties FOR SALE");
+      } else if (this.context.intent === 'rent') {
+        parts.push("Perfect! Filtering properties FOR RENT");
+      } else if (this.context.intent === 'new_development') {
+        parts.push("Understood! Filtering NEW DEVELOPMENTS");
+      } else {
+        parts.push("Refining your search");
+      }
+    } else {
+      if (this.context.intent === 'buy') {
+        parts.push("Great! I'm searching for properties FOR SALE");
+      } else if (this.context.intent === 'rent') {
+        parts.push("Perfect! I'm searching for properties FOR RENT");
+      } else if (this.context.intent === 'new_development') {
+        parts.push("Excellent! I'm searching for NEW DEVELOPMENTS");
+      }
     }
+
+    // Location (if specified)
+    const hasLocation = this.context.location.cities.length > 0 ||
+                        this.context.location.areas.length > 0 ||
+                        this.context.location.states.length > 0;
 
     if (this.context.location.cities.length > 0) {
       parts.push(`in ${this.context.location.cities.join(', ')}`);
@@ -970,6 +1065,9 @@ export class SmartPropertyAI {
       parts.push(`in ${this.context.location.areas.join(', ')}`);
     } else if (this.context.location.states.length > 0) {
       parts.push(`in ${this.context.location.states.join(', ')}`);
+    } else {
+      // No location specified - show all Malaysia
+      parts.push("across Malaysia");
     }
 
     // Budget with affordability insight
@@ -1029,6 +1127,11 @@ export class SmartPropertyAI {
     // Add insights if any
     if (insights.length > 0) {
       summary += '\n\n' + insights.join('. ') + '.';
+    }
+
+    // Add helpful note if no location specified
+    if (!hasLocation && !insights.some(i => i.includes('work'))) {
+      summary += '\n\nShowing results from all locations. Feel free to specify a city or area to narrow down your search!';
     }
 
     summary += '\n\nHere are the best matches I found for you:';
