@@ -10,6 +10,7 @@ import AgentsPage from './components/AgentsPage';
 import AdminPanel from './components/AdminPanel';
 import RentPage from './components/RentPage';
 import BuyPage from './components/BuyPage';
+import BuyPropertyDetailsPage from './components/BuyPropertyDetailsPage';
 import NewDevelopmentPage from './components/NewDevelopmentPage';
 import { PropertyWithImages, propertyService } from './services/propertyService';
 import { authService } from './services/authService';
@@ -120,6 +121,7 @@ function App() {
           }
         />
         <Route path="/buy" element={<BuyPage user={user} />} />
+        <Route path="/buy/:id" element={<BuyPropertyDetailsPage />} />
         <Route path="/rent" element={<RentPage user={user} />} />
         <Route path="/new-development" element={<NewDevelopmentPage user={user} />} />
         <Route path="/agents" element={<AgentsPage />} />
