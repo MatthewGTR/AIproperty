@@ -156,9 +156,9 @@ const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
                     </div>
                   </div>
                   {property.featured && (
-                    <div className="absolute top-0 left-0 right-0 h-[30%] bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 z-10 flex items-center justify-center">
+                    <div className="absolute top-0 left-0 right-0 h-[15%] bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 z-10 flex items-center justify-center">
                       <div className="flex items-center space-x-2">
-                        <span className="text-white font-bold text-lg drop-shadow-lg">✨ FEATURED PROPERTY ✨</span>
+                        <span className="text-white font-bold text-base drop-shadow-lg">✨ FEATURED PROPERTY ✨</span>
                       </div>
                     </div>
                   )}
