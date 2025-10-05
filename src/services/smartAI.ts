@@ -40,6 +40,8 @@ export interface ConversationContext {
   lastQuery: string;
   conversationHistory: Array<{ role: 'user' | 'ai'; content: string; timestamp: Date }>;
   autoInferredBudget: boolean;
+  messageCount: number;
+  lastPropertyReminder: number;
 }
 
 export const createDefaultContext = (): ConversationContext => ({
@@ -76,7 +78,9 @@ export const createDefaultContext = (): ConversationContext => ({
   missingInfo: ['intent', 'location', 'budget'],
   lastQuery: '',
   conversationHistory: [],
-  autoInferredBudget: false
+  autoInferredBudget: false,
+  messageCount: 0,
+  lastPropertyReminder: 0
 });
 
 let openai: OpenAI | null = null;
@@ -109,6 +113,7 @@ export class SmartPropertyAI {
     confidence: number;
   }> {
     this.context.lastQuery = userMessage;
+    this.context.messageCount++;
     this.context.conversationHistory.push({
       role: 'user',
       content: userMessage,
@@ -150,6 +155,10 @@ export class SmartPropertyAI {
       this.updateContextFromAI(aiResponse);
 
       const response = aiResponse.response || "I'm here to help you find properties!";
+
+      if (aiResponse.propertyReminded === true) {
+        this.context.lastPropertyReminder = this.context.messageCount;
+      }
       this.context.conversationHistory.push({
         role: 'ai',
         content: response,
@@ -182,8 +191,9 @@ export class SmartPropertyAI {
 
 PERSONALITY:
 - Warm, friendly, and natural (like a helpful friend)
-- Can discuss any topic briefly
-- Smoothly gather property information through conversation
+- Can discuss ANY topic - weather, food, life, hobbies, work, family, etc.
+- NEVER push property conversation unless user brings it up
+- Gather information naturally and subtly through casual conversation
 - Remember everything the user tells you
 
 CRITICAL: Always respond with valid JSON in this exact format:
@@ -220,17 +230,18 @@ CRITICAL: Always respond with valid JSON in this exact format:
   },
   "readyToSearch": false or true,
   "shouldShowProperties": false or true,
+  "propertyReminded": false or true,
   "confidence": 0.8
 }
 
 INFORMATION GATHERING STRATEGY:
 1. Start with casual conversation and greetings
-2. Naturally ask about their property needs (buy/rent)
-3. Learn about their lifestyle, work, family
-4. Understand their budget (or infer from salary)
-5. Discover location preferences
-6. Learn about property type and size needs
-7. Understand amenities and lifestyle requirements
+2. Chat about ANYTHING - be a genuine friend first
+3. Learn about their lifestyle, work, family through natural conversation
+4. Extract information passively (work location, salary, family, hobbies, etc.)
+5. Only mention properties if they bring it up OR after 10 messages with no intent
+6. When they express property interest, THEN gather: budget, location, type, size, amenities
+7. Never rush - build a relationship first
 
 MALAYSIAN PROPERTY CONTEXT:
 - States: Johor, KL, Selangor, Penang, etc.
@@ -250,16 +261,32 @@ EXTRACTION RULES:
 - Set "shouldShowProperties" to true only when readyToSearch is true
 
 CONVERSATION RULES:
-1. NEVER force property talk - chat naturally
-2. If user asks about weather/food/life: answer briefly, then relate to property if natural
-3. Build rapport before diving into requirements
-4. Ask ONE question at a time, conversationally
-5. Acknowledge what they share before asking more
-6. Be encouraging and positive
-7. When you have enough info, summarize and offer to search
+1. NEVER force property talk - let user lead the conversation
+2. Chat naturally about ANY topic they bring up
+3. If user talks about weather/food/hobbies/work: engage genuinely, NO property redirects
+4. Extract information passively (if they mention "I work in KL", save workLocation)
+5. ONLY remind about properties if:
+   - User has been chatting for 10+ messages AND
+   - They haven't mentioned property intent yet AND
+   - Last reminder was 10+ messages ago
+6. When reminding, be SUBTLE: "By the way, I noticed you haven't explored properties yet. Just so you know, I can help with that whenever you're ready!"
+7. If they have property intent but chatting off-topic, NEVER interrupt - let them chat freely
+8. When you have enough property info (intent + location/budget), show properties automatically
+
+REMINDER LOGIC:
+- Current message count: ${this.context.messageCount}
+- Last property reminder at: ${this.context.lastPropertyReminder}
+- Should remind: ${this.shouldRemindAboutProperties()}
 
 Current conversation context:
 ${JSON.stringify(this.context, null, 2)}`;
+  }
+
+  private shouldRemindAboutProperties(): boolean {
+    const hasNoIntent = !this.context.intent;
+    const messagesSinceReminder = this.context.messageCount - this.context.lastPropertyReminder;
+    const shouldRemind = hasNoIntent && this.context.messageCount >= 10 && messagesSinceReminder >= 10;
+    return shouldRemind;
   }
 
   private buildConversationMessages(): Array<{ role: 'user' | 'assistant'; content: string }> {
