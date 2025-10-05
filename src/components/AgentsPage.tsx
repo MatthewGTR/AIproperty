@@ -19,11 +19,9 @@ interface Agent {
   achievements: string[];
 }
 
-interface AgentsPageProps {
-  onClose: () => void;
-}
+interface AgentsPageProps {}
 
-const AgentsPage: React.FC<AgentsPageProps> = ({ onClose }) => {
+const AgentsPage: React.FC<AgentsPageProps> = () => {
   const topAgents: Agent[] = [
     {
       id: '1',
@@ -138,19 +136,12 @@ const AgentsPage: React.FC<AgentsPageProps> = ({ onClose }) => {
   ];
 
   return (
-    <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
-      {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm z-40">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Our Top Agents</h1>
-          <p className="text-gray-600">Meet Malaysia's most trusted property experts</p>
+    <div className="min-h-screen bg-white">
+      <div className="bg-white border-b border-gray-200 px-6 py-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Our Top Agents</h1>
+          <p className="text-gray-600 text-lg">Meet Malaysia's most trusted property experts</p>
         </div>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-        >
-          <X className="h-6 w-6 text-gray-600" />
-        </button>
       </div>
 
       {/* Search Bar */}

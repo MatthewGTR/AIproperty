@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import PropertyListings from './components/PropertyListings';
@@ -12,16 +13,31 @@ import BuyPage from './components/BuyPage';
 import NewDevelopmentPage from './components/NewDevelopmentPage';
 import { PropertyWithImages, propertyService } from './services/propertyService';
 import { authService } from './services/authService';
-import { supabase } from './lib/supabase';
+
+function HomePage({
+  user,
+  onPropertiesRecommended,
+  recommendedProperties,
+  onPropertyClick
+}: {
+  user: any;
+  onPropertiesRecommended: (props: PropertyWithImages[]) => void;
+  recommendedProperties: PropertyWithImages[];
+  onPropertyClick: (prop: PropertyWithImages) => void;
+}) {
+  return (
+    <>
+      <Hero user={user} onPropertiesRecommended={onPropertiesRecommended} />
+      <PropertyListings properties={recommendedProperties} onPropertyClick={onPropertyClick} />
+    </>
+  );
+}
 
 function App() {
+  const navigate = useNavigate();
   const [selectedProperty, setSelectedProperty] = useState<PropertyWithImages | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
-  const [showAgents, setShowAgents] = useState(false);
-  const [showRent, setShowRent] = useState(false);
-  const [showBuy, setShowBuy] = useState(false);
-  const [showNewDevelopment, setShowNewDevelopment] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [recommendedProperties, setRecommendedProperties] = useState<PropertyWithImages[]>([]);
   const [user, setUser] = useState<{ id: string; name: string; email: string; userType: string; credits: number } | null>(null);
@@ -53,9 +69,7 @@ function App() {
 
   const loadInitialProperties = async () => {
     try {
-      console.log('Loading initial properties...');
       const properties = await propertyService.getProperties({ limit: 12 });
-      console.log('Properties loaded:', properties.length);
       setRecommendedProperties(properties);
     } catch (error) {
       console.error('Error loading properties:', error);
@@ -69,9 +83,8 @@ function App() {
   const handleLogout = async () => {
     await authService.signOut();
     setUser(null);
+    navigate('/');
   };
-
-  console.log('App render - loading:', loading, 'properties:', recommendedProperties.length);
 
   if (loading) {
     return (
@@ -86,85 +99,61 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header 
-        user={user} 
+      <Header
+        user={user}
         onAuthClick={() => setShowAuth(true)}
         onSubmitClick={() => setShowSubmit(true)}
-        onAgentsClick={() => setShowAgents(true)}
-        onRentClick={() => setShowRent(true)}
-        onBuyClick={() => setShowBuy(true)}
-        onNewDevelopmentClick={() => setShowNewDevelopment(true)}
         onAdminClick={() => setShowAdmin(true)}
         onLogout={handleLogout}
       />
-      
-      <Hero 
-        user={user}
-        onPropertiesRecommended={handlePropertiesRecommended} 
-      />
-      
-      <PropertyListings 
-        properties={recommendedProperties}
-        onPropertyClick={setSelectedProperty}
-      />
-      
+
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <HomePage
+              user={user}
+              onPropertiesRecommended={handlePropertiesRecommended}
+              recommendedProperties={recommendedProperties}
+              onPropertyClick={setSelectedProperty}
+            />
+          }
+        />
+        <Route path="/buy" element={<BuyPage user={user} />} />
+        <Route path="/rent" element={<RentPage user={user} />} />
+        <Route path="/new-development" element={<NewDevelopmentPage user={user} />} />
+        <Route path="/agents" element={<AgentsPage />} />
+      </Routes>
+
       {selectedProperty && (
-        <PropertyDetailsNew 
+        <PropertyDetailsNew
           property={selectedProperty}
           onClose={() => setSelectedProperty(null)}
           user={user}
         />
       )}
-      
+
       {showAuth && (
-        <AuthModal 
+        <AuthModal
           onClose={() => setShowAuth(false)}
           onLogin={setUser}
         />
       )}
-      
+
       {showSubmit && (
-        <SubmitProperty 
+        <SubmitProperty
           onClose={() => setShowSubmit(false)}
           user={user}
           onUserUpdate={setUser}
         />
       )}
-      
-      {showAgents && (
-        <AgentsPage 
-          onClose={() => setShowAgents(false)}
-        />
-      )}
-      
-      {showRent && (
-        <RentPage 
-          onClose={() => setShowRent(false)}
-          user={user}
-        />
-      )}
-      
-      {showBuy && (
-        <BuyPage 
-          onClose={() => setShowBuy(false)}
-          user={user}
-        />
-      )}
-      
-      {showNewDevelopment && (
-        <NewDevelopmentPage 
-          onClose={() => setShowNewDevelopment(false)}
-          user={user}
-        />
-      )}
-      
+
       {showAdmin && user && (
-        <AdminPanel 
+        <AdminPanel
           onClose={() => setShowAdmin(false)}
           currentUser={user}
         />
       )}
-      
     </div>
   );
 }

@@ -25,11 +25,10 @@ interface RentalProperty {
 }
 
 interface RentPageProps {
-  onClose: () => void;
   user: { id: string; name: string; email: string; userType: string; credits: number } | null;
 }
 
-const RentPage: React.FC<RentPageProps> = ({ onClose, user }) => {
+const RentPage: React.FC<RentPageProps> = ({ user }) => {
   const [selectedProperty, setSelectedProperty] = useState<RentalProperty | null>(null);
 
   const rentalProperties: RentalProperty[] = [
@@ -312,19 +311,12 @@ const RentPage: React.FC<RentPageProps> = ({ onClose, user }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
-      {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Properties for Rent</h1>
-          <p className="text-gray-600">Find your perfect rental home in Johor Bahru</p>
+    <div className="min-h-screen bg-white">
+      <div className="bg-white border-b border-gray-200 px-6 py-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Properties for Rent</h1>
+          <p className="text-gray-600 text-lg">Find your perfect rental home in Johor Bahru</p>
         </div>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-        >
-          <X className="h-6 w-6 text-gray-600" />
-        </button>
       </div>
 
       {/* Search Bar */}

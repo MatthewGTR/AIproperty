@@ -1,71 +1,61 @@
 import React from 'react';
 import { Search, User, PlusCircle, Menu, MessageCircle, Settings, CreditCard } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface HeaderProps {
   user: { id: string; name: string; email: string; userType: string; credits: number } | null;
   onAuthClick: () => void;
   onSubmitClick: () => void;
   onLogout: () => void;
-  onAgentsClick: () => void;
-  onBuyClick: () => void;
-  onRentClick: () => void;
-  onNewDevelopmentClick: () => void;
   onAdminClick: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ 
-  user, 
-  onAuthClick, 
-  onSubmitClick, 
-  onLogout, 
-  onAgentsClick, 
-  onRentClick, 
-  onBuyClick, 
-  onNewDevelopmentClick,
-  onAdminClick 
+const Header: React.FC<HeaderProps> = ({
+  user,
+  onAuthClick,
+  onSubmitClick,
+  onLogout,
+  onAdminClick
 }) => {
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex items-center">
+          <Link to="/" className="flex items-center">
             <Search className="h-8 w-8 text-blue-600 mr-2" />
             <div className="flex flex-col">
               <span className="text-2xl font-bold text-gray-900">AI Property</span>
               <span className="text-xs text-blue-600 font-medium -mt-1">Smart AI, Smart Home</span>
             </div>
-          </div>
+          </Link>
 
-          {/* Navigation */}
           <nav className="hidden md:flex space-x-8">
-            <button 
-              onClick={onBuyClick}
+            <Link
+              to="/buy"
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200"
             >
               Buy
-            </button>
-            <button 
-              onClick={onRentClick}
+            </Link>
+            <Link
+              to="/rent"
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200"
             >
               Rent
-            </button>
-            <button 
-              onClick={onNewDevelopmentClick}
+            </Link>
+            <Link
+              to="/new-development"
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200"
             >
               New Development
-            </button>
-            <button 
-              onClick={onAgentsClick}
+            </Link>
+            <Link
+              to="/agents"
               className="text-gray-700 hover:text-blue-600 transition-colors duration-200"
             >
               Agents
-            </button>
+            </Link>
           </nav>
 
-          {/* Right side actions */}
           <div className="flex items-center space-x-4">
             {user && (user.userType === 'agent' || user.userType === 'seller') && (
               <button
@@ -85,7 +75,7 @@ const Header: React.FC<HeaderProps> = ({
                     <span className="text-sm font-medium text-blue-700">{user.credits} credits</span>
                   </div>
                 )}
-                
+
                 <div className="flex items-center space-x-2">
                   <MessageCircle className="h-5 w-5 text-gray-600" />
                   <span className="hidden sm:inline text-sm text-gray-700">Messages</span>
@@ -101,7 +91,7 @@ const Header: React.FC<HeaderProps> = ({
                       <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Properties</a>
                       <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Saved Searches</a>
                       {user.userType === 'admin' && (
-                        <button 
+                        <button
                           onClick={onAdminClick}
                           className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
@@ -109,7 +99,7 @@ const Header: React.FC<HeaderProps> = ({
                           Admin Panel
                         </button>
                       )}
-                      <button 
+                      <button
                         onClick={onLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
