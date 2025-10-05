@@ -33,6 +33,7 @@ const RentPage: React.FC<RentPageProps> = ({ user }) => {
   const navigate = useNavigate();
   const [selectedProperty, setSelectedProperty] = useState<RentalProperty | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState<{ [key: string]: number }>({});
+  const [likedProperties, setLikedProperties] = useState<Set<string>>(new Set());
 
   const rentalProperties: RentalProperty[] = [
     {
@@ -333,6 +334,19 @@ const RentPage: React.FC<RentPageProps> = ({ user }) => {
     }));
   };
 
+  const handleLike = (e: React.MouseEvent, propertyId: string) => {
+    e.stopPropagation();
+    setLikedProperties(prev => {
+      const newLiked = new Set(prev);
+      if (newLiked.has(propertyId)) {
+        newLiked.delete(propertyId);
+      } else {
+        newLiked.add(propertyId);
+      }
+      return newLiked;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <div className="bg-white border-b border-gray-200 px-6 py-8">
@@ -441,12 +455,14 @@ const RentPage: React.FC<RentPageProps> = ({ user }) => {
                       </div>
                     </div>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
+                      onClick={(e) => handleLike(e, property.id)}
                       className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
                     >
-                      <Heart className="h-5 w-5 text-gray-600" />
+                      <Heart className={`h-5 w-5 transition-colors duration-200 ${
+                        likedProperties.has(property.id)
+                          ? 'fill-red-500 text-red-500'
+                          : 'text-gray-600'
+                      }`} />
                     </button>
                   </div>
 
