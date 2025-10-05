@@ -31,6 +31,7 @@ interface BuyPageProps {
 const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
   const navigate = useNavigate();
   const [selectedProperty, setSelectedProperty] = useState<BuyProperty | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const buyProperties: BuyProperty[] = [
     {
@@ -282,6 +283,206 @@ const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
       },
       featured: true,
       listedDate: '2025-01-11'
+    },
+    {
+      id: 'b11',
+      title: 'KLCC Luxury Condo - Pavilion Residences',
+      location: 'KLCC, Kuala Lumpur',
+      price: 2800000,
+      type: 'condo',
+      bedrooms: 4,
+      bathrooms: 4,
+      sqft: 2500,
+      images: [
+        'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
+      ],
+      description: 'Ultra-luxury condominium in the heart of KLCC. Breathtaking city skyline views, premium finishes, and world-class facilities. Walking distance to Suria KLCC and Petronas Twin Towers.',
+      amenities: ['KLCC View', 'Infinity Pool', 'Concierge', 'Gym', 'Security', 'Shopping Mall'],
+      agent: {
+        name: 'Sophia Chen',
+        phone: '+60 12-888-9999',
+        email: 'sophia@klccproperties.com',
+        image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150'
+      },
+      featured: true,
+      listedDate: '2025-01-10'
+    },
+    {
+      id: 'b12',
+      title: 'Penang Beachfront Villa - Batu Ferringhi',
+      location: 'Batu Ferringhi, Penang',
+      price: 3500000,
+      type: 'villa',
+      bedrooms: 6,
+      bathrooms: 5,
+      sqft: 4500,
+      images: [
+        'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
+      ],
+      description: 'Stunning beachfront villa with direct beach access. Panoramic sea views, private infinity pool, and lush tropical gardens. Perfect for luxury living or holiday retreat.',
+      amenities: ['Beachfront', 'Private Pool', 'Sea View', 'Garden', 'Luxury Finishes', 'Double Garage'],
+      agent: {
+        name: 'Marcus Lim',
+        phone: '+60 16-777-6666',
+        email: 'marcus@penangvillas.com',
+        image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150'
+      },
+      featured: true,
+      listedDate: '2025-01-09'
+    },
+    {
+      id: 'b13',
+      title: 'Modern Townhouse - Subang Jaya',
+      location: 'Subang Jaya, Selangor',
+      price: 890000,
+      type: 'house',
+      bedrooms: 4,
+      bathrooms: 3,
+      sqft: 2200,
+      images: [
+        'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      ],
+      description: 'Contemporary 3-storey townhouse in prime Subang Jaya location. Modern minimalist design with quality finishes. Close to shopping malls, schools, and public transport.',
+      amenities: ['Gated Community', 'Parking', 'Near Mall', 'Near School', 'Modern Design', 'LRT Access'],
+      agent: {
+        name: 'Emily Tan',
+        phone: '+60 17-555-4444',
+        email: 'emily@subanghomes.com',
+        image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
+      },
+      featured: false,
+      listedDate: '2025-01-08'
+    },
+    {
+      id: 'b14',
+      title: 'Kota Kinabalu Seaview Condo',
+      location: 'Tanjung Aru, Kota Kinabalu',
+      price: 650000,
+      type: 'condo',
+      bedrooms: 3,
+      bathrooms: 2,
+      sqft: 1300,
+      images: [
+        'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
+      ],
+      description: 'Beautiful sea-facing condominium with stunning sunset views over South China Sea. Walking distance to beach and Prince Philip Park. Resort-style facilities.',
+      amenities: ['Sea View', 'Near Beach', 'Swimming Pool', 'Gym', 'Security', 'Sunset View'],
+      agent: {
+        name: 'Daniel Tan',
+        phone: '+60 18-333-2222',
+        email: 'daniel@kkproperties.com',
+        image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'
+      },
+      featured: true,
+      listedDate: '2025-01-07'
+    },
+    {
+      id: 'b15',
+      title: 'Heritage Shophouse - Georgetown',
+      location: 'Georgetown, Penang',
+      price: 1800000,
+      type: 'house',
+      bedrooms: 0,
+      bathrooms: 3,
+      sqft: 2800,
+      images: [
+        'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'
+      ],
+      description: 'Beautifully restored pre-war shophouse in UNESCO World Heritage zone. Original features preserved with modern amenities added. Prime location in Armenian Street area.',
+      amenities: ['Heritage Building', 'Commercial Use', 'Tourist Area', 'UNESCO Zone', 'Investment Potential', 'High Traffic'],
+      agent: {
+        name: 'Andrew Khoo',
+        phone: '+60 12-444-5555',
+        email: 'andrew@penangheritage.com',
+        image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150'
+      },
+      featured: true,
+      listedDate: '2025-01-06'
+    },
+    {
+      id: 'b16',
+      title: 'Shah Alam Lake View Bungalow',
+      location: 'Section 7, Shah Alam',
+      price: 2200000,
+      type: 'house',
+      bedrooms: 6,
+      bathrooms: 5,
+      sqft: 5000,
+      images: [
+        'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1115804/pexels-photo-1115804.jpeg?auto=compress&cs=tinysrgb&w=800'
+      ],
+      description: 'Magnificent corner lot bungalow overlooking Section 7 lake. Spacious rooms, beautiful landscaping, and premium renovations. Perfect for large families.',
+      amenities: ['Lake View', 'Corner Lot', 'Large Garden', 'Renovated', 'Prestigious Area', 'Triple Garage'],
+      agent: {
+        name: 'Sarah Lim',
+        phone: '+60 19-666-5555',
+        email: 'sarah@shahalamelite.com',
+        image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150'
+      },
+      featured: false,
+      listedDate: '2025-01-05'
+    },
+    {
+      id: 'b17',
+      title: 'Ipoh Garden Villa - Tambun',
+      location: 'Tambun, Ipoh',
+      price: 780000,
+      type: 'villa',
+      bedrooms: 4,
+      bathrooms: 3,
+      sqft: 2800,
+      images: [
+        'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800'
+      ],
+      description: 'Tranquil villa nestled in Tambun hills with limestone mountain views. Large garden, koi pond, and peaceful surroundings. Perfect retirement or weekend home.',
+      amenities: ['Mountain View', 'Garden', 'Koi Pond', 'Peaceful', 'Near Hot Springs', 'Retirement Haven'],
+      agent: {
+        name: 'Vincent Lee',
+        phone: '+60 15-888-7777',
+        email: 'vincent@ipohvillas.com',
+        image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'
+      },
+      featured: false,
+      listedDate: '2025-01-04'
+    },
+    {
+      id: 'b18',
+      title: 'Mont Kiara Serviced Residence',
+      location: 'Mont Kiara, Kuala Lumpur',
+      price: 1200000,
+      type: 'condo',
+      bedrooms: 3,
+      bathrooms: 3,
+      sqft: 1800,
+      images: [
+        'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1438832/pexels-photo-1438832.jpeg?auto=compress&cs=tinysrgb&w=800',
+        'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800'
+      ],
+      description: 'Premium serviced residence in exclusive Mont Kiara enclave. Fully furnished with designer interiors. Walking distance to international schools and shopping plazas.',
+      amenities: ['Fully Furnished', 'International School', 'Shopping Mall', 'Gym', 'Pool', 'Expatriate Area'],
+      agent: {
+        name: 'Catherine Wong',
+        phone: '+60 13-999-8888',
+        email: 'catherine@montkiaraproperties.com',
+        image: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=150'
+      },
+      featured: true,
+      listedDate: '2025-01-03'
     }
   ];
 
@@ -298,12 +499,24 @@ const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
     'Garden': <span className="text-green-500">🌿</span>,
   };
 
+  const filteredProperties = buyProperties.filter(property => {
+    if (!searchQuery.trim()) return true;
+
+    const query = searchQuery.toLowerCase();
+    return (
+      property.title.toLowerCase().includes(query) ||
+      property.location.toLowerCase().includes(query) ||
+      property.type.toLowerCase().includes(query) ||
+      property.description.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className="min-h-screen bg-white">
       <div className="bg-white border-b border-gray-200 px-6 py-8">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Properties for Sale</h1>
-          <p className="text-gray-600 text-lg">Discover your dream home in Johor Bahru</p>
+          <p className="text-gray-600 text-lg">Discover your dream home across Malaysia</p>
         </div>
       </div>
 
@@ -314,7 +527,9 @@ const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
             <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search properties in Johor Bahru..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by location, property type, or keywords..."
               className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -324,7 +539,7 @@ const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
       {/* Properties Grid */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-6 flex justify-between items-center">
-          <p className="text-gray-600">{buyProperties.length} properties found in Johor Bahru</p>
+          <p className="text-gray-600">{filteredProperties.length} properties found {searchQuery ? `for "${searchQuery}"` : 'across Malaysia'}</p>
           <div className="flex space-x-2">
             <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
               <option>Sort by Price</option>
@@ -336,7 +551,18 @@ const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {buyProperties.map((property) => (
+          {filteredProperties.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-500 text-lg">No properties found matching your search.</p>
+              <button
+                onClick={() => setSearchQuery('')}
+                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Clear Search
+              </button>
+            </div>
+          ) : (
+            filteredProperties.map((property) => (
             <div
               key={property.id}
               className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
@@ -427,7 +653,7 @@ const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
                 </div>
               </div>
             </div>
-          ))}
+          )))}
         </div>
 
         {/* Call to Action */}
