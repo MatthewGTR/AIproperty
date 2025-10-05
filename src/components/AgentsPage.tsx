@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Phone, Mail, MapPin, Star, Award, TrendingUp, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface Agent {
   id: string;
@@ -22,6 +23,7 @@ interface Agent {
 interface AgentsPageProps {}
 
 const AgentsPage: React.FC<AgentsPageProps> = () => {
+  const navigate = useNavigate();
   const topAgents: Agent[] = [
     {
       id: '1',
@@ -293,8 +295,8 @@ const AgentsPage: React.FC<AgentsPageProps> = () => {
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
             <h3 className="text-2xl font-bold mb-4">Looking for a Specific Agent?</h3>
             <p className="text-blue-100 mb-6">Our AI assistant can help you find the perfect agent based on your property type, location, and specific requirements.</p>
-            <button 
-              onClick={onClose}
+            <button
+              onClick={() => navigate('/')}
               className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors duration-200"
             >
               Ask Our AI Assistant

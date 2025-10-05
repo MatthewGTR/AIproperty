@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, MapPin, Calendar, Building, Users, Star, Phone, Mail, MessageCircle, Search, Filter } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface NewDevelopment {
   id: string;
@@ -34,6 +35,7 @@ interface NewDevelopmentPageProps {
 }
 
 const NewDevelopmentPage: React.FC<NewDevelopmentPageProps> = ({ user }) => {
+  const navigate = useNavigate();
   const [selectedDevelopment, setSelectedDevelopment] = useState<NewDevelopment | null>(null);
 
   const newDevelopments: NewDevelopment[] = [
@@ -357,8 +359,8 @@ const NewDevelopmentPage: React.FC<NewDevelopmentPageProps> = ({ user }) => {
           <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 text-white">
             <h3 className="text-2xl font-bold mb-4">Interested in New Developments?</h3>
             <p className="text-purple-100 mb-6">Get early bird pricing and exclusive previews. Our AI assistant can help you find the perfect new development based on your investment goals and preferences.</p>
-            <button 
-              onClick={onClose}
+            <button
+              onClick={() => navigate('/')}
               className="bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-purple-50 transition-colors duration-200"
             >
               Ask Our AI Assistant

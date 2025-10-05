@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, MapPin, Bed, Bath, Square, Heart, Phone, Mail, MessageCircle, Car, Wifi, Dumbbell, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface RentalProperty {
   id: string;
@@ -29,6 +30,7 @@ interface RentPageProps {
 }
 
 const RentPage: React.FC<RentPageProps> = ({ user }) => {
+  const navigate = useNavigate();
   const [selectedProperty, setSelectedProperty] = useState<RentalProperty | null>(null);
 
   const rentalProperties: RentalProperty[] = [
@@ -454,8 +456,8 @@ const RentPage: React.FC<RentPageProps> = ({ user }) => {
           <div className="bg-gradient-to-r from-emerald-600 to-blue-600 rounded-2xl p-8 text-white">
             <h3 className="text-2xl font-bold mb-4">Looking for Something Specific?</h3>
             <p className="text-emerald-100 mb-6">Our AI assistant can help you find the perfect rental property based on your budget, location preferences, and lifestyle needs.</p>
-            <button 
-              onClick={onClose}
+            <button
+              onClick={() => navigate('/')}
               className="bg-white text-emerald-600 px-6 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition-colors duration-200"
             >
               Ask Our AI Assistant

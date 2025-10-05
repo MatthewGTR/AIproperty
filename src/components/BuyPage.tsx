@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MapPin, Bed, Bath, Square, Heart, Phone, Mail, MessageCircle, Car, Wifi, Dumbbell, Search, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface BuyProperty {
   id: string;
@@ -28,6 +29,7 @@ interface BuyPageProps {
 }
 
 const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
+  const navigate = useNavigate();
   const [selectedProperty, setSelectedProperty] = useState<BuyProperty | null>(null);
 
   const buyProperties: BuyProperty[] = [
@@ -433,8 +435,8 @@ const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
           <div className="bg-gradient-to-r from-blue-600 to-emerald-600 rounded-2xl p-8 text-white">
             <h3 className="text-2xl font-bold mb-4">Can't Find What You're Looking For?</h3>
             <p className="text-blue-100 mb-6">Our AI assistant can help you find the perfect property based on your specific requirements and budget.</p>
-            <button 
-              onClick={onClose}
+            <button
+              onClick={() => navigate('/')}
               className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors duration-200"
             >
               Ask Our AI Assistant
