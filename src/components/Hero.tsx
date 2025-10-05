@@ -133,9 +133,6 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
           <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
             Find Your Perfect Home with Smart Property AI
           </h1>
-          <p className="text-lg text-blue-100 mb-6 max-w-3xl mx-auto">
-            Chat with our Smart Property AI assistant about your dream home. Get personalized recommendations and neighborhood insights.
-          </p>
         </div>
 
         {/* AI Chat Interface */}
