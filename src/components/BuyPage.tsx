@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Bed, Bath, Square, Heart, Search } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, Heart, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { buyPropertiesData } from './BuyPropertiesData';
 
@@ -10,6 +10,7 @@ interface BuyPageProps {
 const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentImageIndex, setCurrentImageIndex] = useState<{ [key: string]: number }>({});
 
   const buyProperties = buyPropertiesData;
 
@@ -31,6 +32,26 @@ const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
 
   const handlePropertyClick = (propertyId: string) => {
     navigate(`/buy/${propertyId}`);
+  };
+
+  const getCurrentImageIndex = (propertyId: string) => {
+    return currentImageIndex[propertyId] || 0;
+  };
+
+  const handleNextImage = (e: React.MouseEvent, propertyId: string, totalImages: number) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev => ({
+      ...prev,
+      [propertyId]: ((prev[propertyId] || 0) + 1) % totalImages
+    }));
+  };
+
+  const handlePrevImage = (e: React.MouseEvent, propertyId: string, totalImages: number) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev => ({
+      ...prev,
+      [propertyId]: ((prev[propertyId] || 0) - 1 + totalImages) % totalImages
+    }));
   };
 
   return (
@@ -90,16 +111,49 @@ const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
             >
               <div className="flex flex-col md:flex-row">
                 <div className="md:w-2/5 relative">
-                  <div className="grid grid-cols-3 gap-1">
-                    {property.images.slice(0, 3).map((image, index) => (
-                      <div key={index} className="aspect-square">
+                  <div className="flex gap-1">
+                    <div className="w-2/3 relative aspect-[4/3]">
+                      <img
+                        src={property.images[getCurrentImageIndex(property.id)]}
+                        alt={`${property.title} - Main Image`}
+                        className="w-full h-full object-cover rounded-l-lg"
+                      />
+                      {property.images.length > 1 && (
+                        <>
+                          <button
+                            onClick={(e) => handlePrevImage(e, property.id, property.images.length)}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/90 rounded-full shadow-lg hover:bg-white transition-colors duration-200"
+                          >
+                            <ChevronLeft className="h-4 w-4 text-gray-800" />
+                          </button>
+                          <button
+                            onClick={(e) => handleNextImage(e, property.id, property.images.length)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/90 rounded-full shadow-lg hover:bg-white transition-colors duration-200"
+                          >
+                            <ChevronRight className="h-4 w-4 text-gray-800" />
+                          </button>
+                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white px-2 py-1 rounded text-xs">
+                            {getCurrentImageIndex(property.id) + 1} / {property.images.length}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <div className="w-1/3 flex flex-col gap-1">
+                      <div className="flex-1 relative aspect-square">
                         <img
-                          src={image}
-                          alt={`${property.title} - Image ${index + 1}`}
+                          src={property.images[(getCurrentImageIndex(property.id) + 1) % property.images.length]}
+                          alt={`${property.title} - Thumbnail 1`}
                           className="w-full h-full object-cover"
                         />
                       </div>
-                    ))}
+                      <div className="flex-1 relative aspect-square">
+                        <img
+                          src={property.images[(getCurrentImageIndex(property.id) + 2) % property.images.length]}
+                          alt={`${property.title} - Thumbnail 2`}
+                          className="w-full h-full object-cover rounded-tr-lg"
+                        />
+                      </div>
+                    </div>
                   </div>
                   {property.featured && (
                     <div className="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold z-10">
