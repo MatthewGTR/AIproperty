@@ -349,100 +349,96 @@ const RentPage: React.FC<RentPageProps> = ({ user }) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
           {rentalProperties.map((property) => (
             <div
               key={property.id}
               className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
               onClick={() => setSelectedProperty(property)}
             >
-              {/* Property Image */}
-              <div className="relative">
-                <img
-                  src={property.images[0]}
-                  alt={property.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-4 left-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  For Rent
-                </div>
-                <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  {property.furnished}
-                </div>
-                <button className="absolute bottom-4 right-4 p-2 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors duration-200">
-                  <Heart className="h-5 w-5 text-gray-600" />
-                </button>
-              </div>
-
-              {/* Property Details */}
-              <div className="p-5">
-                <div className="mb-3">
-                  <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1">{property.title}</h3>
-                  <div className="flex items-center text-gray-600 mb-2">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    <span className="text-sm">{property.location}</span>
-                  </div>
-                  <div className="text-2xl font-bold text-emerald-600">{formatRent(property.monthlyRent)}</div>
-                  <div className="text-sm text-gray-500">{property.deposit}</div>
-                </div>
-
-                {/* Property Stats */}
-                <div className="flex items-center justify-between text-gray-600 mb-4">
-                  <div className="flex items-center">
-                    <Bed className="h-4 w-4 mr-1" />
-                    <span className="text-sm mr-3">{property.bedrooms} bed</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Bath className="h-4 w-4 mr-1" />
-                    <span className="text-sm mr-3">{property.bathrooms} bath</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Square className="h-4 w-4 mr-1" />
-                    <span className="text-sm">{property.sqft.toLocaleString()} sqft</span>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{property.description}</p>
-
-                {/* Amenities */}
-                <div className="mb-4">
-                  <div className="flex flex-wrap gap-2">
-                    {property.amenities.slice(0, 3).map((amenity) => (
-                      <div key={amenity} className="flex items-center px-2 py-1 bg-gray-100 rounded-lg">
-                        {amenityIcons[amenity] || <span className="text-blue-500">✓</span>}
-                        <span className="ml-1 text-xs text-gray-700">{amenity}</span>
+              <div className="flex flex-col md:flex-row">
+                <div className="md:w-2/5 relative">
+                  <div className="grid grid-cols-3 gap-1">
+                    {property.images.slice(0, 3).map((image, index) => (
+                      <div key={index} className="aspect-square">
+                        <img
+                          src={image}
+                          alt={`${property.title} - Image ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     ))}
-                    {property.amenities.length > 3 && (
-                      <div className="px-2 py-1 bg-gray-100 rounded-lg">
-                        <span className="text-xs text-gray-700">+{property.amenities.length - 3} more</span>
+                  </div>
+                  <div className="absolute top-4 left-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-sm font-semibold z-10">
+                    For Rent
+                  </div>
+                  <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold z-10">
+                    {property.furnished}
+                  </div>
+                </div>
+
+                <div className="md:w-3/5 p-6 flex flex-col">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">{property.title}</h3>
+                      <div className="flex items-center text-gray-600 mb-2">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        <span className="text-sm">{property.location}</span>
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Availability */}
-                <div className="mb-4 p-2 bg-green-50 rounded-lg">
-                  <span className="text-sm font-medium text-green-800">{property.availability}</span>
-                </div>
-
-                {/* Agent Info */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                  <div className="flex items-center">
-                    <img
-                      src={property.agent.image}
-                      alt={property.agent.name}
-                      className="w-8 h-8 rounded-full mr-2"
-                    />
-                    <span className="text-sm font-medium text-gray-700">{property.agent.name}</span>
-                  </div>
-                  <div className="flex space-x-2">
-                    <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200">
-                      <Phone className="h-4 w-4" />
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                    >
+                      <Heart className="h-5 w-5 text-gray-600" />
                     </button>
-                    <button className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors duration-200">
-                      <MessageCircle className="h-4 w-4" />
+                  </div>
+
+                  <div className="mb-2">
+                    <div className="text-3xl font-bold text-emerald-600">{formatRent(property.monthlyRent)}</div>
+                    <div className="text-sm text-gray-500">{property.deposit}</div>
+                  </div>
+
+                  <div className="flex items-center gap-6 text-gray-600 my-4">
+                    <div className="flex items-center">
+                      <Bed className="h-5 w-5 mr-2" />
+                      <span>{property.bedrooms} Beds</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Bath className="h-5 w-5 mr-2" />
+                      <span>{property.bathrooms} Baths</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Square className="h-5 w-5 mr-2" />
+                      <span>{property.sqft.toLocaleString()} sqft</span>
+                    </div>
+                  </div>
+
+                  <p className="text-gray-600 mb-3 line-clamp-2">{property.description}</p>
+
+                  <div className="mb-3 p-2 bg-green-50 rounded-lg inline-block">
+                    <span className="text-sm font-medium text-green-800">{property.availability}</span>
+                  </div>
+
+                  <div className="mt-auto flex items-center justify-between">
+                    <div className="flex items-center">
+                      <img
+                        src={property.agent.image}
+                        alt={property.agent.name}
+                        className="w-10 h-10 rounded-full mr-3"
+                      />
+                      <span className="text-sm font-medium text-gray-700">{property.agent.name}</span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedProperty(property);
+                      }}
+                      className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors duration-200 font-medium"
+                    >
+                      View Full Details
                     </button>
                   </div>
                 </div>
