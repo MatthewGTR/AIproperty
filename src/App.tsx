@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import PropertyListings from './components/PropertyListings';
-import PropertyDetailsNew from './components/PropertyDetailsNew';
+import PropertyDetailsPage from './components/PropertyDetailsPage';
 import AuthModal from './components/AuthModal';
 import SubmitProperty from './components/SubmitProperty';
 import AgentsPage from './components/AgentsPage';
@@ -11,6 +11,7 @@ import AdminPanel from './components/AdminPanel';
 import RentPage from './components/RentPage';
 import BuyPage from './components/BuyPage';
 import BuyPropertyDetailsPage from './components/BuyPropertyDetailsPage';
+import RentPropertyDetailsPage from './components/RentPropertyDetailsPage';
 import NewDevelopmentPage from './components/NewDevelopmentPage';
 import { PropertyWithImages, propertyService } from './services/propertyService';
 import { authService } from './services/authService';
@@ -116,24 +117,19 @@ function App() {
               user={user}
               onPropertiesRecommended={handlePropertiesRecommended}
               recommendedProperties={recommendedProperties}
-              onPropertyClick={setSelectedProperty}
+              onPropertyClick={(property) => navigate(`/property/${property.id}`)}
             />
           }
         />
         <Route path="/buy" element={<BuyPage user={user} />} />
         <Route path="/buy/:id" element={<BuyPropertyDetailsPage />} />
         <Route path="/rent" element={<RentPage user={user} />} />
+        <Route path="/rent/:id" element={<RentPropertyDetailsPage />} />
+        <Route path="/property/:id" element={<PropertyDetailsPage user={user} />} />
         <Route path="/new-development" element={<NewDevelopmentPage user={user} />} />
         <Route path="/agents" element={<AgentsPage />} />
       </Routes>
 
-      {selectedProperty && (
-        <PropertyDetailsNew
-          property={selectedProperty}
-          onClose={() => setSelectedProperty(null)}
-          user={user}
-        />
-      )}
 
       {showAuth && (
         <AuthModal
