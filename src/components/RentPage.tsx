@@ -57,7 +57,6 @@ const RentPage: React.FC<RentPageProps> = ({ user }) => {
       <div className="bg-white border-b border-gray-200 px-6 py-8">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Properties for Rent</h1>
-          <p className="text-gray-600 text-lg">Find your perfect rental home in Johor Bahru</p>
         </div>
       </div>
 
