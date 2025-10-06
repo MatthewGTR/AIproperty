@@ -21,8 +21,14 @@ const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({ user }) => {
 
   const loadProperty = async (propertyId: string) => {
     try {
-      const prop = await propertyService.getPropertyById(propertyId);
-      setProperty(prop);
+      const prop = await propertyService.getProperty(propertyId);
+      if (prop) {
+        setProperty(prop);
+      } else {
+        const allProps = await propertyService.getProperties({});
+        const foundProp = allProps.find(p => p.id === propertyId);
+        setProperty(foundProp || null);
+      }
     } catch (error) {
       console.error('Error loading property:', error);
     } finally {
@@ -57,12 +63,11 @@ const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({ user }) => {
     );
   }
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0
-    }).format(price);
+  const formatPrice = (price: number, listingType: string) => {
+    if (listingType === 'rent') {
+      return `RM${price.toLocaleString()}/month`;
+    }
+    return `RM${price.toLocaleString()}`;
   };
 
   return (
@@ -83,10 +88,12 @@ const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({ user }) => {
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">{property.title}</h1>
                 <div className="flex items-center text-gray-600 mb-4">
                   <MapPin className="h-5 w-5 mr-2" />
-                  <span>{property.location}</span>
+                  <span>{property.address ? `${property.address}, ` : ''}{property.city}, {property.state}</span>
                 </div>
-                <div className="text-4xl font-bold text-blue-600 mb-6">
-                  {formatPrice(property.price)}
+                <div className={`text-4xl font-bold mb-6 ${
+                  property.listing_type === 'rent' ? 'text-emerald-600' : 'text-blue-600'
+                }`}>
+                  {formatPrice(property.price, property.listing_type)}
                 </div>
               </div>
 
@@ -113,6 +120,20 @@ const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({ user }) => {
                 <p className="text-gray-600 leading-relaxed">{property.description}</p>
               </div>
 
+              {property.amenities && property.amenities.length > 0 && (
+                <div className="mb-8">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Amenities</h2>
+                  <div className="grid grid-cols-2 gap-3">
+                    {property.amenities.map((amenity, index) => (
+                      <div key={index} className="flex items-center space-x-2 text-gray-700">
+                        <span className="text-blue-500">✓</span>
+                        <span className="text-sm">{amenity}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="bg-blue-50 rounded-xl p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Contact Agent</h2>
                 <div className="space-y-3">
@@ -134,14 +155,22 @@ const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({ user }) => {
 
             <div className="p-8 bg-gray-50">
               <div className="space-y-4">
-                {property.images.map((image, index) => (
+                {property.property_images && property.property_images.length > 0 ? (
+                  property.property_images.map((image, index) => (
+                    <img
+                      key={index}
+                      src={image.image_url}
+                      alt={`${property.title} - Image ${index + 1}`}
+                      className="w-full h-64 object-cover rounded-lg shadow-md"
+                    />
+                  ))
+                ) : (
                   <img
-                    key={index}
-                    src={image}
-                    alt={`${property.title} - Image ${index + 1}`}
+                    src="https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800"
+                    alt={property.title}
                     className="w-full h-64 object-cover rounded-lg shadow-md"
                   />
-                ))}
+                )}
               </div>
               <button className="mt-6 w-full flex items-center justify-center px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200">
                 <Heart className="h-5 w-5 mr-2" />
@@ -154,10 +183,13 @@ const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({ user }) => {
         <div className="mt-8 bg-white rounded-xl p-6 shadow-md">
           <div className="flex items-center justify-between text-sm text-gray-600">
             <div>
-              <span className="font-semibold">Property Type:</span> {property.type?.charAt(0).toUpperCase() + property.type?.slice(1)}
+              <span className="font-semibold">Property Type:</span> {property.property_type?.charAt(0).toUpperCase() + property.property_type?.slice(1)}
             </div>
             <div>
-              <span className="font-semibold">Property ID:</span> {property.id.toUpperCase()}
+              <span className="font-semibold">Listing Type:</span> {property.listing_type === 'sale' ? 'For Sale' : 'For Rent'}
+            </div>
+            <div>
+              <span className="font-semibold">Property ID:</span> {property.id.substring(0, 8).toUpperCase()}
             </div>
           </div>
         </div>
