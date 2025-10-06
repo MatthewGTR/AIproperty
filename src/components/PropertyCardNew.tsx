@@ -26,16 +26,16 @@ const PropertyCardNew: React.FC<PropertyCardNewProps> = ({ property, onClick }) 
 
   return (
     <div
-      className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer transform hover:scale-105"
+      className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer flex flex-row"
       onClick={() => onClick(property)}
     >
-      <div className="relative">
-        <img src={primaryImage} alt={property.title} className="w-full h-64 object-cover" />
-        
+      <div className="relative w-2/5">
+        <img src={primaryImage} alt={property.title} className="w-full h-full object-cover" />
+
         {/* Listing Type Badge */}
         <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-semibold ${
-          property.listing_type === 'rent' 
-            ? 'bg-emerald-500 text-white' 
+          property.listing_type === 'rent'
+            ? 'bg-emerald-500 text-white'
             : 'bg-blue-500 text-white'
         }`}>
           {property.listing_type === 'rent' ? 'For Rent' : 'For Sale'}
@@ -60,7 +60,7 @@ const PropertyCardNew: React.FC<PropertyCardNewProps> = ({ property, onClick }) 
         </button>
       </div>
 
-      <div className="p-6">
+      <div className="w-3/5 p-6">
         <div className="flex justify-between items-start mb-3">
           <h3 className="text-xl font-semibold text-gray-900 line-clamp-1">{property.title}</h3>
           <span className={`text-2xl font-bold ${
