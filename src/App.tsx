@@ -13,7 +13,7 @@ import BuyPage from './components/BuyPage';
 import BuyPropertyDetailsPage from './components/BuyPropertyDetailsPage';
 import RentPropertyDetailsPage from './components/RentPropertyDetailsPage';
 import NewDevelopmentPage from './components/NewDevelopmentPage';
-import { PropertyWithImages } from './types/Property';
+import { PropertyWithImages } from './services/propertyService';
 import { authService } from './services/authService';
 import { getAllStaticProperties } from './services/unifiedPropertyData';
 

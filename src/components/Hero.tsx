@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, MapPin } from 'lucide-react';
-import { PropertyWithImages } from '../types/Property';
+import { PropertyWithImages } from '../services/propertyService';
 import { processUserMessage, ConversationContext, createDefaultContext } from '../services/enhancedOpenAI';
 import { authService } from '../services/authService';
 

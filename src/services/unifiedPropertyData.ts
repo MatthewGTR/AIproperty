@@ -1,6 +1,6 @@
 import { buyPropertiesData } from '../components/BuyPropertiesData';
 import { rentPropertiesData } from '../components/RentPropertiesData';
-import type { PropertyWithImages } from '../types/Property';
+import type { PropertyWithImages } from './propertyService';
 
 // Convert Buy properties to unified format
 const convertBuyProperties = (): PropertyWithImages[] => {
@@ -36,13 +36,21 @@ const convertBuyProperties = (): PropertyWithImages[] => {
     views_count: 0,
     created_at: prop.listedDate,
     updated_at: prop.listedDate,
-    images: prop.images.map((url, index) => ({
+    property_images: prop.images.map((url, index) => ({
       id: `${prop.id}-img-${index}`,
       property_id: prop.id,
       image_url: url,
       display_order: index + 1,
+      is_primary: index === 0,
       created_at: prop.listedDate
-    }))
+    })),
+    profiles: {
+      full_name: prop.agent.name,
+      phone: prop.agent.phone,
+      email: prop.agent.email,
+      avatar_url: prop.agent.image,
+      company: null
+    }
   }));
 };
 
@@ -80,13 +88,21 @@ const convertRentProperties = (): PropertyWithImages[] => {
     views_count: 0,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    images: prop.images.map((url, index) => ({
+    property_images: prop.images.map((url, index) => ({
       id: `${prop.id}-img-${index}`,
       property_id: prop.id,
       image_url: url,
       display_order: index + 1,
+      is_primary: index === 0,
       created_at: new Date().toISOString()
-    }))
+    })),
+    profiles: {
+      full_name: prop.agent.name,
+      phone: prop.agent.phone,
+      email: prop.agent.email,
+      avatar_url: prop.agent.image,
+      company: null
+    }
   }));
 };
 

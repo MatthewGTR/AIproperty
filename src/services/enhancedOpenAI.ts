@@ -1,4 +1,4 @@
-import { PropertyWithImages } from '../types/Property';
+import { PropertyWithImages } from './propertyService';
 import { SmartPropertyAI, ConversationContext, createDefaultContext, scoreProperty } from './smartAI';
 import { filterStaticProperties, PropertyFilters } from './unifiedPropertyData';
 
