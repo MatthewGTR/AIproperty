@@ -22,11 +22,15 @@ const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({ user }) => {
   const loadProperty = async (propertyId: string) => {
     try {
       const prop = await propertyService.getProperty(propertyId);
+      console.log('Loaded property:', prop);
+      console.log('Property profiles:', prop?.profiles);
       if (prop) {
         setProperty(prop);
       } else {
         const allProps = await propertyService.getProperties({});
         const foundProp = allProps.find(p => p.id === propertyId);
+        console.log('Found property from list:', foundProp);
+        console.log('Found property profiles:', foundProp?.profiles);
         setProperty(foundProp || null);
       }
     } catch (error) {
@@ -138,19 +142,19 @@ const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({ user }) => {
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Contact Agent</h2>
 
                 <div className="flex gap-4">
-                  {property.profiles && (
-                    <div className="flex flex-col items-center">
-                      <img
-                        src={property.profiles.avatar_url || 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'}
-                        alt={property.profiles.full_name}
-                        className="w-24 h-24 rounded-full object-cover border-3 border-white shadow-lg mb-2"
-                      />
-                      <h3 className="text-sm font-semibold text-gray-900 text-center">{property.profiles.full_name}</h3>
-                      {property.profiles.company && (
-                        <p className="text-xs text-gray-600 text-center">{property.profiles.company}</p>
-                      )}
-                    </div>
-                  )}
+                  <div className="flex flex-col items-center">
+                    <img
+                      src={property.profiles?.avatar_url || 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'}
+                      alt={property.profiles?.full_name || 'Agent'}
+                      className="w-24 h-24 rounded-full object-cover border-3 border-white shadow-lg mb-2"
+                    />
+                    <h3 className="text-sm font-semibold text-gray-900 text-center">
+                      {property.profiles?.full_name || 'Property Agent'}
+                    </h3>
+                    {property.profiles?.company && (
+                      <p className="text-xs text-gray-600 text-center">{property.profiles.company}</p>
+                    )}
+                  </div>
 
                   <div className="flex-1 space-y-3">
                     <button className="flex items-center justify-center w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
