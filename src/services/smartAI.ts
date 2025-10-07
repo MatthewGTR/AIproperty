@@ -292,8 +292,13 @@ WHEN USER REQUESTS PROPERTIES (says "recommend", "find", "show me properties", e
 4. Use the most recent/specific location mentioned
 5. If you have budget/salary clues, use them
 6. If you have lifestyle clues (family, pets, work location), use them
-7. Show properties with: "Here are properties in [location]. Let me know if you'd like to refine by area, budget, or other preferences!"
-8. AFTER showing properties, ask if they want to refine (specific area, budget range, property type)
+7. IMPORTANT: If NO properties are found (empty array returned):
+   - Say: "I'm sorry, I couldn't find any properties in [location] at the moment."
+   - Suggest nearby areas or alternative locations
+   - Ask if they'd like to see properties in a different area
+8. If properties ARE found:
+   - Say: "Here are properties in [location]. Let me know if you'd like to refine by area, budget, or other preferences!"
+9. AFTER showing properties, ask if they want to refine (specific area, budget range, property type)
 
 EXAMPLE CONVERSATION FLOW:
 - User: "I work in KL" → Extract cities: ["Kuala Lumpur"]
@@ -470,6 +475,42 @@ ${JSON.stringify(this.context, null, 2)}`;
 
   updateContext(context: ConversationContext): void {
     this.context = context;
+  }
+
+  async generateNoPropertiesResponse(location: string): Promise<string> {
+    if (!openai) {
+      return `I'm sorry, I couldn't find any properties in ${location} at the moment. Would you like to try a different area?`;
+    }
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a friendly property assistant. The user searched for properties in ${location} but none were found.
+
+            Respond naturally and helpfully:
+            1. Apologize that no properties are available in ${location}
+            2. Suggest nearby areas or alternative locations in Malaysia
+            3. Ask if they'd like to see properties in a different area
+            4. Keep it brief and friendly (2-3 sentences max)`
+          },
+          {
+            role: "user",
+            content: `I searched for properties in ${location}`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 150
+      });
+
+      return completion.choices[0]?.message?.content ||
+             `I'm sorry, I couldn't find any properties in ${location} at the moment. Would you like to try a different area?`;
+    } catch (error) {
+      console.error('Error generating no properties response:', error);
+      return `I'm sorry, I couldn't find any properties in ${location} at the moment. Would you like to try a different area?`;
+    }
   }
 }
 

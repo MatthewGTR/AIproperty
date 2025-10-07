@@ -33,6 +33,25 @@ export const processUserMessage = async (
     // If AI suggests showing properties, fetch and rank them
     if (aiResponse.shouldShowProperties && aiResponse.confidence > 0.6) {
       matchedProperties = await findBestMatchingProperties(aiResponse.context);
+
+      // If no properties found and user requested specific location, adjust response
+      if (matchedProperties.length === 0 && (
+        aiResponse.context.location.cities.length > 0 ||
+        aiResponse.context.location.areas.length > 0 ||
+        aiResponse.context.location.states.length > 0
+      )) {
+        const location = aiResponse.context.location.areas[0] ||
+                        aiResponse.context.location.cities[0] ||
+                        aiResponse.context.location.states[0];
+
+        // Update AI response to reflect no properties found
+        const noPropertiesResponse = await aiInstance!.generateNoPropertiesResponse(location);
+        return {
+          response: noPropertiesResponse,
+          matchedProperties: [],
+          context: aiResponse.context
+        };
+      }
     }
 
     return {
@@ -102,6 +121,15 @@ async function findBestMatchingProperties(
 
     const allProperties = await propertyService.getProperties(filters);
 
+    console.log(`Found ${allProperties.length} properties with filters`);
+
+    // If no properties found with location filter, return empty array
+    // Don't fall back to showing unrelated properties
+    if (allProperties.length === 0 && filters.city) {
+      console.log(`No properties found in ${filters.city}`);
+      return [];
+    }
+
     // Score and rank all properties
     const scoredProperties = allProperties
       .map(property => {
@@ -112,7 +140,14 @@ async function findBestMatchingProperties(
       .sort((a, b) => b.score - a.score)
       .slice(0, 6);
 
-    // If no good matches, try with relaxed filters
+    // If no good matches and user specified a location, return empty
+    // Better to show nothing than wrong location
+    if (scoredProperties.length === 0 && filters.city) {
+      console.log(`No properties scored well for ${filters.city}`);
+      return [];
+    }
+
+    // If no matches and no location specified, show some properties
     if (scoredProperties.length === 0) {
       const relaxedFilters = {
         listing_type: filters.listing_type,
