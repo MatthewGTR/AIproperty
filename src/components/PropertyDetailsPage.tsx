@@ -137,38 +137,35 @@ const PropertyDetailsPage: React.FC<PropertyDetailsPageProps> = ({ user }) => {
               <div className="bg-blue-50 rounded-xl p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Contact Agent</h2>
 
-                {property.profiles && (
-                  <div className="flex items-center space-x-4 mb-6 pb-6 border-b border-blue-200">
-                    <img
-                      src={property.profiles.avatar_url || 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'}
-                      alt={property.profiles.full_name}
-                      className="w-16 h-16 rounded-full object-cover border-2 border-blue-300"
-                    />
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900">{property.profiles.full_name}</h3>
+                <div className="flex gap-4">
+                  {property.profiles && (
+                    <div className="flex flex-col items-center">
+                      <img
+                        src={property.profiles.avatar_url || 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'}
+                        alt={property.profiles.full_name}
+                        className="w-24 h-24 rounded-full object-cover border-3 border-white shadow-lg mb-2"
+                      />
+                      <h3 className="text-sm font-semibold text-gray-900 text-center">{property.profiles.full_name}</h3>
                       {property.profiles.company && (
-                        <p className="text-sm text-gray-600">{property.profiles.company}</p>
-                      )}
-                      {property.profiles.phone && (
-                        <p className="text-sm text-gray-700 mt-1">{property.profiles.phone}</p>
+                        <p className="text-xs text-gray-600 text-center">{property.profiles.company}</p>
                       )}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                <div className="space-y-3">
-                  <button className="flex items-center justify-center w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
-                    <Phone className="h-5 w-5 mr-2" />
-                    Call Agent
-                  </button>
-                  <button className="flex items-center justify-center w-full px-4 py-3 bg-white border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200">
-                    <Mail className="h-5 w-5 mr-2" />
-                    Email Agent
-                  </button>
-                  <button className="flex items-center justify-center w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
-                    <MessageCircle className="h-5 w-5 mr-2" />
-                    WhatsApp
-                  </button>
+                  <div className="flex-1 space-y-3">
+                    <button className="flex items-center justify-center w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                      <Phone className="h-5 w-5 mr-2" />
+                      Call Agent
+                    </button>
+                    <button className="flex items-center justify-center w-full px-4 py-3 bg-white border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-200">
+                      <Mail className="h-5 w-5 mr-2" />
+                      Email Agent
+                    </button>
+                    <button className="flex items-center justify-center w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
+                      <MessageCircle className="h-5 w-5 mr-2" />
+                      WhatsApp
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
