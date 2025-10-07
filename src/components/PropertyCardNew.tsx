@@ -34,7 +34,7 @@ const PropertyCardNew: React.FC<PropertyCardNewProps> = ({ property, onClick }) 
 
         {/* Featured Banner - Covers 15% of top */}
         {property.featured && (
-          <div className="absolute top-0 left-0 right-0 h-[15%] bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 z-10 flex items-center justify-center">
+          <div className="absolute top-0 left-0 right-0 h-[15%] bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 z-10 flex items-center justify-center">
             <div className="flex items-center space-x-2">
               <span className="text-white font-bold text-base drop-shadow-lg">✨ FEATURED PROPERTY ✨</span>
             </div>
