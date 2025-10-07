@@ -75,6 +75,7 @@ async function findBestMatchingProperties(
     }
 
     // Location (prioritize cities, then areas, then states)
+    // Use the most specific location available
     if (context.location.cities.length > 0) {
       filters.city = context.location.cities[0];
     } else if (context.location.areas.length > 0) {
@@ -82,6 +83,8 @@ async function findBestMatchingProperties(
     } else if (context.location.states.length > 0) {
       filters.city = context.location.states[0];
     }
+
+    console.log('Search filters:', filters);
 
     // Property type
     if (context.propertyType.length > 0) {

@@ -250,16 +250,25 @@ INFORMATION GATHERING STRATEGY:
 7. Only ask refinement questions AFTER showing initial results
 
 MALAYSIAN PROPERTY CONTEXT:
-- States: Johor, KL, Selangor, Penang, etc.
-- Cities: Johor Bahru, Petaling Jaya, Georgetown, etc.
+- States: Johor, Selangor, Penang, etc.
+- Cities: KL (Kuala Lumpur), Johor Bahru, Petaling Jaya, Georgetown, etc.
 - Property types: condo, apartment, house, terrace, semi-d, bungalow, villa
 - Budget ranges: Rent RM800-10000/month, Sale RM200k-5M+
 - If user mentions salary, calculate budget: Rent = 30% of salary, Buy = 35% DSR over 25 years
+
+LOCATION EXTRACTION - CRITICAL:
+- "KL" = Kuala Lumpur (extract as city: "Kuala Lumpur" or "KL")
+- "JB" = Johor Bahru (extract as city: "Johor Bahru")
+- "PJ" = Petaling Jaya (extract as city: "Petaling Jaya")
+- When user says "KL property", extract cities: ["Kuala Lumpur"] or ["KL"]
+- When user says "Johor property", extract states: ["Johor"]
+- Be PRECISE with location extraction - if user says "KL", DO NOT extract "Johor"
 
 EXTRACTION RULES:
 - Extract ALL information from ENTIRE conversation history, not just current message
 - Budget: Look for "RM", "ringgit", numbers with "k" (1000), salary mentions
 - Location: Malaysian states, cities, areas, neighborhoods, landmarks, food places
+  - IMPORTANT: Extract ONLY the locations user mentions, not other locations
 - Personal: Family size, children, pets, work location, occupation, salary
 - Lifestyle: Mentions of hobbies, work from home, car, pets
 - Intent: Any property request = set intent to "rent" by default (most common)
@@ -354,6 +363,7 @@ ${JSON.stringify(this.context, null, 2)}`;
         this.context.location.areas = [...new Set([...this.context.location.areas, ...info.location.areas])];
         this.removeMissingInfo('location');
       }
+      console.log('Updated location context:', this.context.location);
     }
 
     if (info.propertyType?.length > 0) {
@@ -522,13 +532,24 @@ function calculateLocationScore(
   let score = 0;
   let reason: string | null = null;
 
-  const propCity = property.city.toLowerCase();
-  const propState = property.state.toLowerCase();
-  const propAddress = property.address.toLowerCase();
+  const propCity = property.city.toLowerCase().trim();
+  const propState = property.state.toLowerCase().trim();
+  const propAddress = property.address.toLowerCase().trim();
+
+  // Helper function for more precise matching
+  const matchesLocation = (text: string, location: string): boolean => {
+    const searchTerm = location.toLowerCase().trim();
+    // Check for exact match or word boundary match
+    return text === searchTerm ||
+           text.includes(` ${searchTerm} `) ||
+           text.startsWith(`${searchTerm} `) ||
+           text.endsWith(` ${searchTerm}`) ||
+           text.includes(searchTerm);
+  };
 
   if (context.location.cities.length > 0) {
     for (const city of context.location.cities) {
-      if (propCity.includes(city.toLowerCase()) || propAddress.includes(city.toLowerCase())) {
+      if (matchesLocation(propCity, city) || matchesLocation(propAddress, city)) {
         score += 20;
         reason = `in ${city}`;
         break;
@@ -538,7 +559,7 @@ function calculateLocationScore(
 
   if (context.location.areas.length > 0 && score === 0) {
     for (const area of context.location.areas) {
-      if (propCity.includes(area.toLowerCase()) || propAddress.includes(area.toLowerCase())) {
+      if (matchesLocation(propCity, area) || matchesLocation(propAddress, area)) {
         score += 18;
         reason = `in ${area}`;
         break;
@@ -548,7 +569,7 @@ function calculateLocationScore(
 
   if (context.location.states.length > 0 && score === 0) {
     for (const state of context.location.states) {
-      if (propState.includes(state.toLowerCase())) {
+      if (matchesLocation(propState, state)) {
         score += 10;
         reason = `in ${state}`;
         break;
