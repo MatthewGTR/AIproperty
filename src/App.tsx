@@ -15,7 +15,6 @@ import RentPropertyDetailsPage from './components/RentPropertyDetailsPage';
 import NewDevelopmentPage from './components/NewDevelopmentPage';
 import { PropertyWithImages, propertyService } from './services/propertyService';
 import { authService } from './services/authService';
-import { getAllStaticProperties } from './services/unifiedPropertyData';
 
 function HomePage({
   user,
@@ -74,8 +73,8 @@ function App() {
 
   const loadInitialProperties = async () => {
     try {
-      // Get all properties from static data
-      const allProperties = getAllStaticProperties();
+      // Get properties from database
+      const allProperties = await propertyService.getProperties({ limit: 50 });
 
       // Show only FEATURED properties on initial load
       // These are properties that agents paid to feature
