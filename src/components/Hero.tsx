@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, MapPin } from 'lucide-react';
-import { PropertyWithImages } from '../services/propertyService';
-import { processUserMessage, ConversationContext, createDefaultContext, getAIContext } from '../services/enhancedOpenAI';
+import { PropertyWithImages } from '../types/Property';
+import { processUserMessage, ConversationContext, createDefaultContext } from '../services/enhancedOpenAI';
 import { authService } from '../services/authService';
 
 interface HeroProps {

@@ -13,8 +13,9 @@ import BuyPage from './components/BuyPage';
 import BuyPropertyDetailsPage from './components/BuyPropertyDetailsPage';
 import RentPropertyDetailsPage from './components/RentPropertyDetailsPage';
 import NewDevelopmentPage from './components/NewDevelopmentPage';
-import { PropertyWithImages, propertyService } from './services/propertyService';
+import { PropertyWithImages } from './types/Property';
 import { authService } from './services/authService';
+import { getAllStaticProperties } from './services/unifiedPropertyData';
 
 function HomePage({
   user,
@@ -71,8 +72,19 @@ function App() {
 
   const loadInitialProperties = async () => {
     try {
-      const properties = await propertyService.getProperties({ limit: 12 });
-      setRecommendedProperties(properties);
+      // Get all properties from static data
+      const allProperties = getAllStaticProperties();
+
+      // Show only FEATURED properties on initial load
+      // These are properties that agents paid to feature
+      const featuredProperties = allProperties.filter(p => p.featured);
+
+      // If we have featured properties, show them, otherwise show first 12
+      const initialProperties = featuredProperties.length > 0
+        ? featuredProperties.slice(0, 12)
+        : allProperties.slice(0, 12);
+
+      setRecommendedProperties(initialProperties);
     } catch (error) {
       console.error('Error loading properties:', error);
     }
