@@ -1,5 +1,6 @@
-import { PropertyWithImages, propertyService } from './propertyService';
+import { PropertyWithImages } from '../types/Property';
 import { SmartPropertyAI, ConversationContext, createDefaultContext, scoreProperty } from './smartAI';
+import { filterStaticProperties, PropertyFilters } from './unifiedPropertyData';
 
 export interface EnhancedAIResponse {
   response: string;
@@ -76,7 +77,7 @@ async function findBestMatchingProperties(
 ): Promise<PropertyWithImages[]> {
   try {
     // Build search filters from context
-    const filters: any = {};
+    const filters: PropertyFilters = {};
 
     // Intent to listing type
     if (context.intent === 'buy') {
@@ -119,7 +120,7 @@ async function findBestMatchingProperties(
     // Fetch more properties than needed for better ranking
     filters.limit = 50;
 
-    const allProperties = await propertyService.getProperties(filters);
+    const allProperties = filterStaticProperties(filters);
 
     console.log(`Found ${allProperties.length} properties with filters`);
 
@@ -149,11 +150,11 @@ async function findBestMatchingProperties(
 
     // If no matches and no location specified, show some properties
     if (scoredProperties.length === 0) {
-      const relaxedFilters = {
+      const relaxedFilters: PropertyFilters = {
         listing_type: filters.listing_type,
         limit: 6
       };
-      return await propertyService.getProperties(relaxedFilters);
+      return filterStaticProperties(relaxedFilters);
     }
 
     return scoredProperties.map(item => item.property);
