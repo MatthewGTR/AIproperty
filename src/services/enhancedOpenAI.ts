@@ -1,4 +1,4 @@
-import { PropertyWithImages } from './propertyService';
+import { PropertyWithImages, propertyService } from './propertyService';
 import { SmartPropertyAI, ConversationContext, createDefaultContext, scoreProperty } from './smartAI';
 import { filterStaticProperties, PropertyFilters } from './unifiedPropertyData';
 
@@ -123,12 +123,29 @@ async function findBestMatchingProperties(
       filters.bedrooms = context.bedrooms;
     }
 
-    // Fetch more properties than needed for better ranking
-    filters.limit = 50;
+    // Fetch properties from database first, fallback to static if needed
+    let allProperties: PropertyWithImages[] = [];
 
-    const allProperties = filterStaticProperties(filters);
+    try {
+      // Try fetching from database
+      const dbProperties = await propertyService.getProperties(filters);
+      allProperties = dbProperties;
+      console.log(`Found ${allProperties.length} properties from database with filters`);
 
-    console.log(`Found ${allProperties.length} properties with filters`);
+      // If database is empty, use static properties as fallback
+      if (allProperties.length === 0) {
+        console.log('Database returned no results, trying static properties');
+        filters.limit = 50;
+        allProperties = filterStaticProperties(filters);
+        console.log(`Found ${allProperties.length} properties from static data`);
+      }
+    } catch (error) {
+      console.error('Error fetching from database, falling back to static:', error);
+      // Fallback to static properties
+      filters.limit = 50;
+      allProperties = filterStaticProperties(filters);
+      console.log(`Found ${allProperties.length} properties from static data with filters`);
+    }
 
     // If no properties found with location filter, return empty array
     // Don't fall back to showing unrelated properties
