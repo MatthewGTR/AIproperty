@@ -198,7 +198,7 @@ PERSONALITY:
 
 CRITICAL: Always respond with valid JSON in this exact format:
 {
-  "response": "your friendly response here",
+  "response": "your friendly response here (mention count and criteria if showing properties)",
   "extractedInfo": {
     "intent": null or "buy" or "rent" or "new_development",
     "budget": {"min": null or number, "max": null or number},
@@ -232,8 +232,15 @@ CRITICAL: Always respond with valid JSON in this exact format:
   "shouldShowProperties": false or true,
   "propertyReminded": false or true,
   "shouldAskForRefinement": false or true,
+  "activeCriteria": "human-readable summary of active filters (e.g., '4 bedrooms in KL under RM800k')",
   "confidence": 0.8
 }
+
+RESPONSE FORMAT WHEN SHOWING PROPERTIES:
+- Always mention what criteria you're searching by
+- Example: "I found 12 properties with 4 bedrooms across Malaysia."
+- Example: "Here are 5 condos in Kuala Lumpur."
+- Then offer refinement: "Would you like to narrow down by budget or specific area?"
 
 IMPORTANT: Set "shouldAskForRefinement" to true when showing properties for first time, so response includes: "Let me know if you'd like to refine by specific area, budget, or other preferences!"
 
@@ -287,18 +294,35 @@ CONVERSATION RULES - PROPERTY RECOMMENDATION FLOW:
 
 WHEN USER REQUESTS PROPERTIES (says "recommend", "find", "show me properties", etc.):
 1. IMMEDIATELY show properties - DO NOT ask clarifying questions first
-2. Extract location from THE CURRENT MESSAGE FIRST (highest priority)
-3. If current message has new location, REPLACE old location context with new one
-4. Use the most recent/specific location mentioned
-5. If you have budget/salary clues, use them
-6. If you have lifestyle clues (family, pets, work location), use them
-7. IMPORTANT: If NO properties are found (empty array returned):
-   - Say: "I'm sorry, I couldn't find any properties in [location] at the moment."
-   - Suggest nearby areas or alternative locations
-   - Ask if they'd like to see properties in a different area
-8. If properties ARE found:
-   - Say: "Here are properties in [location]. Let me know if you'd like to refine by area, budget, or other preferences!"
-9. AFTER showing properties, ask if they want to refine (specific area, budget range, property type)
+2. Extract ALL criteria from current message (bedrooms, location, budget, type, etc.)
+3. If current message has NEW criteria, ADD or REPLACE relevant context fields
+4. Show properties matching the available criteria (even just ONE filter is enough!)
+5. After showing properties, summarize what was shown and offer refinement options
+6. IMPORTANT: If NO properties are found (empty array returned):
+   - Say: "I'm sorry, I couldn't find any properties matching [criteria] at the moment."
+   - Suggest: "Would you like to adjust your [budget/location/requirements]?"
+7. If properties ARE found:
+   - Say: "I found X properties with [criteria]. Here are the top matches!"
+   - Then ask: "Would you like to refine by [suggest 2-3 refinement options based on what's missing]?"
+8. AFTER showing properties, guide next refinement based on what's missing:
+   - If shown by bedrooms only: "Would you like to narrow by location or budget?"
+   - If shown by location only: "What's your preferred budget or number of bedrooms?"
+   - If shown by budget only: "Which area are you interested in?"
+
+ITERATIVE REFINEMENT FLOW:
+User: "4 room properties"
+→ Show ALL 4-bedroom properties
+→ AI: "I found 15 properties with 4 bedrooms across Malaysia. Would you like to narrow down by location or budget?"
+
+User: "in KL"
+→ Add location filter, keep bedrooms: 4
+→ Show 4-bedroom properties in KL only
+→ AI: "Here are 8 properties with 4 bedrooms in Kuala Lumpur. What's your budget range?"
+
+User: "under RM800k"
+→ Add budget filter, keep bedrooms: 4 and location: KL
+→ Show 4-bedroom KL properties under RM800k
+→ AI: "I found 3 properties matching your criteria: 4 bedrooms in KL under RM800k. Would you like to see specific property types like condos or apartments?"
 
 EXAMPLE CONVERSATION FLOW:
 - User: "I work in KL" → Extract cities: ["Kuala Lumpur"]
@@ -308,9 +332,18 @@ EXAMPLE CONVERSATION FLOW:
 PROPERTY SEARCH DECISION LOGIC:
 - Has location (any) + property request = SHOW PROPERTIES (set shouldShowProperties: true)
 - Has budget (any) + property request = SHOW PROPERTIES (set shouldShowProperties: true)
+- Has bedrooms (any) + property request = SHOW PROPERTIES (set shouldShowProperties: true)
+- Has property type (any) + property request = SHOW PROPERTIES (set shouldShowProperties: true)
 - Has work location + property request = SHOW PROPERTIES in work area
-- Has ANY context clue + property request = SHOW PROPERTIES with available info
+- Has ANY single criteria + property request = SHOW PROPERTIES with that filter
 - No context at all + property request = Show all properties, ask for preferences after
+
+MINIMAL INFORMATION EXAMPLES:
+- User: "4 room properties" → bedrooms: 4, show ALL 4-bedroom properties, then ask: "I found X properties with 4 bedrooms. Would you like to narrow down by location or budget?"
+- User: "apartment" → propertyType: ["apartment"], show ALL apartments, then ask for refinement
+- User: "properties under RM500k" → budget max: 500000, show properties under budget
+- User: "KL properties" → location: cities ["Kuala Lumpur"], show ALL KL properties
+- User: "condo with pool" → propertyType: ["condo"], amenities: ["pool"], show matching properties
 
 GENERAL CONVERSATION (when NOT requesting properties):
 1. NEVER force property talk - let user lead
@@ -445,10 +478,7 @@ ${JSON.stringify(this.context, null, 2)}`;
   }
 
   private hasActionableSearchCriteria(): boolean {
-    if (!this.context.intent) {
-      return false;
-    }
-
+    // More flexible: Any single criteria is enough to search
     const hasLocation = this.context.location.cities.length > 0 ||
                         this.context.location.areas.length > 0 ||
                         this.context.location.states.length > 0 ||
@@ -458,15 +488,15 @@ ${JSON.stringify(this.context, null, 2)}`;
                       this.context.budget.min ||
                       this.context.personalInfo.salary;
 
-    if (hasLocation || hasBudget || this.context.propertyType.length > 0) {
-      return true;
-    }
+    const hasBedrooms = this.context.bedrooms !== null;
+    const hasBathrooms = this.context.bathrooms !== null;
+    const hasPropertyType = this.context.propertyType.length > 0;
+    const hasIntent = this.context.intent !== null;
+    const hasAmenities = this.context.amenities.length > 0;
 
-    if (this.context.intent) {
-      return true;
-    }
-
-    return false;
+    // Any single criteria is actionable
+    return hasLocation || hasBudget || hasBedrooms || hasBathrooms ||
+           hasPropertyType || hasIntent || hasAmenities;
   }
 
   getContext(): ConversationContext {

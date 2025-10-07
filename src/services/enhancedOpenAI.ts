@@ -35,24 +35,30 @@ export const processUserMessage = async (
     if (aiResponse.shouldShowProperties && aiResponse.confidence > 0.6) {
       matchedProperties = await findBestMatchingProperties(aiResponse.context);
 
-      // If no properties found and user requested specific location, adjust response
-      if (matchedProperties.length === 0 && (
-        aiResponse.context.location.cities.length > 0 ||
-        aiResponse.context.location.areas.length > 0 ||
-        aiResponse.context.location.states.length > 0
-      )) {
-        const location = aiResponse.context.location.areas[0] ||
-                        aiResponse.context.location.cities[0] ||
-                        aiResponse.context.location.states[0];
+      // Build criteria summary
+      const criteria = buildCriteriaSummary(aiResponse.context);
 
-        // Update AI response to reflect no properties found
-        const noPropertiesResponse = await aiInstance!.generateNoPropertiesResponse(location);
+      // If no properties found, adjust response
+      if (matchedProperties.length === 0) {
+        const noPropertiesResponse = `I'm sorry, I couldn't find any properties matching ${criteria} at the moment. Would you like to adjust your criteria or try a different area?`;
         return {
           response: noPropertiesResponse,
           matchedProperties: [],
           context: aiResponse.context
         };
       }
+
+      // Inject property count into AI response
+      let finalResponse = aiResponse.response;
+      if (!finalResponse.match(/\d+\s+propert(y|ies)/i)) {
+        finalResponse = `I found ${matchedProperties.length} ${matchedProperties.length === 1 ? 'property' : 'properties'} ${criteria}. ${finalResponse}`;
+      }
+
+      return {
+        response: finalResponse,
+        matchedProperties,
+        context: aiResponse.context
+      };
     }
 
     return {
@@ -174,6 +180,45 @@ export const getAIContext = (): ConversationContext => {
 export const resetAIContext = (): void => {
   aiInstance = new SmartPropertyAI(createDefaultContext());
 };
+
+function buildCriteriaSummary(context: ConversationContext): string {
+  const parts: string[] = [];
+
+  if (context.bedrooms) {
+    parts.push(`${context.bedrooms} bedroom${context.bedrooms > 1 ? 's' : ''}`);
+  }
+
+  if (context.bathrooms) {
+    parts.push(`${context.bathrooms} bathroom${context.bathrooms > 1 ? 's' : ''}`);
+  }
+
+  if (context.propertyType.length > 0) {
+    parts.push(context.propertyType.join(', '));
+  }
+
+  const location = context.location.areas[0] ||
+                   context.location.cities[0] ||
+                   context.location.states[0];
+  if (location) {
+    parts.push(`in ${location}`);
+  }
+
+  if (context.budget.min && context.budget.max) {
+    parts.push(`between RM${context.budget.min.toLocaleString()} - RM${context.budget.max.toLocaleString()}`);
+  } else if (context.budget.max) {
+    parts.push(`under RM${context.budget.max.toLocaleString()}`);
+  } else if (context.budget.min) {
+    parts.push(`above RM${context.budget.min.toLocaleString()}`);
+  }
+
+  if (context.intent === 'rent') {
+    parts.push('for rent');
+  } else if (context.intent === 'buy') {
+    parts.push('for sale');
+  }
+
+  return parts.length > 0 ? parts.join(' ') : 'matching your criteria';
+}
 
 // Export types for use in components
 export type { ConversationContext };
