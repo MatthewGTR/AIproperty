@@ -13,7 +13,7 @@ import BuyPage from './components/BuyPage';
 import BuyPropertyDetailsPage from './components/BuyPropertyDetailsPage';
 import RentPropertyDetailsPage from './components/RentPropertyDetailsPage';
 import NewDevelopmentPage from './components/NewDevelopmentPage';
-import { PropertyWithImages } from './services/propertyService';
+import { PropertyWithImages, propertyService } from './services/propertyService';
 import { authService } from './services/authService';
 import { getAllStaticProperties } from './services/unifiedPropertyData';
 
@@ -47,6 +47,8 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Clear property cache on app load to ensure fresh data
+    propertyService.clearCache();
     checkUser();
     loadInitialProperties();
   }, []);
