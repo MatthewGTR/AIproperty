@@ -195,7 +195,7 @@ const Hero: React.FC<HeroProps> = ({ user, onPropertiesRecommended }) => {
             {isTyping && (
               <div className="flex justify-start">
                 <div className="flex items-start space-x-2">
-                  <div className="bg-blue-600 rounded-full p-1 mt-1">
+                  <div className="bg-blue-600 rounded-full p-1 mt-1 animate-pulse">
                     <Bot className="h-4 w-4 text-white" />
                   </div>
                   <div className="bg-white text-gray-900 border border-gray-200 px-4 py-3 rounded-2xl">
