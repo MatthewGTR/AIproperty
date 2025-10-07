@@ -177,6 +177,13 @@ export const propertyService = {
 
   // Get single property with full details
   async getProperty(id: string): Promise<PropertyWithImages | null> {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      console.error('Invalid UUID format:', id);
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('properties')
       .select(`

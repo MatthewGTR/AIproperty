@@ -158,13 +158,10 @@ async function findBestMatchingProperties(
       return [];
     }
 
-    // If no matches and no location specified, show some properties
+    // If no matches, return empty array - better than showing wrong properties
     if (scoredProperties.length === 0) {
-      const relaxedFilters: PropertyFilters = {
-        listing_type: filters.listing_type,
-        limit: 6
-      };
-      return filterStaticProperties(relaxedFilters);
+      console.log('No properties scored well');
+      return [];
     }
 
     return scoredProperties.map(item => item.property);
