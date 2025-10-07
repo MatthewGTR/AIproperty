@@ -30,7 +30,12 @@ const PropertyCardNew: React.FC<PropertyCardNewProps> = ({ property, onClick }) 
       onClick={() => onClick(property)}
     >
       <div className="relative w-2/5">
-        <img src={primaryImage} alt={property.title} className="w-full h-full object-cover" />
+        <img
+          src={primaryImage}
+          alt={property.title}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
 
         {/* Featured Banner - Covers 15% of top */}
         {property.featured && (

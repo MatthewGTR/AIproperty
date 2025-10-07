@@ -20,6 +20,39 @@ export interface PropertyWithImages extends Property {
   } | null;
 }
 
+// Simple in-memory cache
+interface CacheEntry {
+  data: PropertyWithImages[];
+  timestamp: number;
+}
+
+const propertyCache = new Map<string, CacheEntry>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+function generateCacheKey(filters?: any): string {
+  return JSON.stringify(filters || {});
+}
+
+function getCachedData(key: string): PropertyWithImages[] | null {
+  const entry = propertyCache.get(key);
+  if (!entry) return null;
+
+  const now = Date.now();
+  if (now - entry.timestamp > CACHE_DURATION) {
+    propertyCache.delete(key);
+    return null;
+  }
+
+  return entry.data;
+}
+
+function setCachedData(key: string, data: PropertyWithImages[]): void {
+  propertyCache.set(key, {
+    data,
+    timestamp: Date.now()
+  });
+}
+
 export const propertyService = {
   // Get all active properties with images and agent info
   async getProperties(filters?: {
@@ -31,13 +64,21 @@ export const propertyService = {
     bedrooms?: number;
     limit?: number;
   }): Promise<PropertyWithImages[]> {
-    // First try to get properties from database
+    // Check cache first
+    const cacheKey = generateCacheKey(filters);
+    const cachedData = getCachedData(cacheKey);
+    if (cachedData) {
+      console.log('Returning cached properties');
+      return cachedData;
+    }
+
+    // Build optimized query
     let query = supabase
       .from('properties')
       .select(`
         *,
-        property_images(*),
-        profiles!properties_agent_id_fkey(full_name, phone, email, avatar_url, company)
+        property_images(image_url, display_order, is_primary),
+        profiles!properties_agent_id_fkey(full_name, phone, email, avatar_url)
       `)
       .eq('status', 'active')
       .order('created_at', { ascending: false });
@@ -46,7 +87,6 @@ export const propertyService = {
       query = query.eq('listing_type', filters.listing_type);
     }
     if (filters?.city) {
-      // Search in city, state, and address for flexible location matching
       query = query.or(`city.ilike.%${filters.city}%,state.ilike.%${filters.city}%,address.ilike.%${filters.city}%`);
     }
     if (filters?.property_type) {
@@ -63,21 +103,23 @@ export const propertyService = {
     }
     if (filters?.limit) {
       query = query.limit(filters.limit);
+    } else {
+      query = query.limit(50); // Default limit to prevent large queries
     }
 
     const { data, error } = await query;
-    
+
     if (error) {
       console.error('Error fetching properties:', error);
       throw error;
     }
 
-    // If no properties found in database, return dummy properties
-    if (!data || data.length === 0) {
-      return this.getFilteredDummyProperties(filters);
-    }
+    const properties = data || [];
 
-    return data || [];
+    // Cache the results
+    setCachedData(cacheKey, properties);
+
+    return properties;
   },
 
   // Get filtered dummy properties
@@ -427,5 +469,11 @@ export const propertyService = {
       bedrooms: bedrooms,
       limit: 6
     });
+  },
+
+  // Clear cache (useful when properties are updated)
+  clearCache(): void {
+    propertyCache.clear();
+    console.log('Property cache cleared');
   }
 };

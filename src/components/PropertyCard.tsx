@@ -16,7 +16,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
       onClick={() => onClick(property)}
     >
       <div className="relative">
-        <img src={property.images[0]} alt={property.title} className="w-full h-64 object-cover" />
+        <img
+          src={property.images[0]}
+          alt={property.title}
+          className="w-full h-64 object-cover"
+          loading="lazy"
+        />
         {property.featured && (
           <div className="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
             Featured
@@ -57,7 +62,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
 
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <img src={property.agent.image} alt={property.agent.name} className="w-8 h-8 rounded-full mr-2" />
+            <img
+              src={property.agent.image}
+              alt={property.agent.name}
+              className="w-8 h-8 rounded-full mr-2"
+              loading="lazy"
+            />
             <span className="text-sm font-medium text-gray-700">{property.agent.name}</span>
           </div>
           <button className="flex items-center text-blue-600 hover:text-blue-700 transition-colors duration-200">
