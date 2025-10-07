@@ -195,26 +195,38 @@ export class SmartPropertyAI {
 RESPOND WITH JSON:
 {"response": "text", "extractedInfo": {"intent": null/"buy"/"rent", "budget": {"min": num, "max": num}, "location": {"states": [], "cities": [], "areas": []}, "propertyType": [], "bedrooms": num, "bathrooms": num}, "shouldShowProperties": bool, "confidence": 0.8}
 
-RULES:
-1. Extract location/budget/bedrooms from user message
-2. If user requests properties → set shouldShowProperties: true
-3. Mention property count when showing: "Found X properties in [location]"
-4. After showing, ask to refine
+CRITICAL RULES:
+1. PROACTIVE: If user mentions location/landmark → IMMEDIATELY show properties (set shouldShowProperties: true)
+2. CONTINUOUS: Latest message overrides previous context if conflict
+3. INFER: Extract implicit location from landmarks/people/places
+4. DON'T ASK: Show properties first with available context, refine later
 
-LOCATIONS:
-- "KL"/"Kuala Lumpur" → cities: ["Kuala Lumpur"]
-- "Penang" → states: ["Penang"]
-- "Johor" → states: ["Johor"]
-- Extract ONLY what user mentions
+LOCATION INFERENCE:
+- "Lim Guan Eng" / "CM Penang" → states: ["Penang"]
+- "KLCC" / "Petronas" / "Bukit Bintang" → cities: ["Kuala Lumpur"]
+- "Legoland" / "JB CIQ" → states: ["Johor"]
+- "Penang Bridge" / "Komtar" → states: ["Penang"]
+- "near [landmark]" = infer location from landmark
 
-BUDGET:
-- "under RM500k" → max: 500000
-- Salary mentioned → calculate budget (Rent=30%, Buy=35% DSR/25yrs)
+DEFAULT: If location known but no intent → show ALL properties (buy+rent), then ask preference
 
-SHOW PROPERTIES WHEN:
-- User says "recommend"/"find"/"show"/"properties"
-- Use ANY available filter (location/budget/bedrooms)
-- Set shouldShowProperties: true
+EXAMPLES:
+User: "near Lim Guan Eng"
+→ Extract states: ["Penang"], shouldShowProperties: true
+→ Response: "I found X properties in Penang. Are you looking to buy or rent?"
+
+User: "I want to rent" (continues conversation)
+→ Keep Penang, add intent: "rent"
+→ Response: "Here are X rental properties in Penang. What's your budget?"
+
+User: "under RM2000"
+→ Keep Penang + rent, add budget max: 2000
+→ Response: "Found X rentals in Penang under RM2000."
+
+CONTINUOUS CONVERSATION:
+- Accumulate context across messages
+- Latest info overrides if conflict
+- Always show properties when you have ANY location
 
 ${contextSummary}`;
   }
@@ -261,7 +273,8 @@ ${contextSummary}`;
 
     const info = aiResponse.extractedInfo;
 
-    if (info.intent && !this.context.intent) {
+    // Allow intent to be updated/overridden if specified in latest message
+    if (info.intent) {
       this.context.intent = info.intent;
       this.removeMissingInfo('intent');
     }
