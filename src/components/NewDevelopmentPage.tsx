@@ -275,7 +275,9 @@ const NewDevelopmentPage: React.FC<NewDevelopmentPageProps> = ({ user }) => {
       {/* Developments Grid */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-6 flex justify-between items-center">
-          <p className="text-gray-600">{newDevelopments.length} new developments found in Johor Bahru</p>
+          <p className="text-gray-600">
+            {newDevelopments.length} new developments found{searchQuery ? ` for "${searchQuery}"` : ''}
+          </p>
           <div className="flex space-x-2">
             <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
               <option>Sort by Launch Date</option>
