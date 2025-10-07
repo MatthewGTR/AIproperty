@@ -32,8 +32,17 @@ const PropertyCardNew: React.FC<PropertyCardNewProps> = ({ property, onClick }) 
       <div className="relative w-2/5">
         <img src={primaryImage} alt={property.title} className="w-full h-full object-cover" />
 
+        {/* Featured Banner - Covers 15% of top */}
+        {property.featured && (
+          <div className="absolute top-0 left-0 right-0 h-[15%] bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 z-10 flex items-center justify-center">
+            <div className="flex items-center space-x-2">
+              <span className="text-white font-bold text-base drop-shadow-lg">✨ FEATURED PROPERTY ✨</span>
+            </div>
+          </div>
+        )}
+
         {/* Listing Type Badge */}
-        <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-semibold ${
+        <div className={`absolute ${property.featured ? 'top-[calc(15%+1rem)]' : 'top-4'} left-4 px-3 py-1 rounded-full text-sm font-semibold ${
           property.listing_type === 'rent'
             ? 'bg-emerald-500 text-white'
             : 'bg-blue-500 text-white'
@@ -43,15 +52,8 @@ const PropertyCardNew: React.FC<PropertyCardNewProps> = ({ property, onClick }) 
 
         {/* Furnished Badge for Rentals */}
         {property.listing_type === 'rent' && property.furnished && (
-          <div className="absolute top-4 right-4 bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+          <div className={`absolute ${property.featured ? 'top-[calc(15%+1rem)]' : 'top-4'} right-4 bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-semibold`}>
             {formatFurnished(property.furnished)}
-          </div>
-        )}
-
-        {/* Featured Badge */}
-        {property.featured && (
-          <div className="absolute bottom-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-            Featured
           </div>
         )}
 
