@@ -12,24 +12,33 @@ const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState<{ [key: string]: number }>({});
   const [likedProperties, setLikedProperties] = useState<Set<string>>(new Set());
-
-  const buyProperties = buyPropertiesData;
+  const [filteredProperties, setFilteredProperties] = useState(buyPropertiesData);
 
   const formatPrice = (price: number) => {
     return `RM${price.toLocaleString()}`;
   };
 
-  const filteredProperties = buyProperties.filter(property => {
-    if (!searchQuery.trim()) return true;
+  const handleSearch = () => {
+    if (!searchQuery.trim()) {
+      setFilteredProperties(buyPropertiesData);
+      return;
+    }
 
     const query = searchQuery.toLowerCase();
-    return (
+    const filtered = buyPropertiesData.filter(property =>
       property.title.toLowerCase().includes(query) ||
       property.location.toLowerCase().includes(query) ||
       property.type.toLowerCase().includes(query) ||
       property.description.toLowerCase().includes(query)
     );
-  });
+    setFilteredProperties(filtered);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   const handlePropertyClick = (propertyId: string) => {
     navigate(`/buy/${propertyId}`);
@@ -79,15 +88,24 @@ const BuyPage: React.FC<BuyPageProps> = ({ user }) => {
 
       <div className="bg-gray-50 px-6 py-4">
         <div className="max-w-4xl mx-auto">
-          <div className="relative">
-            <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by location, property type, or keywords..."
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+          <div className="relative flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Search by location, property type, or keywords..."
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <button
+              onClick={handleSearch}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+            >
+              Search
+            </button>
           </div>
         </div>
       </div>

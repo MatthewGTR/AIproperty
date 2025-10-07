@@ -37,8 +37,9 @@ interface NewDevelopmentPageProps {
 const NewDevelopmentPage: React.FC<NewDevelopmentPageProps> = ({ user }) => {
   const navigate = useNavigate();
   const [selectedDevelopment, setSelectedDevelopment] = useState<NewDevelopment | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const newDevelopments: NewDevelopment[] = [
+  const allDevelopments: NewDevelopment[] = [
     {
       id: 'nd1',
       name: 'Tropez Residences',
@@ -210,6 +211,29 @@ const NewDevelopmentPage: React.FC<NewDevelopmentPageProps> = ({ user }) => {
     }
   };
 
+  const handleSearchClick = () => {
+    if (!searchQuery.trim()) {
+      return;
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearchClick();
+    }
+  };
+
+  const newDevelopments = !searchQuery.trim()
+    ? allDevelopments
+    : allDevelopments.filter(dev => {
+        const query = searchQuery.toLowerCase();
+        return (
+          dev.name.toLowerCase().includes(query) ||
+          dev.location.toLowerCase().includes(query) ||
+          dev.developer.toLowerCase().includes(query)
+        );
+      });
+
   return (
     <div className="min-h-screen bg-white">
       <div className="bg-white border-b border-gray-200 px-6 py-8">
@@ -222,13 +246,24 @@ const NewDevelopmentPage: React.FC<NewDevelopmentPageProps> = ({ user }) => {
       {/* Search and Filter Bar */}
       <div className="bg-gray-50 px-6 py-4 sticky top-[88px] z-30">
         <div className="max-w-4xl mx-auto flex space-x-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search new developments in Johor Bahru..."
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+          <div className="flex-1 relative flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-3 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Search new developments in Johor Bahru..."
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <button
+              onClick={handleSearchClick}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+            >
+              Search
+            </button>
           </div>
           <button className="flex items-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
             <Filter className="h-5 w-5 mr-2 text-gray-600" />
