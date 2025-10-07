@@ -257,18 +257,24 @@ MALAYSIAN PROPERTY CONTEXT:
 - If user mentions salary, calculate budget: Rent = 30% of salary, Buy = 35% DSR over 25 years
 
 LOCATION EXTRACTION - CRITICAL:
-- "KL" = Kuala Lumpur (extract as city: "Kuala Lumpur" or "KL")
-- "JB" = Johor Bahru (extract as city: "Johor Bahru")
-- "PJ" = Petaling Jaya (extract as city: "Petaling Jaya")
-- When user says "KL property", extract cities: ["Kuala Lumpur"] or ["KL"]
-- When user says "Johor property", extract states: ["Johor"]
-- Be PRECISE with location extraction - if user says "KL", DO NOT extract "Johor"
+- Extract EXACTLY what the user mentions - do not substitute or add other locations
+- "KL" or "Kuala Lumpur" → extract as cities: ["Kuala Lumpur"]
+- "JB" or "Johor Bahru" → extract as cities: ["Johor Bahru"]
+- "PJ" or "Petaling Jaya" → extract as cities: ["Petaling Jaya"]
+- "Johor" (state) → extract as states: ["Johor"]
+- Specific areas/neighborhoods (Molek, Taman Molek, Bukit Indah, etc.) → extract as areas: ["exact_name"]
+- When user says "Molek property" → extract areas: ["Molek"]
+- When user says "KL property" → extract cities: ["Kuala Lumpur"], DO NOT extract any other location
+- Be ULTRA PRECISE - if user says "Molek", extract ONLY "Molek", not "KL" or "Johor"
 
 EXTRACTION RULES:
 - Extract ALL information from ENTIRE conversation history, not just current message
 - Budget: Look for "RM", "ringgit", numbers with "k" (1000), salary mentions
-- Location: Malaysian states, cities, areas, neighborhoods, landmarks, food places
-  - IMPORTANT: Extract ONLY the locations user mentions, not other locations
+- Location: Extract EXACTLY what user says
+  - CRITICAL: If user says "Molek", extract areas: ["Molek"] ONLY
+  - CRITICAL: If user says "KL", extract cities: ["Kuala Lumpur"] ONLY
+  - DO NOT extract multiple locations unless user mentions multiple locations
+  - Clear previous location context when user specifies a NEW location
 - Personal: Family size, children, pets, work location, occupation, salary
 - Lifestyle: Mentions of hobbies, work from home, car, pets
 - Intent: Any property request = set intent to "rent" by default (most common)
@@ -281,12 +287,18 @@ CONVERSATION RULES - PROPERTY RECOMMENDATION FLOW:
 
 WHEN USER REQUESTS PROPERTIES (says "recommend", "find", "show me properties", etc.):
 1. IMMEDIATELY show properties - DO NOT ask clarifying questions first
-2. Use ALL information gathered from entire conversation history
-3. If you have ANY location clues (from previous messages), use them
-4. If you have ANY budget/salary clues (from previous messages), use them
-5. If you have ANY lifestyle clues (family, pets, work location), use them
-6. Show properties with: "Here are all the properties in [location]. Let me know if you'd like to refine by area, budget, or other preferences!"
-7. AFTER showing properties, ask if they want to refine (specific area, budget range, property type)
+2. Extract location from THE CURRENT MESSAGE FIRST (highest priority)
+3. If current message has new location, REPLACE old location context with new one
+4. Use the most recent/specific location mentioned
+5. If you have budget/salary clues, use them
+6. If you have lifestyle clues (family, pets, work location), use them
+7. Show properties with: "Here are properties in [location]. Let me know if you'd like to refine by area, budget, or other preferences!"
+8. AFTER showing properties, ask if they want to refine (specific area, budget range, property type)
+
+EXAMPLE CONVERSATION FLOW:
+- User: "I work in KL" → Extract cities: ["Kuala Lumpur"]
+- User: "Show me Molek property" → REPLACE location with areas: ["Molek"], show Molek properties
+- User: "What about KL?" → REPLACE location with cities: ["Kuala Lumpur"], show KL properties
 
 PROPERTY SEARCH DECISION LOGIC:
 - Has location (any) + property request = SHOW PROPERTIES (set shouldShowProperties: true)
@@ -351,16 +363,19 @@ ${JSON.stringify(this.context, null, 2)}`;
     }
 
     if (info.location) {
-      if (info.location.states?.length > 0) {
-        this.context.location.states = [...new Set([...this.context.location.states, ...info.location.states])];
-        this.removeMissingInfo('location');
-      }
-      if (info.location.cities?.length > 0) {
-        this.context.location.cities = [...new Set([...this.context.location.cities, ...info.location.cities])];
-        this.removeMissingInfo('location');
-      }
-      if (info.location.areas?.length > 0) {
-        this.context.location.areas = [...new Set([...this.context.location.areas, ...info.location.areas])];
+      // Check if this is a new specific location request (user changing their search)
+      const hasNewLocation = (info.location.states?.length > 0) ||
+                            (info.location.cities?.length > 0) ||
+                            (info.location.areas?.length > 0);
+
+      if (hasNewLocation) {
+        // If user specifies a new location in this message, REPLACE old location context
+        // This prevents accumulation of unrelated locations
+        this.context.location = {
+          states: info.location.states || [],
+          cities: info.location.cities || [],
+          areas: info.location.areas || []
+        };
         this.removeMissingInfo('location');
       }
       console.log('Updated location context:', this.context.location);

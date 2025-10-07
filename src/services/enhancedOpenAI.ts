@@ -74,16 +74,17 @@ async function findBestMatchingProperties(
       filters.max_price = context.budget.max;
     }
 
-    // Location (prioritize cities, then areas, then states)
-    // Use the most specific location available
-    if (context.location.cities.length > 0) {
-      filters.city = context.location.cities[0];
-    } else if (context.location.areas.length > 0) {
+    // Location (prioritize areas first, then cities, then states)
+    // Areas are most specific, so they should take priority
+    if (context.location.areas.length > 0) {
       filters.city = context.location.areas[0];
+    } else if (context.location.cities.length > 0) {
+      filters.city = context.location.cities[0];
     } else if (context.location.states.length > 0) {
       filters.city = context.location.states[0];
     }
 
+    console.log('Search context:', context.location);
     console.log('Search filters:', filters);
 
     // Property type

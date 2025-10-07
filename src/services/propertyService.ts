@@ -46,7 +46,8 @@ export const propertyService = {
       query = query.eq('listing_type', filters.listing_type);
     }
     if (filters?.city) {
-      query = query.ilike('city', `%${filters.city}%`);
+      // Search in city, state, and address for flexible location matching
+      query = query.or(`city.ilike.%${filters.city}%,state.ilike.%${filters.city}%,address.ilike.%${filters.city}%`);
     }
     if (filters?.property_type) {
       query = query.eq('property_type', filters.property_type);
