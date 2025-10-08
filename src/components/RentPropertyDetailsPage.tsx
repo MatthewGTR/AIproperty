@@ -138,7 +138,7 @@ const RentPropertyDetailsPage: React.FC = () => {
             </div>
 
             <div className="p-8 bg-gray-50">
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                 {property.images.map((image, index) => (
                   <img
                     key={index}
